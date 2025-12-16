@@ -49,7 +49,7 @@ const platformColors: Record<string, string> = {
   TikTok: "bg-foreground/20 text-foreground",
 };
 
-const scheduledPosts = [
+const initialPosts = [
   {
     id: 1,
     title: "New product launch announcement",
@@ -109,12 +109,37 @@ const scheduledPosts = [
 export default function ContentCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [view, setView] = useState<"week" | "month">("week");
+  const [posts, setPosts] = useState(initialPosts);
+  const [draggedPost, setDraggedPost] = useState<number | null>(null);
 
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   const getPostsForDate = (date: Date) => {
-    return scheduledPosts.filter((post) => isSameDay(post.date, date));
+    return posts.filter((post) => isSameDay(post.date, date));
+  };
+
+  const handleDragStart = (postId: number) => {
+    setDraggedPost(postId);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (targetDate: Date) => {
+    if (draggedPost === null) return;
+    
+    setPosts((prevPosts) =>
+      prevPosts.map((post) =>
+        post.id === draggedPost ? { ...post, date: targetDate } : post
+      )
+    );
+    setDraggedPost(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedPost(null);
   };
 
   const todayPosts = getPostsForDate(selectedDate);
@@ -223,9 +248,10 @@ export default function ContentCalendar() {
                 <CardContent>
                   <div className="grid grid-cols-7 gap-2">
                     {weekDays.map((day) => {
-                      const posts = getPostsForDate(day);
+                      const dayPosts = getPostsForDate(day);
                       const isToday = isSameDay(day, new Date());
                       const isSelected = isSameDay(day, selectedDate);
+                      const isDragOver = draggedPost !== null;
 
                       return (
                         <div
@@ -236,8 +262,10 @@ export default function ContentCalendar() {
                               : isToday
                               ? "border-primary/50 bg-muted/50"
                               : "border-border hover:bg-muted/30"
-                          }`}
+                          } ${isDragOver ? "ring-2 ring-primary/30" : ""}`}
                           onClick={() => setSelectedDate(day)}
+                          onDragOver={handleDragOver}
+                          onDrop={() => handleDrop(day)}
                         >
                           <div className="text-center mb-2">
                             <p className="text-xs text-muted-foreground">{format(day, "EEE")}</p>
@@ -250,21 +278,24 @@ export default function ContentCalendar() {
                             </p>
                           </div>
                           <div className="space-y-1">
-                            {posts.slice(0, 3).map((post) => (
+                            {dayPosts.slice(0, 3).map((post) => (
                               <div
                                 key={post.id}
-                                className={`text-xs p-1 rounded truncate ${
+                                draggable
+                                onDragStart={() => handleDragStart(post.id)}
+                                onDragEnd={handleDragEnd}
+                                className={`text-xs p-1 rounded truncate cursor-grab active:cursor-grabbing ${
                                   post.status === "draft"
                                     ? "bg-muted text-muted-foreground"
                                     : "bg-primary/20 text-primary"
-                                }`}
+                                } ${draggedPost === post.id ? "opacity-50" : ""}`}
                               >
                                 {post.title}
                               </div>
                             ))}
-                            {posts.length > 3 && (
+                            {dayPosts.length > 3 && (
                               <p className="text-xs text-muted-foreground text-center">
-                                +{posts.length - 3} more
+                                +{dayPosts.length - 3} more
                               </p>
                             )}
                           </div>

@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Automation from "./pages/Automation";
 import Platforms from "./pages/Platforms";
 import ContentCalendar from "./pages/Calendar";
+import Projects from "./pages/Projects";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/automation" element={<Automation />} />
           <Route path="/platforms" element={<Platforms />} />
           <Route path="/calendar" element={<ContentCalendar />} />
+          <Route path="/projects" element={<Projects />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

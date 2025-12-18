@@ -11,6 +11,8 @@ import Projects from "./pages/Projects";
 import Strategies from "./pages/Strategies";
 import Notes from "./pages/Notes";
 import Analytics from "./pages/Analytics";
+import Reports from "./pages/Reports";
+import GanttChart from "./pages/GanttChart";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +32,8 @@ const App = () => (
           <Route path="/strategies" element={<Strategies />} />
           <Route path="/notes" element={<Notes />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/gantt" element={<GanttChart />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

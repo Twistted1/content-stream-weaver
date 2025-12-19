@@ -14,6 +14,7 @@ import Analytics from "./pages/Analytics";
 import Reports from "./pages/Reports";
 import GanttChart from "./pages/GanttChart";
 import Templates from "./pages/Templates";
+import AIAssistant from "./pages/AIAssistant";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/reports" element={<Reports />} />
           <Route path="/gantt" element={<GanttChart />} />
           <Route path="/templates" element={<Templates />} />
+          <Route path="/ai-assistant" element={<AIAssistant />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

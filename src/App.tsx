@@ -39,7 +39,7 @@ const App = () => (
           <Route path="/reports" element={<Reports />} />
           <Route path="/gantt" element={<GanttChart />} />
           <Route path="/templates" element={<Templates />} />
-          <Route path="/ai-assistant" element={<AIAssistant />} />
+          <Route path="/ai" element={<AIAssistant />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path="/import" element={<ImportData />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

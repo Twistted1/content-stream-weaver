@@ -60,10 +60,12 @@ All colors MUST be HSL.
     /* Platform colors */
     --youtube: 0 100% 50%;
     --tiktok: 349 100% 49%;
-    --twitter: 203 89% 53%;
+    --twitter: 220 10% 20%;
     --instagram: 330 70% 55%;
     --facebook: 221 44% 41%;
     --linkedin: 201 100% 35%;
+    --website: 174 83% 45%;
+    --podcast: 270 60% 55%;
 
     /* Success/Warning */
     --success: 142 76% 45%;

@@ -7,12 +7,39 @@ import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { toast } from "@/hooks/use-toast";
 import {
   Youtube,
   Instagram,
@@ -41,6 +68,14 @@ import {
   Activity,
   Calendar,
   Target,
+  Send,
+  Edit,
+  Trash2,
+  MoreVertical,
+  Image,
+  Video,
+  FileText,
+  CalendarClock,
 } from "lucide-react";
 
 const platforms = [
@@ -241,9 +276,75 @@ const platformColors: Record<string, string> = {
   twitter: "hsl(var(--twitter))",
 };
 
+interface ScheduledPost {
+  id: string;
+  title: string;
+  content: string;
+  platforms: string[];
+  scheduledDate: string;
+  scheduledTime: string;
+  status: "scheduled" | "draft" | "published";
+  type: "text" | "image" | "video" | "carousel";
+}
+
+const initialScheduledPosts: ScheduledPost[] = [
+  {
+    id: "1",
+    title: "New Product Launch Announcement",
+    content: "Exciting news! We're launching our new product line next week. Stay tuned for exclusive previews and early access offers!",
+    platforms: ["instagram", "facebook", "linkedin"],
+    scheduledDate: "2026-01-03",
+    scheduledTime: "09:00",
+    status: "scheduled",
+    type: "image",
+  },
+  {
+    id: "2",
+    title: "Behind the Scenes Video",
+    content: "Take a peek behind the curtain! Watch how our team brings creative ideas to life.",
+    platforms: ["youtube", "tiktok"],
+    scheduledDate: "2026-01-04",
+    scheduledTime: "14:00",
+    status: "scheduled",
+    type: "video",
+  },
+  {
+    id: "3",
+    title: "Weekly Tips Thread",
+    content: "5 tips to boost your productivity this week. Thread incoming! 🧵",
+    platforms: ["twitter"],
+    scheduledDate: "2026-01-05",
+    scheduledTime: "10:00",
+    status: "draft",
+    type: "text",
+  },
+  {
+    id: "4",
+    title: "Community Q&A Session",
+    content: "Join us for our monthly Q&A! Drop your questions below and we'll answer them live.",
+    platforms: ["instagram", "youtube"],
+    scheduledDate: "2026-01-06",
+    scheduledTime: "18:00",
+    status: "scheduled",
+    type: "video",
+  },
+];
+
 export default function Platforms() {
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>(initialScheduledPosts);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<ScheduledPost | null>(null);
+  const [newPost, setNewPost] = useState({
+    title: "",
+    content: "",
+    platforms: [] as string[],
+    scheduledDate: "",
+    scheduledTime: "",
+    type: "text" as "text" | "image" | "video" | "carousel",
+  });
+  
   const connectedPlatforms = platforms.filter((p) => p.connected);
   const disconnectedPlatforms = platforms.filter((p) => !p.connected);
 
@@ -253,6 +354,101 @@ export default function Platforms() {
   };
 
   const getPlatformColor = (id: string) => platformColors[id] || "hsl(var(--primary))";
+  
+  const getPlatformIcon = (id: string) => {
+    const platform = platforms.find(p => p.id === id);
+    return platform?.icon || Globe;
+  };
+
+  const getPostTypeIcon = (type: string) => {
+    switch (type) {
+      case "image": return Image;
+      case "video": return Video;
+      case "carousel": return FileText;
+      default: return FileText;
+    }
+  };
+
+  const handleCreatePost = () => {
+    if (!newPost.title || !newPost.content || newPost.platforms.length === 0) {
+      toast({
+        title: "Missing fields",
+        description: "Please fill in all required fields and select at least one platform.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const post: ScheduledPost = {
+      id: Date.now().toString(),
+      ...newPost,
+      status: newPost.scheduledDate && newPost.scheduledTime ? "scheduled" : "draft",
+    };
+
+    setScheduledPosts([...scheduledPosts, post]);
+    setNewPost({
+      title: "",
+      content: "",
+      platforms: [],
+      scheduledDate: "",
+      scheduledTime: "",
+      type: "text",
+    });
+    setIsCreateDialogOpen(false);
+    toast({
+      title: "Post created",
+      description: post.status === "scheduled" ? "Your post has been scheduled." : "Your post has been saved as a draft.",
+    });
+  };
+
+  const handleUpdatePost = () => {
+    if (!editingPost) return;
+    
+    setScheduledPosts(scheduledPosts.map(p => 
+      p.id === editingPost.id ? editingPost : p
+    ));
+    setEditingPost(null);
+    toast({
+      title: "Post updated",
+      description: "Your post has been updated successfully.",
+    });
+  };
+
+  const handleDeletePost = (id: string) => {
+    setScheduledPosts(scheduledPosts.filter(p => p.id !== id));
+    toast({
+      title: "Post deleted",
+      description: "The post has been removed.",
+    });
+  };
+
+  const handlePublishNow = (id: string) => {
+    setScheduledPosts(scheduledPosts.map(p =>
+      p.id === id ? { ...p, status: "published" as const } : p
+    ));
+    toast({
+      title: "Post published",
+      description: "Your post has been published successfully.",
+    });
+  };
+
+  const togglePlatformSelection = (platformId: string, isNew: boolean = true) => {
+    if (isNew) {
+      setNewPost(prev => ({
+        ...prev,
+        platforms: prev.platforms.includes(platformId)
+          ? prev.platforms.filter(p => p !== platformId)
+          : [...prev.platforms, platformId]
+      }));
+    } else if (editingPost) {
+      setEditingPost({
+        ...editingPost,
+        platforms: editingPost.platforms.includes(platformId)
+          ? editingPost.platforms.filter(p => p !== platformId)
+          : [...editingPost.platforms, platformId]
+      });
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -370,10 +566,14 @@ export default function Platforms() {
           </Card>
 
           <Tabs defaultValue="connected" className="space-y-4">
-            <TabsList className="bg-muted/50">
+            <TabsList className="bg-muted/50 flex-wrap">
               <TabsTrigger value="connected" className="gap-2">
                 <CheckCircle2 className="h-4 w-4" />
                 Connected ({connectedPlatforms.length})
+              </TabsTrigger>
+              <TabsTrigger value="schedule" className="gap-2">
+                <CalendarClock className="h-4 w-4" />
+                Schedule ({scheduledPosts.filter(p => p.status !== "published").length})
               </TabsTrigger>
               <TabsTrigger value="available" className="gap-2">
                 <Plus className="h-4 w-4" />
@@ -556,6 +756,370 @@ export default function Platforms() {
                 ))}
               </div>
             </TabsContent>
+
+            {/* Schedule Tab */}
+            <TabsContent value="schedule" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Scheduled Posts</h3>
+                  <p className="text-sm text-muted-foreground">Manage and schedule content across all platforms</p>
+                </div>
+                <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="gap-2 bg-primary hover:bg-primary/90">
+                      <Plus className="h-4 w-4" />
+                      Create Post
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[600px]">
+                    <DialogHeader>
+                      <DialogTitle>Create New Post</DialogTitle>
+                      <DialogDescription>
+                        Schedule a post to be published across your connected platforms.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="title">Title</Label>
+                        <Input
+                          id="title"
+                          placeholder="Enter post title..."
+                          value={newPost.title}
+                          onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="content">Content</Label>
+                        <Textarea
+                          id="content"
+                          placeholder="Write your post content..."
+                          rows={4}
+                          value={newPost.content}
+                          onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Content Type</Label>
+                        <Select
+                          value={newPost.type}
+                          onValueChange={(value: "text" | "image" | "video" | "carousel") => 
+                            setNewPost({ ...newPost, type: value })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select content type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="text">Text Post</SelectItem>
+                            <SelectItem value="image">Image Post</SelectItem>
+                            <SelectItem value="video">Video Post</SelectItem>
+                            <SelectItem value="carousel">Carousel</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Platforms</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {connectedPlatforms.map((platform) => (
+                            <div
+                              key={platform.id}
+                              className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
+                                newPost.platforms.includes(platform.id)
+                                  ? "border-primary bg-primary/10"
+                                  : "border-border hover:border-primary/50"
+                              }`}
+                              onClick={() => togglePlatformSelection(platform.id)}
+                            >
+                              <Checkbox
+                                checked={newPost.platforms.includes(platform.id)}
+                                onCheckedChange={() => togglePlatformSelection(platform.id)}
+                              />
+                              <platform.icon
+                                className="h-4 w-4"
+                                style={{ color: getPlatformColor(platform.id) }}
+                              />
+                              <span className="text-sm">{platform.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="date">Schedule Date</Label>
+                          <Input
+                            id="date"
+                            type="date"
+                            value={newPost.scheduledDate}
+                            onChange={(e) => setNewPost({ ...newPost, scheduledDate: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="time">Schedule Time</Label>
+                          <Input
+                            id="time"
+                            type="time"
+                            value={newPost.scheduledTime}
+                            onChange={(e) => setNewPost({ ...newPost, scheduledTime: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={handleCreatePost} className="gap-2">
+                        <Send className="h-4 w-4" />
+                        {newPost.scheduledDate && newPost.scheduledTime ? "Schedule Post" : "Save as Draft"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              {/* Post Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="bg-card border-border">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="p-3 rounded-xl bg-primary/10">
+                      <CalendarClock className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">
+                        {scheduledPosts.filter(p => p.status === "scheduled").length}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Scheduled</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-card border-border">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="p-3 rounded-xl bg-yellow-500/10">
+                      <FileText className="h-5 w-5 text-yellow-500" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">
+                        {scheduledPosts.filter(p => p.status === "draft").length}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Drafts</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-card border-border">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="p-3 rounded-xl bg-emerald-500/10">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">
+                        {scheduledPosts.filter(p => p.status === "published").length}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Published</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Posts List */}
+              <div className="space-y-3">
+                {scheduledPosts.length === 0 ? (
+                  <Card className="bg-card border-border border-dashed">
+                    <CardContent className="p-8 text-center">
+                      <CalendarClock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="font-semibold text-lg mb-2 text-foreground">No scheduled posts</h3>
+                      <p className="text-muted-foreground mb-4">Create your first post to get started</p>
+                      <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        Create Post
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  scheduledPosts.map((post) => {
+                    const TypeIcon = getPostTypeIcon(post.type);
+                    return (
+                      <Card key={post.id} className="bg-card border-border hover:border-primary/30 transition-all">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-4">
+                            <div className="p-2 rounded-lg bg-muted/50">
+                              <TypeIcon className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-medium text-foreground truncate">{post.title}</h4>
+                                <Badge
+                                  variant="outline"
+                                  className={`text-[10px] ${
+                                    post.status === "scheduled"
+                                      ? "border-primary/50 text-primary"
+                                      : post.status === "published"
+                                      ? "border-emerald-500/50 text-emerald-500"
+                                      : "border-yellow-500/50 text-yellow-500"
+                                  }`}
+                                >
+                                  {post.status}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{post.content}</p>
+                              <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-1">
+                                  {post.platforms.map((platformId) => {
+                                    const PlatformIcon = getPlatformIcon(platformId);
+                                    return (
+                                      <div
+                                        key={platformId}
+                                        className="p-1 rounded"
+                                        style={{ background: `${getPlatformColor(platformId)}20` }}
+                                      >
+                                        <PlatformIcon
+                                          className="h-3.5 w-3.5"
+                                          style={{ color: getPlatformColor(platformId) }}
+                                        />
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                                {post.scheduledDate && post.scheduledTime && (
+                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {new Date(`${post.scheduledDate}T${post.scheduledTime}`).toLocaleString(undefined, {
+                                      month: "short",
+                                      day: "numeric",
+                                      hour: "numeric",
+                                      minute: "2-digit",
+                                    })}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {post.status !== "published" && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="gap-1 text-xs"
+                                  onClick={() => handlePublishNow(post.id)}
+                                >
+                                  <Send className="h-3 w-3" />
+                                  Publish
+                                </Button>
+                              )}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => setEditingPost(post)}>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() => handleDeletePost(post.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })
+                )}
+              </div>
+            </TabsContent>
+
+            {/* Edit Post Dialog */}
+            <Dialog open={!!editingPost} onOpenChange={(open) => !open && setEditingPost(null)}>
+              <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                  <DialogTitle>Edit Post</DialogTitle>
+                  <DialogDescription>
+                    Update your scheduled post details.
+                  </DialogDescription>
+                </DialogHeader>
+                {editingPost && (
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-title">Title</Label>
+                      <Input
+                        id="edit-title"
+                        value={editingPost.title}
+                        onChange={(e) => setEditingPost({ ...editingPost, title: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-content">Content</Label>
+                      <Textarea
+                        id="edit-content"
+                        rows={4}
+                        value={editingPost.content}
+                        onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Platforms</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {connectedPlatforms.map((platform) => (
+                          <div
+                            key={platform.id}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
+                              editingPost.platforms.includes(platform.id)
+                                ? "border-primary bg-primary/10"
+                                : "border-border hover:border-primary/50"
+                            }`}
+                            onClick={() => togglePlatformSelection(platform.id, false)}
+                          >
+                            <Checkbox
+                              checked={editingPost.platforms.includes(platform.id)}
+                              onCheckedChange={() => togglePlatformSelection(platform.id, false)}
+                            />
+                            <platform.icon
+                              className="h-4 w-4"
+                              style={{ color: getPlatformColor(platform.id) }}
+                            />
+                            <span className="text-sm">{platform.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-date">Schedule Date</Label>
+                        <Input
+                          id="edit-date"
+                          type="date"
+                          value={editingPost.scheduledDate}
+                          onChange={(e) => setEditingPost({ ...editingPost, scheduledDate: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-time">Schedule Time</Label>
+                        <Input
+                          id="edit-time"
+                          type="time"
+                          value={editingPost.scheduledTime}
+                          onChange={(e) => setEditingPost({ ...editingPost, scheduledTime: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setEditingPost(null)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleUpdatePost}>
+                    Save Changes
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
             <TabsContent value="available" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

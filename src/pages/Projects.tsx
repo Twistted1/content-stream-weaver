@@ -5,167 +5,46 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
-import {
-  Plus,
-  MoreHorizontal,
-  Calendar,
-  Users,
-  MessageSquare,
-  Paperclip,
-  Filter,
-  Search,
-  LayoutGrid,
-  List,
-} from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-type ProjectStatus = "backlog" | "in-progress" | "review" | "completed";
-
-interface Project {
-  id: number;
-  title: string;
-  description: string;
-  status: ProjectStatus;
-  priority: "low" | "medium" | "high";
-  dueDate: string;
-  progress: number;
-  comments: number;
-  attachments: number;
-  assignees: { name: string; avatar?: string }[];
-  tags: string[];
-}
-
-const initialProjects: Project[] = [
-  {
-    id: 1,
-    title: "Q4 Marketing Campaign",
-    description: "Plan and execute holiday marketing campaign across all platforms",
-    status: "in-progress",
-    priority: "high",
-    dueDate: "Dec 20, 2025",
-    progress: 65,
-    comments: 12,
-    attachments: 5,
-    assignees: [
-      { name: "Alice Johnson" },
-      { name: "Bob Smith" },
-    ],
-    tags: ["Marketing", "Social Media"],
-  },
-  {
-    id: 2,
-    title: "Website Redesign Content",
-    description: "Create all copy and visuals for the new website launch",
-    status: "in-progress",
-    priority: "high",
-    dueDate: "Dec 15, 2025",
-    progress: 40,
-    comments: 8,
-    attachments: 12,
-    assignees: [
-      { name: "Carol Davis" },
-    ],
-    tags: ["Website", "Design"],
-  },
-  {
-    id: 3,
-    title: "Product Launch Video",
-    description: "Script and produce launch video for new product line",
-    status: "review",
-    priority: "medium",
-    dueDate: "Dec 18, 2025",
-    progress: 90,
-    comments: 15,
-    attachments: 8,
-    assignees: [
-      { name: "David Lee" },
-      { name: "Eve Wilson" },
-    ],
-    tags: ["Video", "Product"],
-  },
-  {
-    id: 4,
-    title: "Blog Content Series",
-    description: "Write 10-part blog series on industry trends",
-    status: "backlog",
-    priority: "low",
-    dueDate: "Jan 10, 2026",
-    progress: 10,
-    comments: 3,
-    attachments: 2,
-    assignees: [
-      { name: "Frank Miller" },
-    ],
-    tags: ["Blog", "SEO"],
-  },
-  {
-    id: 5,
-    title: "Social Media Templates",
-    description: "Design reusable templates for Instagram and TikTok",
-    status: "backlog",
-    priority: "medium",
-    dueDate: "Dec 30, 2025",
-    progress: 0,
-    comments: 2,
-    attachments: 0,
-    assignees: [
-      { name: "Grace Taylor" },
-    ],
-    tags: ["Design", "Social Media"],
-  },
-  {
-    id: 6,
-    title: "Email Newsletter Redesign",
-    description: "Refresh email templates and newsletter layout",
-    status: "completed",
-    priority: "medium",
-    dueDate: "Dec 10, 2025",
-    progress: 100,
-    comments: 20,
-    attachments: 6,
-    assignees: [
-      { name: "Henry Brown" },
-      { name: "Ivy Chen" },
-    ],
-    tags: ["Email", "Design"],
-  },
-  {
-    id: 7,
-    title: "Influencer Collaboration",
-    description: "Coordinate content with partner influencers",
-    status: "review",
-    priority: "high",
-    dueDate: "Dec 22, 2025",
-    progress: 75,
-    comments: 25,
-    attachments: 10,
-    assignees: [
-      { name: "Jack White" },
-    ],
-    tags: ["Influencer", "Partnership"],
-  },
-  {
-    id: 8,
-    title: "Annual Report Graphics",
-    description: "Create infographics and charts for annual report",
-    status: "completed",
-    priority: "low",
-    dueDate: "Dec 5, 2025",
-    progress: 100,
-    comments: 8,
-    attachments: 15,
-    assignees: [
-      { name: "Karen Green" },
-    ],
-    tags: ["Design", "Corporate"],
-  },
-];
+import {
+  Plus,
+  MoreHorizontal,
+  Calendar,
+  MessageSquare,
+  Paperclip,
+  Filter,
+  Search,
+  LayoutGrid,
+  List,
+  Edit,
+  Trash2,
+  Copy,
+} from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { useAppStore, Project, ProjectStatus } from "@/stores/useAppStore";
 
 const columns: { id: ProjectStatus; title: string; color: string }[] = [
   { id: "backlog", title: "Backlog", color: "bg-muted" },
@@ -180,7 +59,15 @@ const priorityColors = {
   high: "bg-destructive/20 text-destructive",
 };
 
-function ProjectCard({ project, onDragStart }: { project: Project; onDragStart: (id: number) => void }) {
+interface ProjectCardProps {
+  project: Project;
+  onDragStart: (id: string) => void;
+  onEdit: (project: Project) => void;
+  onDelete: (id: string) => void;
+  onDuplicate: (project: Project) => void;
+}
+
+function ProjectCard({ project, onDragStart, onEdit, onDelete, onDuplicate }: ProjectCardProps) {
   return (
     <Card
       draggable
@@ -203,9 +90,18 @@ function ProjectCard({ project, onDragStart }: { project: Project; onDragStart: 
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>Edit</DropdownMenuItem>
-              <DropdownMenuItem>Duplicate</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onEdit(project)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onDuplicate(project)}>
+                <Copy className="h-4 w-4 mr-2" />
+                Duplicate
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={() => onDelete(project.id)}>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -269,13 +165,31 @@ function ProjectCard({ project, onDragStart }: { project: Project; onDragStart: 
   );
 }
 
-export default function Projects() {
-  const [projects, setProjects] = useState(initialProjects);
-  const [viewMode, setViewMode] = useState<"board" | "list">("board");
-  const [draggedProject, setDraggedProject] = useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+const emptyProject = {
+  title: "",
+  description: "",
+  status: "backlog" as ProjectStatus,
+  priority: "medium" as "low" | "medium" | "high",
+  dueDate: "",
+  progress: 0,
+  comments: 0,
+  attachments: 0,
+  assignees: [] as { name: string; avatar?: string }[],
+  tags: [] as string[],
+};
 
-  const handleDragStart = (projectId: number) => {
+export default function Projects() {
+  const { projects, addProject, updateProject, deleteProject, moveProject } = useAppStore();
+  const [viewMode, setViewMode] = useState<"board" | "list">("board");
+  const [draggedProject, setDraggedProject] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [newProject, setNewProject] = useState(emptyProject);
+  const [newTag, setNewTag] = useState("");
+  const [newAssignee, setNewAssignee] = useState("");
+
+  const handleDragStart = (projectId: string) => {
     setDraggedProject(projectId);
   };
 
@@ -285,13 +199,12 @@ export default function Projects() {
 
   const handleDrop = (status: ProjectStatus) => {
     if (draggedProject === null) return;
-
-    setProjects((prev) =>
-      prev.map((project) =>
-        project.id === draggedProject ? { ...project, status } : project
-      )
-    );
+    moveProject(draggedProject, status);
     setDraggedProject(null);
+    toast({
+      title: "Project moved",
+      description: `Project moved to ${status.replace("-", " ")}`,
+    });
   };
 
   const filteredProjects = projects.filter((project) =>
@@ -301,6 +214,238 @@ export default function Projects() {
 
   const getProjectsByStatus = (status: ProjectStatus) =>
     filteredProjects.filter((project) => project.status === status);
+
+  const handleCreateProject = () => {
+    if (!newProject.title) {
+      toast({
+        title: "Missing title",
+        description: "Please enter a project title.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    addProject(newProject);
+    setNewProject(emptyProject);
+    setIsCreateDialogOpen(false);
+    toast({
+      title: "Project created",
+      description: "Your project has been created successfully.",
+    });
+  };
+
+  const handleUpdateProject = () => {
+    if (!editingProject) return;
+    updateProject(editingProject.id, editingProject);
+    setEditingProject(null);
+    toast({
+      title: "Project updated",
+      description: "Your project has been updated successfully.",
+    });
+  };
+
+  const handleDeleteProject = (id: string) => {
+    deleteProject(id);
+    toast({
+      title: "Project deleted",
+      description: "The project has been removed.",
+    });
+  };
+
+  const handleDuplicateProject = (project: Project) => {
+    const { id, createdAt, ...rest } = project;
+    addProject({ ...rest, title: `${project.title} (Copy)` });
+    toast({
+      title: "Project duplicated",
+      description: "A copy of the project has been created.",
+    });
+  };
+
+  const addTag = (isNew: boolean) => {
+    if (!newTag.trim()) return;
+    if (isNew) {
+      setNewProject((prev) => ({ ...prev, tags: [...prev.tags, newTag.trim()] }));
+    } else if (editingProject) {
+      setEditingProject({ ...editingProject, tags: [...editingProject.tags, newTag.trim()] });
+    }
+    setNewTag("");
+  };
+
+  const removeTag = (tag: string, isNew: boolean) => {
+    if (isNew) {
+      setNewProject((prev) => ({ ...prev, tags: prev.tags.filter((t) => t !== tag) }));
+    } else if (editingProject) {
+      setEditingProject({ ...editingProject, tags: editingProject.tags.filter((t) => t !== tag) });
+    }
+  };
+
+  const addAssignee = (isNew: boolean) => {
+    if (!newAssignee.trim()) return;
+    if (isNew) {
+      setNewProject((prev) => ({
+        ...prev,
+        assignees: [...prev.assignees, { name: newAssignee.trim() }],
+      }));
+    } else if (editingProject) {
+      setEditingProject({
+        ...editingProject,
+        assignees: [...editingProject.assignees, { name: newAssignee.trim() }],
+      });
+    }
+    setNewAssignee("");
+  };
+
+  const removeAssignee = (name: string, isNew: boolean) => {
+    if (isNew) {
+      setNewProject((prev) => ({
+        ...prev,
+        assignees: prev.assignees.filter((a) => a.name !== name),
+      }));
+    } else if (editingProject) {
+      setEditingProject({
+        ...editingProject,
+        assignees: editingProject.assignees.filter((a) => a.name !== name),
+      });
+    }
+  };
+
+  const ProjectForm = ({ data, onChange, isNew }: { data: typeof emptyProject | Project; onChange: (data: any) => void; isNew: boolean }) => (
+    <div className="space-y-4 py-4">
+      <div className="space-y-2">
+        <Label htmlFor="title">Title</Label>
+        <Input
+          id="title"
+          value={data.title}
+          onChange={(e) => onChange({ ...data, title: e.target.value })}
+          placeholder="Project title"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          value={data.description}
+          onChange={(e) => onChange({ ...data, description: e.target.value })}
+          placeholder="Project description"
+          rows={3}
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Status</Label>
+          <Select
+            value={data.status}
+            onValueChange={(value: ProjectStatus) => onChange({ ...data, status: value })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {columns.map((col) => (
+                <SelectItem key={col.id} value={col.id}>
+                  {col.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Priority</Label>
+          <Select
+            value={data.priority}
+            onValueChange={(value: "low" | "medium" | "high") =>
+              onChange({ ...data, priority: value })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="low">Low</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="high">High</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="dueDate">Due Date</Label>
+          <Input
+            id="dueDate"
+            type="date"
+            value={data.dueDate}
+            onChange={(e) => onChange({ ...data, dueDate: e.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="progress">Progress (%)</Label>
+          <Input
+            id="progress"
+            type="number"
+            min="0"
+            max="100"
+            value={data.progress}
+            onChange={(e) => onChange({ ...data, progress: parseInt(e.target.value) || 0 })}
+          />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label>Tags</Label>
+        <div className="flex gap-2">
+          <Input
+            value={newTag}
+            onChange={(e) => setNewTag(e.target.value)}
+            placeholder="Add tag"
+            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag(isNew))}
+          />
+          <Button type="button" variant="outline" onClick={() => addTag(isNew)}>
+            Add
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-1 mt-2">
+          {data.tags.map((tag) => (
+            <Badge key={tag} variant="secondary" className="gap-1">
+              {tag}
+              <button
+                onClick={() => removeTag(tag, isNew)}
+                className="ml-1 hover:text-destructive"
+              >
+                ×
+              </button>
+            </Badge>
+          ))}
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label>Assignees</Label>
+        <div className="flex gap-2">
+          <Input
+            value={newAssignee}
+            onChange={(e) => setNewAssignee(e.target.value)}
+            placeholder="Add assignee name"
+            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addAssignee(isNew))}
+          />
+          <Button type="button" variant="outline" onClick={() => addAssignee(isNew)}>
+            Add
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-1 mt-2">
+          {data.assignees.map((assignee) => (
+            <Badge key={assignee.name} variant="outline" className="gap-1">
+              {assignee.name}
+              <button
+                onClick={() => removeAssignee(assignee.name, isNew)}
+                className="ml-1 hover:text-destructive"
+              >
+                ×
+              </button>
+            </Badge>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <DashboardLayout>
@@ -313,7 +458,7 @@ export default function Projects() {
               Manage and track your content projects
             </p>
           </div>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => setIsCreateDialogOpen(true)}>
             <Plus className="h-4 w-4" />
             New Project
           </Button>
@@ -380,6 +525,9 @@ export default function Projects() {
                       key={project.id}
                       project={project}
                       onDragStart={handleDragStart}
+                      onEdit={setEditingProject}
+                      onDelete={handleDeleteProject}
+                      onDuplicate={handleDuplicateProject}
                     />
                   ))}
                 </div>
@@ -425,6 +573,30 @@ export default function Projects() {
                       </div>
                       <span className="text-sm text-muted-foreground w-24">{project.dueDate}</span>
                       <Badge variant="outline">{project.status.replace("-", " ")}</Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setEditingProject(project)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDuplicateProject(project)}>
+                            <Copy className="h-4 w-4 mr-2" />
+                            Duplicate
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => handleDeleteProject(project.id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 ))}
@@ -432,6 +604,42 @@ export default function Projects() {
             </CardContent>
           </Card>
         )}
+
+        {/* Create Dialog */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Create New Project</DialogTitle>
+              <DialogDescription>Add a new project to track your content work.</DialogDescription>
+            </DialogHeader>
+            <ProjectForm data={newProject} onChange={setNewProject} isNew={true} />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateProject}>Create Project</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog open={!!editingProject} onOpenChange={(open) => !open && setEditingProject(null)}>
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Project</DialogTitle>
+              <DialogDescription>Update your project details.</DialogDescription>
+            </DialogHeader>
+            {editingProject && (
+              <ProjectForm data={editingProject} onChange={setEditingProject} isNew={false} />
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditingProject(null)}>
+                Cancel
+              </Button>
+              <Button onClick={handleUpdateProject}>Save Changes</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

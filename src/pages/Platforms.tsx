@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
+import { useAppStore } from "@/stores/useAppStore";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -346,64 +347,12 @@ const platformColors: Record<string, string> = {
   podcast: "hsl(var(--podcast))",
 };
 
-interface ScheduledPost {
-  id: string;
-  title: string;
-  content: string;
-  platforms: string[];
-  scheduledDate: string;
-  scheduledTime: string;
-  status: "scheduled" | "draft" | "published";
-  type: "text" | "image" | "video" | "carousel";
-}
-
-const initialScheduledPosts: ScheduledPost[] = [
-  {
-    id: "1",
-    title: "New Product Launch Announcement",
-    content: "Exciting news! We're launching our new product line next week. Stay tuned for exclusive previews and early access offers!",
-    platforms: ["instagram", "facebook", "linkedin"],
-    scheduledDate: "2026-01-03",
-    scheduledTime: "09:00",
-    status: "scheduled",
-    type: "image",
-  },
-  {
-    id: "2",
-    title: "Behind the Scenes Video",
-    content: "Take a peek behind the curtain! Watch how our team brings creative ideas to life.",
-    platforms: ["youtube", "tiktok"],
-    scheduledDate: "2026-01-04",
-    scheduledTime: "14:00",
-    status: "scheduled",
-    type: "video",
-  },
-  {
-    id: "3",
-    title: "Weekly Tips Thread",
-    content: "5 tips to boost your productivity this week. Thread incoming! 🧵",
-    platforms: ["twitter"],
-    scheduledDate: "2026-01-05",
-    scheduledTime: "10:00",
-    status: "draft",
-    type: "text",
-  },
-  {
-    id: "4",
-    title: "Community Q&A Session",
-    content: "Join us for our monthly Q&A! Drop your questions below and we'll answer them live.",
-    platforms: ["instagram", "youtube"],
-    scheduledDate: "2026-01-06",
-    scheduledTime: "18:00",
-    status: "scheduled",
-    type: "video",
-  },
-];
+import { useAppStore, ScheduledPost, PostType } from "@/stores/useAppStore";
 
 export default function Platforms() {
+  const { scheduledPosts, addPost, updatePost, deletePost, publishPost } = useAppStore();
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
-  const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>(initialScheduledPosts);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<ScheduledPost | null>(null);
   const [newPost, setNewPost] = useState({
@@ -412,7 +361,7 @@ export default function Platforms() {
     platforms: [] as string[],
     scheduledDate: "",
     scheduledTime: "",
-    type: "text" as "text" | "image" | "video" | "carousel",
+    type: "text" as PostType,
   });
   
   const connectedPlatforms = platforms.filter((p) => p.connected);

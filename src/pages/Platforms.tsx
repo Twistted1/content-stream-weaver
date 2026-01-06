@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
-import { useAppStore } from "@/stores/useAppStore";
+import { useAppStore, ScheduledPost, PostType } from "@/stores/useAppStore";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -347,8 +347,6 @@ const platformColors: Record<string, string> = {
   podcast: "hsl(var(--podcast))",
 };
 
-import { useAppStore, ScheduledPost, PostType } from "@/stores/useAppStore";
-
 export default function Platforms() {
   const { scheduledPosts, addPost, updatePost, deletePost, publishPost } = useAppStore();
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
@@ -398,13 +396,10 @@ export default function Platforms() {
       return;
     }
 
-    const post: ScheduledPost = {
-      id: Date.now().toString(),
+    addPost({
       ...newPost,
       status: newPost.scheduledDate && newPost.scheduledTime ? "scheduled" : "draft",
-    };
-
-    setScheduledPosts([...scheduledPosts, post]);
+    });
     setNewPost({
       title: "",
       content: "",
@@ -413,19 +408,18 @@ export default function Platforms() {
       scheduledTime: "",
       type: "text",
     });
+    const isScheduled = newPost.scheduledDate && newPost.scheduledTime;
     setIsCreateDialogOpen(false);
     toast({
       title: "Post created",
-      description: post.status === "scheduled" ? "Your post has been scheduled." : "Your post has been saved as a draft.",
+      description: isScheduled ? "Your post has been scheduled." : "Your post has been saved as a draft.",
     });
   };
 
   const handleUpdatePost = () => {
     if (!editingPost) return;
     
-    setScheduledPosts(scheduledPosts.map(p => 
-      p.id === editingPost.id ? editingPost : p
-    ));
+    updatePost(editingPost.id, editingPost);
     setEditingPost(null);
     toast({
       title: "Post updated",
@@ -434,7 +428,7 @@ export default function Platforms() {
   };
 
   const handleDeletePost = (id: string) => {
-    setScheduledPosts(scheduledPosts.filter(p => p.id !== id));
+    deletePost(id);
     toast({
       title: "Post deleted",
       description: "The post has been removed.",
@@ -442,9 +436,7 @@ export default function Platforms() {
   };
 
   const handlePublishNow = (id: string) => {
-    setScheduledPosts(scheduledPosts.map(p =>
-      p.id === id ? { ...p, status: "published" as const } : p
-    ));
+    publishPost(id);
     toast({
       title: "Post published",
       description: "Your post has been published successfully.",

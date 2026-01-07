@@ -1,116 +1,173 @@
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-  FileText, 
-  Download, 
   Plus, 
   Search, 
   Filter,
   Calendar,
   BarChart3,
-  PieChart,
-  TrendingUp,
+  FileText,
   Users,
-  Clock,
-  MoreVertical
+  TrendingUp,
+  Trash2,
 } from "lucide-react";
+import { toast } from "sonner";
+import { ReportCard, Report } from "@/components/reports/ReportCard";
+import { CreateReportDialog } from "@/components/reports/CreateReportDialog";
+import { ReportPreviewDialog } from "@/components/reports/ReportPreviewDialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-const reports = [
-  {
-    id: 1,
-    name: "Monthly Performance Report",
-    description: "Overview of key metrics and KPIs for the month",
-    type: "Performance",
-    icon: TrendingUp,
-    lastGenerated: "2024-01-15",
-    status: "Ready",
-    format: "PDF",
-  },
-  {
-    id: 2,
-    name: "User Engagement Analysis",
-    description: "Detailed breakdown of user behavior and engagement patterns",
-    type: "Analytics",
-    icon: Users,
-    lastGenerated: "2024-01-14",
-    status: "Ready",
-    format: "Excel",
-  },
-  {
-    id: 3,
-    name: "Revenue Breakdown",
-    description: "Financial analysis by product, region, and channel",
-    type: "Financial",
-    icon: PieChart,
-    lastGenerated: "2024-01-13",
-    status: "Ready",
-    format: "PDF",
-  },
-  {
-    id: 4,
-    name: "Traffic Sources Report",
-    description: "Analysis of traffic acquisition channels and campaigns",
-    type: "Marketing",
-    icon: BarChart3,
-    lastGenerated: "2024-01-12",
-    status: "Processing",
-    format: "PDF",
-  },
-  {
-    id: 5,
-    name: "Weekly Team Productivity",
-    description: "Team performance metrics and task completion rates",
-    type: "Performance",
-    icon: Clock,
-    lastGenerated: "2024-01-11",
-    status: "Ready",
-    format: "Excel",
-  },
-];
-
-const scheduledReports = [
-  { name: "Weekly Summary", frequency: "Every Monday", nextRun: "Jan 22, 2024" },
-  { name: "Monthly Analytics", frequency: "1st of month", nextRun: "Feb 1, 2024" },
-  { name: "Daily Traffic", frequency: "Daily at 9am", nextRun: "Tomorrow" },
-];
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "Ready":
-      return "bg-green-500/10 text-green-500";
-    case "Processing":
-      return "bg-yellow-500/10 text-yellow-500";
-    default:
-      return "bg-muted text-muted-foreground";
-  }
-};
-
-const getTypeColor = (type: string) => {
-  switch (type) {
-    case "Performance":
-      return "bg-primary/10 text-primary";
-    case "Analytics":
-      return "bg-blue-500/10 text-blue-500";
-    case "Financial":
-      return "bg-green-500/10 text-green-500";
-    case "Marketing":
-      return "bg-purple-500/10 text-purple-500";
-    default:
-      return "bg-muted text-muted-foreground";
-  }
-};
+  initialReports,
+  initialScheduledReports,
+  reportStats,
+  quickTemplates,
+  typeIcons,
+  ScheduledReport,
+} from "@/components/reports/reportsData";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function Reports() {
+  const [reports, setReports] = useState<Report[]>(initialReports);
+  const [scheduledReports, setScheduledReports] = useState<ScheduledReport[]>(initialScheduledReports);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("recent");
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [previewReport, setPreviewReport] = useState<Report | null>(null);
+  const [deleteReport, setDeleteReport] = useState<Report | null>(null);
+
+  // Filtered reports
+  const filteredReports = useMemo(() => {
+    return reports.filter((report) => {
+      const matchesSearch =
+        report.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        report.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesType =
+        typeFilter === "all" || report.type.toLowerCase() === typeFilter;
+      return matchesSearch && matchesType;
+    });
+  }, [reports, searchQuery, typeFilter]);
+
+  const handleCreateReport = (data: {
+    name: string;
+    description: string;
+    type: string;
+    format: string;
+    schedule: boolean;
+    frequency?: string;
+  }) => {
+    const newReport: Report = {
+      id: Date.now(),
+      name: data.name,
+      description: data.description,
+      type: data.type as Report["type"],
+      icon: typeIcons[data.type as keyof typeof typeIcons],
+      lastGenerated: new Date().toISOString().split("T")[0],
+      status: "Processing",
+      format: data.format as Report["format"],
+    };
+
+    setReports((prev) => [newReport, ...prev]);
+
+    // Simulate processing completion
+    setTimeout(() => {
+      setReports((prev) =>
+        prev.map((r) => (r.id === newReport.id ? { ...r, status: "Ready" as const } : r))
+      );
+      toast.success(`"${data.name}" is ready for download`);
+    }, 3000);
+
+    if (data.schedule && data.frequency) {
+      const newScheduled: ScheduledReport = {
+        id: Date.now(),
+        name: data.name,
+        frequency: data.frequency.charAt(0).toUpperCase() + data.frequency.slice(1),
+        nextRun: getNextRunDate(data.frequency),
+      };
+      setScheduledReports((prev) => [...prev, newScheduled]);
+    }
+
+    toast.success("Report created successfully");
+  };
+
+  const getNextRunDate = (frequency: string): string => {
+    const now = new Date();
+    switch (frequency) {
+      case "daily":
+        return "Tomorrow";
+      case "weekly":
+        now.setDate(now.getDate() + 7);
+        return now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      case "monthly":
+        now.setMonth(now.getMonth() + 1);
+        return now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      case "quarterly":
+        now.setMonth(now.getMonth() + 3);
+        return now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      default:
+        return "TBD";
+    }
+  };
+
+  const handleDownload = (report: Report) => {
+    toast.success(`Downloading ${report.name}.${report.format.toLowerCase()}`);
+  };
+
+  const handleRegenerate = (report: Report) => {
+    setReports((prev) =>
+      prev.map((r) => (r.id === report.id ? { ...r, status: "Processing" as const } : r))
+    );
+    toast.info(`Regenerating "${report.name}"...`);
+
+    setTimeout(() => {
+      setReports((prev) =>
+        prev.map((r) =>
+          r.id === report.id
+            ? { ...r, status: "Ready" as const, lastGenerated: new Date().toISOString().split("T")[0] }
+            : r
+        )
+      );
+      toast.success(`"${report.name}" has been regenerated`);
+    }, 2500);
+  };
+
+  const handleView = (report: Report) => {
+    setPreviewReport(report);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deleteReport) return;
+    setReports((prev) => prev.filter((r) => r.id !== deleteReport.id));
+    toast.success(`"${deleteReport.name}" has been deleted`);
+    setDeleteReport(null);
+  };
+
+  const handleSchedule = (report: Report) => {
+    toast.info(`Opening schedule options for "${report.name}"`);
+  };
+
+  const handleQuickTemplate = (templateName: string) => {
+    setCreateDialogOpen(true);
+    toast.info(`Template "${templateName}" selected`);
+  };
+
+  const handleRemoveScheduled = (id: number) => {
+    setScheduledReports((prev) => prev.filter((r) => r.id !== id));
+    toast.success("Scheduled report removed");
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -122,7 +179,7 @@ export default function Reports() {
               Generate and manage your business reports
             </p>
           </div>
-          <Button>
+          <Button onClick={() => setCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Create Report
           </Button>
@@ -132,9 +189,14 @@ export default function Reports() {
         <div className="flex flex-col gap-4 sm:flex-row">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Search reports..." className="pl-10" />
+            <Input
+              placeholder="Search reports..."
+              className="pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-          <Select defaultValue="all">
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger className="w-full sm:w-[150px]">
               <Filter className="mr-2 h-4 w-4" />
               <SelectValue placeholder="Type" />
@@ -147,7 +209,7 @@ export default function Reports() {
               <SelectItem value="marketing">Marketing</SelectItem>
             </SelectContent>
           </Select>
-          <Select defaultValue="recent">
+          <Select value={dateFilter} onValueChange={setDateFilter}>
             <SelectTrigger className="w-full sm:w-[150px]">
               <Calendar className="mr-2 h-4 w-4" />
               <SelectValue placeholder="Date" />
@@ -164,62 +226,42 @@ export default function Reports() {
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Reports List */}
           <div className="lg:col-span-2 space-y-4">
-            <h2 className="text-lg font-semibold">Available Reports</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Available Reports</h2>
+              <span className="text-sm text-muted-foreground">
+                {filteredReports.length} of {reports.length} reports
+              </span>
+            </div>
             <div className="space-y-3">
-              {reports.map((report) => (
-                <Card key={report.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-4">
-                      <div className="rounded-lg bg-muted p-3">
-                        <report.icon className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <h3 className="font-medium">{report.name}</h3>
-                            <p className="text-sm text-muted-foreground line-clamp-1">
-                              {report.description}
-                            </p>
-                          </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="shrink-0">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>View Report</DropdownMenuItem>
-                              <DropdownMenuItem>Edit Settings</DropdownMenuItem>
-                              <DropdownMenuItem>Schedule</DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <Badge variant="secondary" className={getTypeColor(report.type)}>
-                            {report.type}
-                          </Badge>
-                          <Badge variant="secondary" className={getStatusColor(report.status)}>
-                            {report.status}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            Last generated: {report.lastGenerated}
-                          </span>
-                        </div>
-                        <div className="mt-3 flex gap-2">
-                          <Button size="sm" variant="outline">
-                            <Download className="mr-2 h-3 w-3" />
-                            {report.format}
-                          </Button>
-                          <Button size="sm" variant="ghost">
-                            Regenerate
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
+              {filteredReports.length > 0 ? (
+                filteredReports.map((report) => (
+                  <ReportCard
+                    key={report.id}
+                    report={report}
+                    onDownload={handleDownload}
+                    onRegenerate={handleRegenerate}
+                    onView={handleView}
+                    onDelete={setDeleteReport}
+                    onSchedule={handleSchedule}
+                  />
+                ))
+              ) : (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium">No reports found</h3>
+                    <p className="text-sm text-muted-foreground text-center mt-1">
+                      {searchQuery || typeFilter !== "all"
+                        ? "Try adjusting your search or filters"
+                        : "Create your first report to get started"}
+                    </p>
+                    <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create Report
+                    </Button>
                   </CardContent>
                 </Card>
-              ))}
+              )}
             </div>
           </div>
 
@@ -233,19 +275,19 @@ export default function Reports() {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Total Reports</span>
-                  <span className="font-medium">24</span>
+                  <span className="font-medium">{reports.length}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Generated This Month</span>
-                  <span className="font-medium">12</span>
+                  <span className="font-medium">{reportStats.generatedThisMonth}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Scheduled</span>
-                  <span className="font-medium">5</span>
+                  <span className="font-medium">{scheduledReports.length}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Storage Used</span>
-                  <span className="font-medium">2.4 GB</span>
+                  <span className="font-medium">{reportStats.storageUsed}</span>
                 </div>
               </CardContent>
             </Card>
@@ -257,19 +299,38 @@ export default function Reports() {
                 <CardDescription>Upcoming automated reports</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {scheduledReports.map((report, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <div className="rounded-full bg-primary/10 p-2">
-                      <Calendar className="h-3 w-3 text-primary" />
+                {scheduledReports.length > 0 ? (
+                  scheduledReports.map((report) => (
+                    <div key={report.id} className="flex items-start gap-3 group">
+                      <div className="rounded-full bg-primary/10 p-2">
+                        <Calendar className="h-3 w-3 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">{report.name}</p>
+                        <p className="text-xs text-muted-foreground">{report.frequency}</p>
+                        <p className="text-xs text-muted-foreground">Next: {report.nextRun}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleRemoveScheduled(report.id)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">{report.name}</p>
-                      <p className="text-xs text-muted-foreground">{report.frequency}</p>
-                      <p className="text-xs text-muted-foreground">Next: {report.nextRun}</p>
-                    </div>
-                  </div>
-                ))}
-                <Button variant="outline" className="w-full" size="sm">
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No scheduled reports
+                  </p>
+                )}
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  size="sm"
+                  onClick={() => setCreateDialogOpen(true)}
+                >
                   <Plus className="mr-2 h-3 w-3" />
                   Schedule New
                 </Button>
@@ -282,23 +343,58 @@ export default function Reports() {
                 <CardTitle className="text-base">Quick Templates</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button variant="outline" className="w-full justify-start" size="sm">
-                  <FileText className="mr-2 h-4 w-4" />
-                  Executive Summary
-                </Button>
-                <Button variant="outline" className="w-full justify-start" size="sm">
-                  <BarChart3 className="mr-2 h-4 w-4" />
-                  Sales Dashboard
-                </Button>
-                <Button variant="outline" className="w-full justify-start" size="sm">
-                  <Users className="mr-2 h-4 w-4" />
-                  Team Performance
-                </Button>
+                {quickTemplates.map((template) => (
+                  <Button
+                    key={template.name}
+                    variant="outline"
+                    className="w-full justify-start"
+                    size="sm"
+                    onClick={() => handleQuickTemplate(template.name)}
+                  >
+                    <template.icon className="mr-2 h-4 w-4" />
+                    {template.name}
+                  </Button>
+                ))}
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
+
+      {/* Create Report Dialog */}
+      <CreateReportDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onCreateReport={handleCreateReport}
+      />
+
+      {/* Report Preview Dialog */}
+      <ReportPreviewDialog
+        open={!!previewReport}
+        onOpenChange={(open) => !open && setPreviewReport(null)}
+        report={previewReport}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteReport} onOpenChange={(open) => !open && setDeleteReport(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Report</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deleteReport?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }

@@ -1,38 +1,71 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Settings, Share2, Mail, Bell, Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Settings, Share2, Mail, Bell, Plus, Search, Filter, ChevronDown, Trash2, Play, Pause } from "lucide-react";
 import { toast } from "sonner";
 import { AutomationCard } from "@/components/automation/AutomationCard";
 import { AutomationDialog } from "@/components/automation/AutomationDialog";
 import { AutomationHistoryDialog } from "@/components/automation/AutomationHistoryDialog";
-import {
-  Automation,
-  AutomationRun,
-  initialAutomations,
-  getQuickStats,
-} from "@/components/automation/automationData";
+import { useAppStore, Automation, TriggerType, AutomationStatus } from "@/stores/useAppStore";
+import { triggerOptions, platformOptions, getQuickStats } from "@/components/automation/automationData";
 
 export default function AutomationPage() {
-  const [automations, setAutomations] = useState<Automation[]>(initialAutomations);
-  const [runs, setRuns] = useState<AutomationRun[]>([]);
+  const {
+    automations,
+    automationRuns,
+    addAutomation,
+    updateAutomation,
+    deleteAutomation,
+    deleteAutomations,
+    toggleAutomation,
+    toggleAutomations,
+    duplicateAutomation,
+    runAutomation,
+    completeAutomationRun,
+  } = useAppStore();
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [editingAutomation, setEditingAutomation] = useState<Automation | null>(null);
   const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | AutomationStatus>("all");
+  const [triggerFilter, setTriggerFilter] = useState<"all" | TriggerType>("all");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const quickStats = getQuickStats(automations);
 
+  const filteredAutomations = useMemo(() => {
+    return automations.filter((automation) => {
+      const matchesSearch =
+        automation.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        automation.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === "all" || automation.status === statusFilter;
+      const matchesTrigger = triggerFilter === "all" || automation.trigger === triggerFilter;
+      return matchesSearch && matchesStatus && matchesTrigger;
+    });
+  }, [automations, searchQuery, statusFilter, triggerFilter]);
+
   const handleToggle = (id: string) => {
-    setAutomations((prev) =>
-      prev.map((a) =>
-        a.id === id
-          ? { ...a, status: a.status === "active" ? "paused" : "active" }
-          : a
-      )
-    );
     const automation = automations.find((a) => a.id === id);
+    toggleAutomation(id);
     toast.success(
       `${automation?.name} ${automation?.status === "active" ? "paused" : "activated"}`
     );
@@ -40,21 +73,10 @@ export default function AutomationPage() {
 
   const handleSave = (data: Omit<Automation, "id" | "createdAt" | "lastRun" | "runs">) => {
     if (editingAutomation) {
-      setAutomations((prev) =>
-        prev.map((a) =>
-          a.id === editingAutomation.id ? { ...a, ...data } : a
-        )
-      );
+      updateAutomation(editingAutomation.id, data);
       toast.success("Automation updated");
     } else {
-      const newAutomation: Automation = {
-        ...data,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString(),
-        lastRun: null,
-        runs: 0,
-      };
-      setAutomations((prev) => [...prev, newAutomation]);
+      addAutomation(data);
       toast.success("Automation created");
     }
     setEditingAutomation(null);
@@ -67,48 +89,33 @@ export default function AutomationPage() {
 
   const handleDelete = (id: string) => {
     const automation = automations.find((a) => a.id === id);
-    setAutomations((prev) => prev.filter((a) => a.id !== id));
+    deleteAutomation(id);
+    setSelectedIds((prev) => prev.filter((sid) => sid !== id));
     toast.success(`${automation?.name} deleted`);
+  };
+
+  const handleDuplicate = (id: string) => {
+    const automation = automations.find((a) => a.id === id);
+    duplicateAutomation(id);
+    toast.success(`${automation?.name} duplicated`);
   };
 
   const handleRun = (id: string) => {
     const automation = automations.find((a) => a.id === id);
     if (!automation) return;
 
-    const newRun: AutomationRun = {
-      id: Date.now().toString(),
-      automationId: id,
-      status: "running",
-      startedAt: new Date().toISOString(),
-      completedAt: null,
-      message: "Automation started...",
-    };
-    setRuns((prev) => [newRun, ...prev]);
+    const runId = runAutomation(id);
     toast.info(`Running ${automation.name}...`);
 
-    // Simulate completion
     setTimeout(() => {
       const success = Math.random() > 0.2;
-      setRuns((prev) =>
-        prev.map((r) =>
-          r.id === newRun.id
-            ? {
-                ...r,
-                status: success ? "success" : "failed",
-                completedAt: new Date().toISOString(),
-                message: success
-                  ? `Successfully executed on ${automation.platforms.join(", ")}`
-                  : "Failed to connect to one or more platforms",
-              }
-            : r
-        )
-      );
-      setAutomations((prev) =>
-        prev.map((a) =>
-          a.id === id
-            ? { ...a, runs: a.runs + 1, lastRun: "Just now" }
-            : a
-        )
+      completeAutomationRun(
+        runId,
+        success,
+        success
+          ? `Successfully executed on ${automation.platforms.join(", ")}`
+          : "Failed to connect to one or more platforms",
+        id
       );
       if (success) {
         toast.success(`${automation.name} completed successfully`);
@@ -127,6 +134,43 @@ export default function AutomationPage() {
     setEditingAutomation(null);
     setDialogOpen(true);
   };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(filteredAutomations.map((a) => a.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectOne = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedIds((prev) => [...prev, id]);
+    } else {
+      setSelectedIds((prev) => prev.filter((sid) => sid !== id));
+    }
+  };
+
+  const handleBulkActivate = () => {
+    toggleAutomations(selectedIds, "active");
+    toast.success(`${selectedIds.length} automations activated`);
+    setSelectedIds([]);
+  };
+
+  const handleBulkPause = () => {
+    toggleAutomations(selectedIds, "paused");
+    toast.success(`${selectedIds.length} automations paused`);
+    setSelectedIds([]);
+  };
+
+  const handleBulkDelete = () => {
+    deleteAutomations(selectedIds);
+    toast.success(`${selectedIds.length} automations deleted`);
+    setSelectedIds([]);
+  };
+
+  const allSelected = filteredAutomations.length > 0 && selectedIds.length === filteredAutomations.length;
+  const someSelected = selectedIds.length > 0;
 
   return (
     <DashboardLayout>
@@ -167,30 +211,108 @@ export default function AutomationPage() {
         {/* Automations List */}
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              Your Automations
-            </CardTitle>
-            <CardDescription>
-              Manage and monitor your automated workflows
-            </CardDescription>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Your Automations
+                </CardTitle>
+                <CardDescription>
+                  Manage and monitor your automated workflows
+                </CardDescription>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search automations..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 w-[200px]"
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as "all" | AutomationStatus)}>
+                  <SelectTrigger className="w-[130px]">
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="paused">Paused</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={triggerFilter} onValueChange={(v) => setTriggerFilter(v as "all" | TriggerType)}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Trigger" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Triggers</SelectItem>
+                    {triggerOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {automations.length === 0 ? (
+            {/* Bulk Actions Bar */}
+            {filteredAutomations.length > 0 && (
+              <div className="flex items-center gap-4 pb-2 border-b border-border">
+                <Checkbox
+                  checked={allSelected}
+                  onCheckedChange={handleSelectAll}
+                />
+                <span className="text-sm text-muted-foreground">
+                  {someSelected ? `${selectedIds.length} selected` : "Select all"}
+                </span>
+                {someSelected && (
+                  <div className="flex items-center gap-2 ml-auto">
+                    <Button variant="outline" size="sm" onClick={handleBulkActivate}>
+                      <Play className="h-4 w-4 mr-1" />
+                      Activate
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleBulkPause}>
+                      <Pause className="h-4 w-4 mr-1" />
+                      Pause
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Delete
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {filteredAutomations.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                No automations yet. Create one to get started!
+                {automations.length === 0
+                  ? "No automations yet. Create one to get started!"
+                  : "No automations match your search criteria."}
               </div>
             ) : (
-              automations.map((automation) => (
-                <AutomationCard
-                  key={automation.id}
-                  automation={automation}
-                  onToggle={handleToggle}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onRun={handleRun}
-                  onViewHistory={handleViewHistory}
-                />
+              filteredAutomations.map((automation) => (
+                <div key={automation.id} className="flex items-center gap-3">
+                  <Checkbox
+                    checked={selectedIds.includes(automation.id)}
+                    onCheckedChange={(checked) => handleSelectOne(automation.id, !!checked)}
+                  />
+                  <div className="flex-1">
+                    <AutomationCard
+                      automation={automation}
+                      onToggle={handleToggle}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onRun={handleRun}
+                      onViewHistory={handleViewHistory}
+                      onDuplicate={handleDuplicate}
+                    />
+                  </div>
+                </div>
               ))
             )}
           </CardContent>
@@ -260,7 +382,7 @@ export default function AutomationPage() {
         open={historyOpen}
         onOpenChange={setHistoryOpen}
         automation={selectedAutomation}
-        runs={runs}
+        runs={automationRuns}
       />
     </DashboardLayout>
   );

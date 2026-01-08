@@ -9,7 +9,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Play, Pause, Clock, Zap, RefreshCw, MoreHorizontal, Pencil, Trash2, History } from "lucide-react";
-import { Automation, triggerOptions } from "./automationData";
+import { triggerOptions } from "./automationData";
+import { Automation } from "@/stores/useAppStore";
+import { Copy } from "lucide-react";
 
 interface AutomationCardProps {
   automation: Automation;
@@ -18,6 +20,7 @@ interface AutomationCardProps {
   onDelete: (id: string) => void;
   onRun: (id: string) => void;
   onViewHistory: (automation: Automation) => void;
+  onDuplicate?: (id: string) => void;
 }
 
 export function AutomationCard({
@@ -27,6 +30,7 @@ export function AutomationCard({
   onDelete,
   onRun,
   onViewHistory,
+  onDuplicate,
 }: AutomationCardProps) {
   const triggerLabel = triggerOptions.find((t) => t.value === automation.trigger)?.label || automation.trigger;
 
@@ -102,6 +106,12 @@ export function AutomationCard({
               <History className="h-4 w-4 mr-2" />
               View History
             </DropdownMenuItem>
+            {onDuplicate && (
+              <DropdownMenuItem onClick={() => onDuplicate(automation.id)}>
+                <Copy className="h-4 w-4 mr-2" />
+                Duplicate
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onEdit(automation)}>
               <Pencil className="h-4 w-4 mr-2" />

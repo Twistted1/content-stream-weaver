@@ -6,6 +6,8 @@ import { addDays } from "date-fns";
 export type ProjectStatus = "backlog" | "in-progress" | "review" | "completed";
 export type PostStatus = "draft" | "scheduled" | "published";
 export type PostType = "text" | "image" | "video" | "carousel" | "reel" | "thread" | "article";
+export type AutomationStatus = "active" | "paused";
+export type TriggerType = "scheduled" | "new-content" | "engagement" | "manual";
 
 export interface Project {
   id: string;
@@ -34,6 +36,31 @@ export interface ScheduledPost {
   createdAt: string;
 }
 
+export interface Automation {
+  id: string;
+  name: string;
+  description: string;
+  trigger: TriggerType;
+  triggerConfig: {
+    schedule?: string;
+    threshold?: number;
+  };
+  platforms: string[];
+  status: AutomationStatus;
+  lastRun: string | null;
+  runs: number;
+  createdAt: string;
+}
+
+export interface AutomationRun {
+  id: string;
+  automationId: string;
+  status: "success" | "failed" | "running";
+  startedAt: string;
+  completedAt: string | null;
+  message: string;
+}
+
 interface AppState {
   // Projects
   projects: Project[];
@@ -49,6 +76,19 @@ interface AppState {
   deletePost: (id: string) => void;
   reschedulePost: (id: string, date: string, time?: string) => void;
   publishPost: (id: string) => void;
+
+  // Automations
+  automations: Automation[];
+  automationRuns: AutomationRun[];
+  addAutomation: (automation: Omit<Automation, "id" | "createdAt" | "lastRun" | "runs">) => void;
+  updateAutomation: (id: string, updates: Partial<Automation>) => void;
+  deleteAutomation: (id: string) => void;
+  deleteAutomations: (ids: string[]) => void;
+  toggleAutomation: (id: string) => void;
+  toggleAutomations: (ids: string[], status: AutomationStatus) => void;
+  duplicateAutomation: (id: string) => void;
+  runAutomation: (id: string) => string;
+  completeAutomationRun: (runId: string, success: boolean, message: string, automationId: string) => void;
 }
 
 const initialProjects: Project[] = [
@@ -236,11 +276,76 @@ const initialPosts: ScheduledPost[] = [
   },
 ];
 
+const initialAutomations: Automation[] = [
+  {
+    id: "1",
+    name: "Auto-publish to all platforms",
+    description: "Automatically publish scheduled content to YouTube, TikTok, Instagram, Facebook, X, and LinkedIn",
+    trigger: "scheduled",
+    triggerConfig: { schedule: "daily" },
+    platforms: ["YouTube", "TikTok", "Instagram", "Facebook", "X", "LinkedIn"],
+    status: "active",
+    lastRun: "2 hours ago",
+    runs: 156,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "2",
+    name: "Cross-post new blog articles",
+    description: "When a new blog post is published, create social media posts for all platforms",
+    trigger: "new-content",
+    triggerConfig: {},
+    platforms: ["X", "LinkedIn", "Facebook"],
+    status: "active",
+    lastRun: "1 day ago",
+    runs: 42,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "3",
+    name: "Weekly performance digest",
+    description: "Send weekly email report with analytics from all connected platforms",
+    trigger: "scheduled",
+    triggerConfig: { schedule: "weekly" },
+    platforms: ["Email"],
+    status: "active",
+    lastRun: "3 days ago",
+    runs: 12,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "4",
+    name: "Engagement notifications",
+    description: "Get notified when posts exceed engagement thresholds",
+    trigger: "engagement",
+    triggerConfig: { threshold: 1000 },
+    platforms: ["Slack", "Email"],
+    status: "paused",
+    lastRun: "1 week ago",
+    runs: 89,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "5",
+    name: "Content backup",
+    description: "Automatically backup all published content to cloud storage",
+    trigger: "scheduled",
+    triggerConfig: { schedule: "daily" },
+    platforms: ["Google Drive"],
+    status: "active",
+    lastRun: "12 hours ago",
+    runs: 365,
+    createdAt: new Date().toISOString(),
+  },
+];
+
 export const useAppStore = create<AppState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       projects: initialProjects,
       scheduledPosts: initialPosts,
+      automations: initialAutomations,
+      automationRuns: [],
 
       // Project actions
       addProject: (project) =>
@@ -312,6 +417,111 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           scheduledPosts: state.scheduledPosts.map((p) =>
             p.id === id ? { ...p, status: "published" as PostStatus } : p
+          ),
+        })),
+
+      // Automation actions
+      addAutomation: (automation) =>
+        set((state) => ({
+          automations: [
+            ...state.automations,
+            {
+              ...automation,
+              id: Date.now().toString(),
+              createdAt: new Date().toISOString(),
+              lastRun: null,
+              runs: 0,
+            },
+          ],
+        })),
+
+      updateAutomation: (id, updates) =>
+        set((state) => ({
+          automations: state.automations.map((a) =>
+            a.id === id ? { ...a, ...updates } : a
+          ),
+        })),
+
+      deleteAutomation: (id) =>
+        set((state) => ({
+          automations: state.automations.filter((a) => a.id !== id),
+        })),
+
+      deleteAutomations: (ids) =>
+        set((state) => ({
+          automations: state.automations.filter((a) => !ids.includes(a.id)),
+        })),
+
+      toggleAutomation: (id) =>
+        set((state) => ({
+          automations: state.automations.map((a) =>
+            a.id === id
+              ? { ...a, status: a.status === "active" ? "paused" : "active" }
+              : a
+          ),
+        })),
+
+      toggleAutomations: (ids, status) =>
+        set((state) => ({
+          automations: state.automations.map((a) =>
+            ids.includes(a.id) ? { ...a, status } : a
+          ),
+        })),
+
+      duplicateAutomation: (id) => {
+        const automation = get().automations.find((a) => a.id === id);
+        if (automation) {
+          set((state) => ({
+            automations: [
+              ...state.automations,
+              {
+                ...automation,
+                id: Date.now().toString(),
+                name: `${automation.name} (Copy)`,
+                createdAt: new Date().toISOString(),
+                lastRun: null,
+                runs: 0,
+                status: "paused",
+              },
+            ],
+          }));
+        }
+      },
+
+      runAutomation: (id) => {
+        const runId = Date.now().toString();
+        set((state) => ({
+          automationRuns: [
+            {
+              id: runId,
+              automationId: id,
+              status: "running",
+              startedAt: new Date().toISOString(),
+              completedAt: null,
+              message: "Automation started...",
+            },
+            ...state.automationRuns,
+          ],
+        }));
+        return runId;
+      },
+
+      completeAutomationRun: (runId, success, message, automationId) =>
+        set((state) => ({
+          automationRuns: state.automationRuns.map((r) =>
+            r.id === runId
+              ? {
+                  ...r,
+                  status: success ? "success" : "failed",
+                  completedAt: new Date().toISOString(),
+                  message,
+                }
+              : r
+          ),
+          automations: state.automations.map((a) =>
+            a.id === automationId
+              ? { ...a, runs: a.runs + 1, lastRun: "Just now" }
+              : a
           ),
         })),
     }),

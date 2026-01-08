@@ -1,32 +1,5 @@
 import { LucideIcon, Zap, Clock, Share2, RefreshCw } from "lucide-react";
-
-export type AutomationStatus = "active" | "paused";
-export type TriggerType = "scheduled" | "new-content" | "engagement" | "manual";
-
-export interface Automation {
-  id: string;
-  name: string;
-  description: string;
-  trigger: TriggerType;
-  triggerConfig: {
-    schedule?: string; // cron-like: "daily", "weekly", "hourly"
-    threshold?: number;
-  };
-  platforms: string[];
-  status: AutomationStatus;
-  lastRun: string | null;
-  runs: number;
-  createdAt: string;
-}
-
-export interface AutomationRun {
-  id: string;
-  automationId: string;
-  status: "success" | "failed" | "running";
-  startedAt: string;
-  completedAt: string | null;
-  message: string;
-}
+import { TriggerType, Automation } from "@/stores/useAppStore";
 
 export interface QuickStat {
   label: string;
@@ -59,69 +32,6 @@ export const platformOptions = [
   "Email",
   "Slack",
   "Google Drive",
-];
-
-export const initialAutomations: Automation[] = [
-  {
-    id: "1",
-    name: "Auto-publish to all platforms",
-    description: "Automatically publish scheduled content to YouTube, TikTok, Instagram, Facebook, X, and LinkedIn",
-    trigger: "scheduled",
-    triggerConfig: { schedule: "daily" },
-    platforms: ["YouTube", "TikTok", "Instagram", "Facebook", "X", "LinkedIn"],
-    status: "active",
-    lastRun: "2 hours ago",
-    runs: 156,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    name: "Cross-post new blog articles",
-    description: "When a new blog post is published, create social media posts for all platforms",
-    trigger: "new-content",
-    triggerConfig: {},
-    platforms: ["X", "LinkedIn", "Facebook"],
-    status: "active",
-    lastRun: "1 day ago",
-    runs: 42,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "3",
-    name: "Weekly performance digest",
-    description: "Send weekly email report with analytics from all connected platforms",
-    trigger: "scheduled",
-    triggerConfig: { schedule: "weekly" },
-    platforms: ["Email"],
-    status: "active",
-    lastRun: "3 days ago",
-    runs: 12,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "4",
-    name: "Engagement notifications",
-    description: "Get notified when posts exceed engagement thresholds",
-    trigger: "engagement",
-    triggerConfig: { threshold: 1000 },
-    platforms: ["Slack", "Email"],
-    status: "paused",
-    lastRun: "1 week ago",
-    runs: 89,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "5",
-    name: "Content backup",
-    description: "Automatically backup all published content to cloud storage",
-    trigger: "scheduled",
-    triggerConfig: { schedule: "daily" },
-    platforms: ["Google Drive"],
-    status: "active",
-    lastRun: "12 hours ago",
-    runs: 365,
-    createdAt: new Date().toISOString(),
-  },
 ];
 
 export const getQuickStats = (automations: Automation[]): QuickStat[] => {

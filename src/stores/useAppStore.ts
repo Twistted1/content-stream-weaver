@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { addDays } from "date-fns";
+import { User, rolePermissions } from "@/components/users/usersData";
 
 // Types
 export type ProjectStatus = "backlog" | "in-progress" | "review" | "completed";
@@ -89,6 +90,16 @@ interface AppState {
   duplicateAutomation: (id: string) => void;
   runAutomation: (id: string) => string;
   completeAutomationRun: (runId: string, success: boolean, message: string, automationId: string) => void;
+
+  // Users
+  users: User[];
+  addUser: (user: Omit<User, "id" | "joinedDate" | "lastActive" | "permissions"> & { permissions?: string[] }) => void;
+  updateUser: (id: string, updates: Partial<User>) => void;
+  deleteUser: (id: string) => void;
+  deleteUsers: (ids: string[]) => void;
+  toggleUserStatus: (id: string) => void;
+  changeUserRole: (id: string, role: User["role"]) => void;
+  resendInvite: (id: string) => void;
 }
 
 const initialProjects: Project[] = [
@@ -339,6 +350,64 @@ const initialAutomations: Automation[] = [
   },
 ];
 
+const initialUsers: User[] = [
+  {
+    id: "1",
+    name: "Sarah Johnson",
+    email: "sarah@company.com",
+    avatar: "",
+    role: "admin",
+    status: "active",
+    lastActive: "2 minutes ago",
+    joinedDate: "Jan 15, 2024",
+    permissions: ["manage_users", "manage_content", "manage_settings", "view_analytics", "view_content", "publish_content"],
+  },
+  {
+    id: "2",
+    name: "Michael Chen",
+    email: "michael@company.com",
+    avatar: "",
+    role: "editor",
+    status: "active",
+    lastActive: "1 hour ago",
+    joinedDate: "Feb 20, 2024",
+    permissions: ["manage_content", "view_analytics", "view_content", "publish_content"],
+  },
+  {
+    id: "3",
+    name: "Emily Davis",
+    email: "emily@company.com",
+    avatar: "",
+    role: "viewer",
+    status: "active",
+    lastActive: "3 hours ago",
+    joinedDate: "Mar 10, 2024",
+    permissions: ["view_analytics", "view_content"],
+  },
+  {
+    id: "4",
+    name: "James Wilson",
+    email: "james@company.com",
+    avatar: "",
+    role: "member",
+    status: "pending",
+    lastActive: "Never",
+    joinedDate: "Dec 1, 2024",
+    permissions: ["view_content"],
+  },
+  {
+    id: "5",
+    name: "Lisa Anderson",
+    email: "lisa@company.com",
+    avatar: "",
+    role: "editor",
+    status: "inactive",
+    lastActive: "2 weeks ago",
+    joinedDate: "Nov 5, 2024",
+    permissions: ["manage_content", "view_content"],
+  },
+];
+
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
@@ -346,6 +415,7 @@ export const useAppStore = create<AppState>()(
       scheduledPosts: initialPosts,
       automations: initialAutomations,
       automationRuns: [],
+      users: initialUsers,
 
       // Project actions
       addProject: (project) =>
@@ -522,6 +592,65 @@ export const useAppStore = create<AppState>()(
             a.id === automationId
               ? { ...a, runs: a.runs + 1, lastRun: "Just now" }
               : a
+          ),
+        })),
+
+      // User actions
+      addUser: (user) =>
+        set((state) => ({
+          users: [
+            ...state.users,
+            {
+              ...user,
+              id: Date.now().toString(),
+              joinedDate: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+              lastActive: user.status === "pending" ? "Never" : "Just now",
+              permissions: user.permissions || rolePermissions[user.role] || ["view_content"],
+            },
+          ],
+        })),
+
+      updateUser: (id, updates) =>
+        set((state) => ({
+          users: state.users.map((u) =>
+            u.id === id ? { ...u, ...updates } : u
+          ),
+        })),
+
+      deleteUser: (id) =>
+        set((state) => ({
+          users: state.users.filter((u) => u.id !== id),
+        })),
+
+      deleteUsers: (ids) =>
+        set((state) => ({
+          users: state.users.filter((u) => !ids.includes(u.id)),
+        })),
+
+      toggleUserStatus: (id) =>
+        set((state) => ({
+          users: state.users.map((u) =>
+            u.id === id
+              ? { ...u, status: u.status === "active" ? "inactive" : "active" }
+              : u
+          ),
+        })),
+
+      changeUserRole: (id, role) =>
+        set((state) => ({
+          users: state.users.map((u) =>
+            u.id === id
+              ? { ...u, role, permissions: rolePermissions[role] || ["view_content"] }
+              : u
+          ),
+        })),
+
+      resendInvite: (id) =>
+        set((state) => ({
+          users: state.users.map((u) =>
+            u.id === id
+              ? { ...u, joinedDate: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) }
+              : u
           ),
         })),
     }),

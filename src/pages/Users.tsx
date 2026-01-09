@@ -1,28 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -30,206 +13,192 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Users,
   UserPlus,
   Shield,
   Settings,
-  MoreHorizontal,
   Search,
   Mail,
-  Calendar,
-  CheckCircle,
-  XCircle,
   Clock,
-  Edit,
-  Trash2,
-  Key,
   UserCheck,
+  Trash2,
   UserX,
+  RefreshCw,
+  XCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string;
-  role: "admin" | "editor" | "viewer" | "member";
-  status: "active" | "inactive" | "pending";
-  lastActive: string;
-  joinedDate: string;
-  permissions: string[];
-}
-
-const mockUsers: User[] = [
-  {
-    id: "1",
-    name: "Sarah Johnson",
-    email: "sarah@company.com",
-    avatar: "",
-    role: "admin",
-    status: "active",
-    lastActive: "2 minutes ago",
-    joinedDate: "Jan 15, 2024",
-    permissions: ["manage_users", "manage_content", "manage_settings", "view_analytics"],
-  },
-  {
-    id: "2",
-    name: "Michael Chen",
-    email: "michael@company.com",
-    avatar: "",
-    role: "editor",
-    status: "active",
-    lastActive: "1 hour ago",
-    joinedDate: "Feb 20, 2024",
-    permissions: ["manage_content", "view_analytics"],
-  },
-  {
-    id: "3",
-    name: "Emily Davis",
-    email: "emily@company.com",
-    avatar: "",
-    role: "viewer",
-    status: "active",
-    lastActive: "3 hours ago",
-    joinedDate: "Mar 10, 2024",
-    permissions: ["view_analytics"],
-  },
-  {
-    id: "4",
-    name: "James Wilson",
-    email: "james@company.com",
-    avatar: "",
-    role: "member",
-    status: "pending",
-    lastActive: "Never",
-    joinedDate: "Dec 1, 2024",
-    permissions: ["view_content"],
-  },
-  {
-    id: "5",
-    name: "Lisa Anderson",
-    email: "lisa@company.com",
-    avatar: "",
-    role: "editor",
-    status: "inactive",
-    lastActive: "2 weeks ago",
-    joinedDate: "Nov 5, 2024",
-    permissions: ["manage_content"],
-  },
-];
-
-const roles = [
-  { value: "admin", label: "Admin", description: "Full access to all features" },
-  { value: "editor", label: "Editor", description: "Can create and edit content" },
-  { value: "viewer", label: "Viewer", description: "Can view content and analytics" },
-  { value: "member", label: "Member", description: "Basic access only" },
-];
-
-const permissions = [
-  { id: "manage_users", label: "Manage Users", description: "Add, edit, and remove team members" },
-  { id: "manage_content", label: "Manage Content", description: "Create, edit, and delete content" },
-  { id: "manage_settings", label: "Manage Settings", description: "Configure system settings" },
-  { id: "view_analytics", label: "View Analytics", description: "Access analytics and reports" },
-  { id: "view_content", label: "View Content", description: "View published content" },
-  { id: "publish_content", label: "Publish Content", description: "Publish content to platforms" },
-];
+import { useAppStore } from "@/stores/useAppStore";
+import { UserCard } from "@/components/users/UserCard";
+import { UserDialog } from "@/components/users/UserDialog";
+import { RoleConfigDialog } from "@/components/users/RoleConfigDialog";
+import { User, roles, permissions, rolePermissions } from "@/components/users/usersData";
 
 const UsersPage = () => {
   const { toast } = useToast();
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const { users, addUser, updateUser, deleteUser, deleteUsers, toggleUserStatus, changeUserRole, resendInvite } = useAppStore();
+  
   const [searchQuery, setSearchQuery] = useState("");
-  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [newUserEmail, setNewUserEmail] = useState("");
-  const [newUserRole, setNewUserRole] = useState("member");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  
+  // Dialog states
+  const [userDialogOpen, setUserDialogOpen] = useState(false);
+  const [userDialogMode, setUserDialogMode] = useState<"create" | "edit" | "role">("create");
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [roleConfigOpen, setRoleConfigOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<{ value: string; label: string; description: string; color: string } | null>(null);
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) => {
+      const matchesSearch =
+        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === "all" || user.status === statusFilter;
+      const matchesRole = roleFilter === "all" || user.role === roleFilter;
+      return matchesSearch && matchesStatus && matchesRole;
+    });
+  }, [users, searchQuery, statusFilter, roleFilter]);
 
-  const getStatusBadge = (status: User["status"]) => {
-    switch (status) {
-      case "active":
-        return <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20">Active</Badge>;
-      case "inactive":
-        return <Badge variant="secondary">Inactive</Badge>;
-      case "pending":
-        return <Badge className="bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20">Pending</Badge>;
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedUsers(filteredUsers.map((u) => u.id));
+    } else {
+      setSelectedUsers([]);
     }
   };
 
-  const getRoleBadge = (role: User["role"]) => {
-    switch (role) {
-      case "admin":
-        return <Badge className="bg-primary/10 text-primary hover:bg-primary/20">Admin</Badge>;
-      case "editor":
-        return <Badge className="bg-blue-500/10 text-blue-500 hover:bg-blue-500/20">Editor</Badge>;
-      case "viewer":
-        return <Badge variant="outline">Viewer</Badge>;
-      case "member":
-        return <Badge variant="secondary">Member</Badge>;
+  const handleSelectUser = (userId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedUsers([...selectedUsers, userId]);
+    } else {
+      setSelectedUsers(selectedUsers.filter((id) => id !== userId));
     }
   };
 
   const handleInviteUser = () => {
-    if (!newUserEmail) return;
+    setSelectedUser(null);
+    setUserDialogMode("create");
+    setUserDialogOpen(true);
+  };
 
-    const newUser: User = {
-      id: Date.now().toString(),
-      name: newUserEmail.split("@")[0],
-      email: newUserEmail,
-      avatar: "",
-      role: newUserRole as User["role"],
-      status: "pending",
-      lastActive: "Never",
-      joinedDate: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      permissions: roles.find((r) => r.value === newUserRole)?.value === "admin"
-        ? ["manage_users", "manage_content", "manage_settings", "view_analytics"]
-        : ["view_content"],
-    };
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user);
+    setUserDialogMode("edit");
+    setUserDialogOpen(true);
+  };
 
-    setUsers([...users, newUser]);
-    setNewUserEmail("");
-    setNewUserRole("member");
-    setInviteDialogOpen(false);
+  const handleChangeRole = (user: User) => {
+    setSelectedUser(user);
+    setUserDialogMode("role");
+    setUserDialogOpen(true);
+  };
 
-    toast({
-      title: "Invitation sent",
-      description: `An invitation has been sent to ${newUserEmail}`,
-    });
+  const handleUserDialogSave = (data: Partial<User>) => {
+    if (userDialogMode === "create") {
+      addUser({
+        name: data.name || "",
+        email: data.email || "",
+        avatar: "",
+        role: data.role || "member",
+        status: "pending",
+        permissions: data.permissions,
+      });
+      toast({
+        title: "Invitation sent",
+        description: `An invitation has been sent to ${data.email}`,
+      });
+    } else if (selectedUser) {
+      if (userDialogMode === "role") {
+        changeUserRole(selectedUser.id, data.role!);
+        if (data.permissions) {
+          updateUser(selectedUser.id, { permissions: data.permissions });
+        }
+        toast({
+          title: "Role updated",
+          description: `${selectedUser.name}'s role has been updated`,
+        });
+      } else {
+        updateUser(selectedUser.id, data);
+        toast({
+          title: "User updated",
+          description: `${selectedUser.name}'s information has been updated`,
+        });
+      }
+    }
   };
 
   const handleDeleteUser = (userId: string) => {
-    setUsers(users.filter((u) => u.id !== userId));
+    const user = users.find((u) => u.id === userId);
+    deleteUser(userId);
+    setSelectedUsers(selectedUsers.filter((id) => id !== userId));
     toast({
       title: "User removed",
-      description: "The user has been removed from the team",
+      description: `${user?.name || "User"} has been removed from the team`,
     });
   };
 
-  const handleToggleStatus = (userId: string) => {
-    setUsers(
-      users.map((u) =>
-        u.id === userId
-          ? { ...u, status: u.status === "active" ? "inactive" : "active" }
-          : u
-      )
-    );
+  const handleBulkDelete = () => {
+    deleteUsers(selectedUsers);
+    toast({
+      title: "Users removed",
+      description: `${selectedUsers.length} users have been removed`,
+    });
+    setSelectedUsers([]);
   };
 
+  const handleBulkActivate = () => {
+    selectedUsers.forEach((id) => {
+      const user = users.find((u) => u.id === id);
+      if (user && user.status !== "active") {
+        toggleUserStatus(id);
+      }
+    });
+    toast({
+      title: "Users activated",
+      description: `${selectedUsers.length} users have been activated`,
+    });
+    setSelectedUsers([]);
+  };
+
+  const handleBulkDeactivate = () => {
+    selectedUsers.forEach((id) => {
+      const user = users.find((u) => u.id === id);
+      if (user && user.status === "active") {
+        toggleUserStatus(id);
+      }
+    });
+    toast({
+      title: "Users deactivated",
+      description: `${selectedUsers.length} users have been deactivated`,
+    });
+    setSelectedUsers([]);
+  };
+
+  const handleResendInvite = (userId: string) => {
+    resendInvite(userId);
+    const user = users.find((u) => u.id === userId);
+    toast({
+      title: "Invitation resent",
+      description: `Invitation resent to ${user?.email}`,
+    });
+  };
+
+  const handleConfigureRole = (role: { value: string; label: string; description: string; color: string }) => {
+    setSelectedRole(role);
+    setRoleConfigOpen(true);
+  };
+
+  const handleRoleConfigSave = (permissions: string[]) => {
+    toast({
+      title: "Role configured",
+      description: `${selectedRole?.label} role permissions have been updated`,
+    });
+  };
+
+  // Stats
   const activeUsers = users.filter((u) => u.status === "active").length;
   const pendingUsers = users.filter((u) => u.status === "pending").length;
   const adminUsers = users.filter((u) => u.role === "admin").length;
@@ -245,60 +214,10 @@ const UsersPage = () => {
               Manage team members, roles, and permissions
             </p>
           </div>
-          <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Invite User
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Invite Team Member</DialogTitle>
-                <DialogDescription>
-                  Send an invitation to join your team
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="colleague@company.com"
-                    value={newUserEmail}
-                    onChange={(e) => setNewUserEmail(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
-                  <Select value={newUserRole} onValueChange={setNewUserRole}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {roles.map((role) => (
-                        <SelectItem key={role.value} value={role.value}>
-                          <div>
-                            <div className="font-medium">{role.label}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {role.description}
-                            </div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleInviteUser}>Send Invitation</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={handleInviteUser}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Invite User
+          </Button>
         </div>
 
         {/* Stats */}
@@ -356,112 +275,109 @@ const UsersPage = () => {
           <TabsContent value="members" className="space-y-4">
             <Card>
               <CardHeader>
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-col gap-4">
                   <div>
                     <CardTitle>Team Members</CardTitle>
                     <CardDescription>
                       Manage your team and their access levels
                     </CardDescription>
                   </div>
-                  <div className="relative w-full md:w-64">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search users..."
-                      className="pl-8"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+                  
+                  {/* Filters */}
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search users..."
+                        className="pl-8"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-full md:w-[140px]">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={roleFilter} onValueChange={setRoleFilter}>
+                      <SelectTrigger className="w-full md:w-[140px]">
+                        <SelectValue placeholder="Role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Roles</SelectItem>
+                        {roles.map((role) => (
+                          <SelectItem key={role.value} value={role.value}>
+                            {role.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+
+                  {/* Bulk Actions */}
+                  {selectedUsers.length > 0 && (
+                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                      <span className="text-sm font-medium">
+                        {selectedUsers.length} selected
+                      </span>
+                      <div className="flex-1" />
+                      <Button variant="outline" size="sm" onClick={handleBulkActivate}>
+                        <UserCheck className="mr-2 h-4 w-4" />
+                        Activate
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={handleBulkDeactivate}>
+                        <UserX className="mr-2 h-4 w-4" />
+                        Deactivate
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Remove
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Last Active</TableHead>
-                      <TableHead>Joined</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredUsers.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarImage src={user.avatar} />
-                              <AvatarFallback>
-                                {user.name
-                                  .split(" ")
-                                  .map((n) => n[0])
-                                  .join("")}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-medium">{user.name}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {user.email}
-                              </div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{getRoleBadge(user.role)}</TableCell>
-                        <TableCell>{getStatusBadge(user.status)}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {user.lastActive}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {user.joinedDate}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit User
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Key className="mr-2 h-4 w-4" />
-                                Change Role
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleToggleStatus(user.id)}>
-                                {user.status === "active" ? (
-                                  <>
-                                    <UserX className="mr-2 h-4 w-4" />
-                                    Deactivate
-                                  </>
-                                ) : (
-                                  <>
-                                    <UserCheck className="mr-2 h-4 w-4" />
-                                    Activate
-                                  </>
-                                )}
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => handleDeleteUser(user.id)}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Remove User
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                {/* Select All */}
+                <div className="flex items-center gap-3 pb-4 border-b mb-4">
+                  <Checkbox
+                    checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="Select all"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    Select all ({filteredUsers.length})
+                  </span>
+                </div>
+
+                {/* User List */}
+                <div className="space-y-2">
+                  {filteredUsers.length > 0 ? (
+                    filteredUsers.map((user) => (
+                      <UserCard
+                        key={user.id}
+                        user={user}
+                        selected={selectedUsers.includes(user.id)}
+                        onSelect={(checked) => handleSelectUser(user.id, checked)}
+                        onEdit={() => handleEditUser(user)}
+                        onChangeRole={() => handleChangeRole(user)}
+                        onToggleStatus={() => toggleUserStatus(user.id)}
+                        onDelete={() => handleDeleteUser(user.id)}
+                      />
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Users className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                      <p>No users found</p>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -486,8 +402,11 @@ const UsersPage = () => {
                         <div className="text-sm text-muted-foreground">
                           {role.description}
                         </div>
+                        <div className="text-xs text-muted-foreground">
+                          {users.filter((u) => u.role === role.value).length} users
+                        </div>
                       </div>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => handleConfigureRole(role)}>
                         <Settings className="mr-2 h-4 w-4" />
                         Configure
                       </Button>
@@ -515,7 +434,7 @@ const UsersPage = () => {
                           {permission.description}
                         </div>
                       </div>
-                      <Switch />
+                      <Switch defaultChecked />
                     </div>
                   ))}
                 </CardContent>
@@ -553,7 +472,12 @@ const UsersPage = () => {
                             </div>
                           </div>
                           <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleResendInvite(user.id)}
+                            >
+                              <RefreshCw className="mr-2 h-4 w-4" />
                               Resend
                             </Button>
                             <Button
@@ -578,6 +502,25 @@ const UsersPage = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Dialogs */}
+      <UserDialog
+        open={userDialogOpen}
+        onOpenChange={setUserDialogOpen}
+        user={selectedUser}
+        onSave={handleUserDialogSave}
+        mode={userDialogMode}
+      />
+
+      {selectedRole && (
+        <RoleConfigDialog
+          open={roleConfigOpen}
+          onOpenChange={setRoleConfigOpen}
+          role={selectedRole}
+          currentPermissions={rolePermissions[selectedRole.value] || []}
+          onSave={handleRoleConfigSave}
+        />
+      )}
     </DashboardLayout>
   );
 };

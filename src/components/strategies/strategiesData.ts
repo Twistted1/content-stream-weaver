@@ -2,6 +2,12 @@ import { TrendingUp, Clock, CheckCircle2, AlertCircle, LucideIcon } from "lucide
 
 export type StrategyStatus = "active" | "planning" | "completed" | "paused";
 
+export interface StrategyGoal {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
 export interface Strategy {
   id: string;
   name: string;
@@ -10,8 +16,7 @@ export interface Strategy {
   progress: number;
   startDate: string;
   endDate: string;
-  goals: number;
-  completedGoals: number;
+  goalItems: StrategyGoal[];
   assignees: string[];
   platforms: string[];
   createdAt: string;

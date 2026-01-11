@@ -1,8 +1,11 @@
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -12,122 +15,136 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Target,
   Plus,
   TrendingUp,
   Users,
   Calendar,
   CheckCircle2,
-  Clock,
-  AlertCircle,
   MoreHorizontal,
   Eye,
   Edit,
   Trash2,
+  Copy,
+  Search,
+  Play,
+  Pause,
 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-interface Strategy {
-  id: string;
-  name: string;
-  description: string;
-  status: "active" | "planning" | "completed" | "paused";
-  progress: number;
-  startDate: string;
-  endDate: string;
-  goals: number;
-  completedGoals: number;
-  assignees: string[];
-  platforms: string[];
-}
-
-const strategies: Strategy[] = [
-  {
-    id: "1",
-    name: "Q1 Brand Awareness Campaign",
-    description: "Increase brand visibility across all social platforms",
-    status: "active",
-    progress: 65,
-    startDate: "Jan 1, 2024",
-    endDate: "Mar 31, 2024",
-    goals: 8,
-    completedGoals: 5,
-    assignees: ["JD", "SM", "AK"],
-    platforms: ["Instagram", "Twitter", "LinkedIn"],
-  },
-  {
-    id: "2",
-    name: "Product Launch Strategy",
-    description: "Coordinated launch campaign for new product line",
-    status: "planning",
-    progress: 25,
-    startDate: "Feb 15, 2024",
-    endDate: "Apr 30, 2024",
-    goals: 12,
-    completedGoals: 3,
-    assignees: ["SM", "RB"],
-    platforms: ["Instagram", "YouTube", "TikTok"],
-  },
-  {
-    id: "3",
-    name: "Holiday Season Engagement",
-    description: "Maximize engagement during holiday shopping season",
-    status: "completed",
-    progress: 100,
-    startDate: "Nov 1, 2023",
-    endDate: "Dec 31, 2023",
-    goals: 10,
-    completedGoals: 10,
-    assignees: ["JD", "AK", "RB", "SM"],
-    platforms: ["All Platforms"],
-  },
-  {
-    id: "4",
-    name: "Influencer Partnership Program",
-    description: "Build relationships with micro-influencers in target niche",
-    status: "active",
-    progress: 40,
-    startDate: "Jan 15, 2024",
-    endDate: "Jun 30, 2024",
-    goals: 6,
-    completedGoals: 2,
-    assignees: ["AK"],
-    platforms: ["Instagram", "TikTok"],
-  },
-  {
-    id: "5",
-    name: "Content Repurposing Initiative",
-    description: "Maximize content ROI by repurposing across channels",
-    status: "paused",
-    progress: 50,
-    startDate: "Dec 1, 2023",
-    endDate: "Feb 28, 2024",
-    goals: 4,
-    completedGoals: 2,
-    assignees: ["RB", "SM"],
-    platforms: ["YouTube", "LinkedIn", "Twitter"],
-  },
-];
-
-const statusConfig = {
-  active: { label: "Active", variant: "default" as const, icon: TrendingUp },
-  planning: { label: "Planning", variant: "secondary" as const, icon: Clock },
-  completed: { label: "Completed", variant: "outline" as const, icon: CheckCircle2 },
-  paused: { label: "Paused", variant: "destructive" as const, icon: AlertCircle },
-};
+import { useAppStore } from "@/stores/useAppStore";
+import { statusConfig, StrategyStatus, Strategy } from "@/components/strategies/strategiesData";
+import { StrategyDialog } from "@/components/strategies/StrategyDialog";
+import { StrategyDetailDialog } from "@/components/strategies/StrategyDetailDialog";
+import { toast } from "sonner";
 
 const Strategies = () => {
+  const {
+    strategies,
+    addStrategy,
+    updateStrategy,
+    deleteStrategy,
+    deleteStrategies,
+    duplicateStrategy,
+    changeStrategiesStatus,
+  } = useAppStore();
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedStrategies, setSelectedStrategies] = useState<string[]>([]);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [editingStrategy, setEditingStrategy] = useState<Strategy | null>(null);
+  const [viewingStrategy, setViewingStrategy] = useState<Strategy | null>(null);
+
+  const filteredStrategies = useMemo(() => {
+    return strategies.filter((strategy) => {
+      const matchesSearch =
+        strategy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        strategy.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === "all" || strategy.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [strategies, searchQuery, statusFilter]);
+
   const activeStrategies = strategies.filter((s) => s.status === "active").length;
   const totalGoals = strategies.reduce((acc, s) => acc + s.goals, 0);
   const completedGoals = strategies.reduce((acc, s) => acc + s.completedGoals, 0);
-  const avgProgress = Math.round(
-    strategies.reduce((acc, s) => acc + s.progress, 0) / strategies.length
-  );
+  const avgProgress = strategies.length
+    ? Math.round(strategies.reduce((acc, s) => acc + s.progress, 0) / strategies.length)
+    : 0;
+  const uniqueAssignees = new Set(strategies.flatMap((s) => s.assignees)).size;
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedStrategies(filteredStrategies.map((s) => s.id));
+    } else {
+      setSelectedStrategies([]);
+    }
+  };
+
+  const handleSelectStrategy = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedStrategies((prev) => [...prev, id]);
+    } else {
+      setSelectedStrategies((prev) => prev.filter((sid) => sid !== id));
+    }
+  };
+
+  const handleSaveStrategy = (data: Omit<Strategy, "id" | "createdAt">) => {
+    if (editingStrategy) {
+      updateStrategy(editingStrategy.id, data);
+      toast.success("Strategy updated successfully");
+    } else {
+      addStrategy(data);
+      toast.success("Strategy created successfully");
+    }
+    setEditingStrategy(null);
+  };
+
+  const handleDelete = (id: string) => {
+    deleteStrategy(id);
+    toast.success("Strategy deleted");
+  };
+
+  const handleBulkDelete = () => {
+    deleteStrategies(selectedStrategies);
+    toast.success(`Deleted ${selectedStrategies.length} strategies`);
+    setSelectedStrategies([]);
+  };
+
+  const handleBulkStatusChange = (status: StrategyStatus) => {
+    changeStrategiesStatus(selectedStrategies, status);
+    toast.success(`Updated ${selectedStrategies.length} strategies to ${status}`);
+    setSelectedStrategies([]);
+  };
+
+  const handleDuplicate = (id: string) => {
+    duplicateStrategy(id);
+    toast.success("Strategy duplicated");
+  };
+
+  const handleView = (strategy: Strategy) => {
+    setViewingStrategy(strategy);
+    setDetailDialogOpen(true);
+  };
+
+  const handleEdit = (strategy: Strategy) => {
+    setEditingStrategy(strategy);
+    setDialogOpen(true);
+  };
 
   return (
     <DashboardLayout>
@@ -140,7 +157,7 @@ const Strategies = () => {
               Plan and track your content marketing strategies
             </p>
           </div>
-          <Button>
+          <Button onClick={() => { setEditingStrategy(null); setDialogOpen(true); }}>
             <Plus className="h-4 w-4 mr-2" />
             New Strategy
           </Button>
@@ -171,7 +188,7 @@ const Strategies = () => {
                 {completedGoals}/{totalGoals}
               </div>
               <p className="text-xs text-muted-foreground">
-                {Math.round((completedGoals / totalGoals) * 100)}% completed
+                {totalGoals > 0 ? Math.round((completedGoals / totalGoals) * 100) : 0}% completed
               </p>
             </CardContent>
           </Card>
@@ -193,7 +210,7 @@ const Strategies = () => {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">4</div>
+              <div className="text-2xl font-bold">{uniqueAssignees}</div>
               <p className="text-xs text-muted-foreground">
                 Across all strategies
               </p>
@@ -201,15 +218,81 @@ const Strategies = () => {
           </Card>
         </div>
 
-        {/* Strategies Table */}
+        {/* Filters and Bulk Actions */}
         <Card>
           <CardHeader>
-            <CardTitle>All Strategies</CardTitle>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <CardTitle>All Strategies</CardTitle>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search strategies..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 w-[200px]"
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="planning">Planning</SelectItem>
+                    <SelectItem value="paused">Paused</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {selectedStrategies.length > 0 && (
+              <div className="flex items-center gap-2 pt-4 border-t mt-4">
+                <span className="text-sm text-muted-foreground">
+                  {selectedStrategies.length} selected
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleBulkStatusChange("active")}
+                >
+                  <Play className="h-4 w-4 mr-1" />
+                  Activate
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleBulkStatusChange("paused")}
+                >
+                  <Pause className="h-4 w-4 mr-1" />
+                  Pause
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={handleBulkDelete}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </Button>
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[50px]">
+                    <Checkbox
+                      checked={
+                        filteredStrategies.length > 0 &&
+                        selectedStrategies.length === filteredStrategies.length
+                      }
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Strategy</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Progress</TableHead>
@@ -220,10 +303,18 @@ const Strategies = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {strategies.map((strategy) => {
+                {filteredStrategies.map((strategy) => {
                   const StatusIcon = statusConfig[strategy.status].icon;
                   return (
                     <TableRow key={strategy.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedStrategies.includes(strategy.id)}
+                          onCheckedChange={(checked) =>
+                            handleSelectStrategy(strategy.id, checked as boolean)
+                          }
+                        />
+                      </TableCell>
                       <TableCell>
                         <div className="space-y-1">
                           <p className="font-medium">{strategy.name}</p>
@@ -295,15 +386,23 @@ const Strategies = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleView(strategy)}>
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEdit(strategy)}>
                               <Edit className="h-4 w-4 mr-2" />
                               Edit Strategy
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
+                            <DropdownMenuItem onClick={() => handleDuplicate(strategy.id)}>
+                              <Copy className="h-4 w-4 mr-2" />
+                              Duplicate
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => handleDelete(strategy.id)}
+                            >
                               <Trash2 className="h-4 w-4 mr-2" />
                               Delete
                             </DropdownMenuItem>
@@ -313,11 +412,31 @@ const Strategies = () => {
                     </TableRow>
                   );
                 })}
+                {filteredStrategies.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                      No strategies found
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
       </div>
+
+      <StrategyDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        strategy={editingStrategy}
+        onSave={handleSaveStrategy}
+      />
+
+      <StrategyDetailDialog
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+        strategy={viewingStrategy}
+      />
     </DashboardLayout>
   );
 };

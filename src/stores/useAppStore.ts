@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { addDays } from "date-fns";
 import { User, rolePermissions } from "@/components/users/usersData";
+import { Strategy, StrategyStatus } from "@/components/strategies/strategiesData";
 
 // Types
 export type ProjectStatus = "backlog" | "in-progress" | "review" | "completed";
@@ -90,6 +91,16 @@ interface AppState {
   duplicateAutomation: (id: string) => void;
   runAutomation: (id: string) => string;
   completeAutomationRun: (runId: string, success: boolean, message: string, automationId: string) => void;
+
+  // Strategies
+  strategies: Strategy[];
+  addStrategy: (strategy: Omit<Strategy, "id" | "createdAt">) => void;
+  updateStrategy: (id: string, updates: Partial<Strategy>) => void;
+  deleteStrategy: (id: string) => void;
+  deleteStrategies: (ids: string[]) => void;
+  duplicateStrategy: (id: string) => void;
+  changeStrategyStatus: (id: string, status: StrategyStatus) => void;
+  changeStrategiesStatus: (ids: string[], status: StrategyStatus) => void;
 
   // Users
   users: User[];
@@ -408,6 +419,79 @@ const initialUsers: User[] = [
   },
 ];
 
+const initialStrategies: Strategy[] = [
+  {
+    id: "1",
+    name: "Q1 Brand Awareness Campaign",
+    description: "Increase brand visibility across all social platforms",
+    status: "active",
+    progress: 65,
+    startDate: "Jan 1, 2024",
+    endDate: "Mar 31, 2024",
+    goals: 8,
+    completedGoals: 5,
+    assignees: ["JD", "SM", "AK"],
+    platforms: ["Instagram", "Twitter", "LinkedIn"],
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "2",
+    name: "Product Launch Strategy",
+    description: "Coordinated launch campaign for new product line",
+    status: "planning",
+    progress: 25,
+    startDate: "Feb 15, 2024",
+    endDate: "Apr 30, 2024",
+    goals: 12,
+    completedGoals: 3,
+    assignees: ["SM", "RB"],
+    platforms: ["Instagram", "YouTube", "TikTok"],
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "3",
+    name: "Holiday Season Engagement",
+    description: "Maximize engagement during holiday shopping season",
+    status: "completed",
+    progress: 100,
+    startDate: "Nov 1, 2023",
+    endDate: "Dec 31, 2023",
+    goals: 10,
+    completedGoals: 10,
+    assignees: ["JD", "AK", "RB", "SM"],
+    platforms: ["All Platforms"],
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "4",
+    name: "Influencer Partnership Program",
+    description: "Build relationships with micro-influencers in target niche",
+    status: "active",
+    progress: 40,
+    startDate: "Jan 15, 2024",
+    endDate: "Jun 30, 2024",
+    goals: 6,
+    completedGoals: 2,
+    assignees: ["AK"],
+    platforms: ["Instagram", "TikTok"],
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "5",
+    name: "Content Repurposing Initiative",
+    description: "Maximize content ROI by repurposing across channels",
+    status: "paused",
+    progress: 50,
+    startDate: "Dec 1, 2023",
+    endDate: "Feb 28, 2024",
+    goals: 4,
+    completedGoals: 2,
+    assignees: ["RB", "SM"],
+    platforms: ["YouTube", "LinkedIn", "Twitter"],
+    createdAt: new Date().toISOString(),
+  },
+];
+
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
@@ -416,6 +500,7 @@ export const useAppStore = create<AppState>()(
       automations: initialAutomations,
       automationRuns: [],
       users: initialUsers,
+      strategies: initialStrategies,
 
       // Project actions
       addProject: (project) =>
@@ -651,6 +736,67 @@ export const useAppStore = create<AppState>()(
             u.id === id
               ? { ...u, joinedDate: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) }
               : u
+          ),
+        })),
+
+      // Strategy actions
+      addStrategy: (strategy) =>
+        set((state) => ({
+          strategies: [
+            ...state.strategies,
+            {
+              ...strategy,
+              id: Date.now().toString(),
+              createdAt: new Date().toISOString(),
+            },
+          ],
+        })),
+
+      updateStrategy: (id, updates) =>
+        set((state) => ({
+          strategies: state.strategies.map((s) =>
+            s.id === id ? { ...s, ...updates } : s
+          ),
+        })),
+
+      deleteStrategy: (id) =>
+        set((state) => ({
+          strategies: state.strategies.filter((s) => s.id !== id),
+        })),
+
+      deleteStrategies: (ids) =>
+        set((state) => ({
+          strategies: state.strategies.filter((s) => !ids.includes(s.id)),
+        })),
+
+      duplicateStrategy: (id) => {
+        const strategy = get().strategies.find((s) => s.id === id);
+        if (strategy) {
+          set((state) => ({
+            strategies: [
+              ...state.strategies,
+              {
+                ...strategy,
+                id: Date.now().toString(),
+                name: `${strategy.name} (Copy)`,
+                createdAt: new Date().toISOString(),
+              },
+            ],
+          }));
+        }
+      },
+
+      changeStrategyStatus: (id, status) =>
+        set((state) => ({
+          strategies: state.strategies.map((s) =>
+            s.id === id ? { ...s, status } : s
+          ),
+        })),
+
+      changeStrategiesStatus: (ids, status) =>
+        set((state) => ({
+          strategies: state.strategies.map((s) =>
+            ids.includes(s.id) ? { ...s, status } : s
           ),
         })),
     }),

@@ -101,6 +101,7 @@ interface AppState {
   duplicateStrategy: (id: string) => void;
   changeStrategyStatus: (id: string, status: StrategyStatus) => void;
   changeStrategiesStatus: (ids: string[], status: StrategyStatus) => void;
+  toggleStrategyGoal: (strategyId: string, goalId: string) => void;
 
   // Users
   users: User[];
@@ -428,8 +429,16 @@ const initialStrategies: Strategy[] = [
     progress: 65,
     startDate: "Jan 1, 2024",
     endDate: "Mar 31, 2024",
-    goals: 8,
-    completedGoals: 5,
+    goalItems: [
+      { id: "g1", title: "Increase Instagram followers by 20%", completed: true },
+      { id: "g2", title: "Launch Twitter engagement campaign", completed: true },
+      { id: "g3", title: "Post 50 pieces of content", completed: true },
+      { id: "g4", title: "Achieve 10k LinkedIn impressions", completed: true },
+      { id: "g5", title: "Create brand awareness video", completed: true },
+      { id: "g6", title: "Partner with 3 influencers", completed: false },
+      { id: "g7", title: "Run paid ad campaign", completed: false },
+      { id: "g8", title: "Analyze campaign metrics", completed: false },
+    ],
     assignees: ["JD", "SM", "AK"],
     platforms: ["Instagram", "Twitter", "LinkedIn"],
     createdAt: new Date().toISOString(),
@@ -442,8 +451,14 @@ const initialStrategies: Strategy[] = [
     progress: 25,
     startDate: "Feb 15, 2024",
     endDate: "Apr 30, 2024",
-    goals: 12,
-    completedGoals: 3,
+    goalItems: [
+      { id: "g1", title: "Create product teaser content", completed: true },
+      { id: "g2", title: "Set up launch page", completed: true },
+      { id: "g3", title: "Prepare email sequence", completed: true },
+      { id: "g4", title: "Schedule launch posts", completed: false },
+      { id: "g5", title: "Coordinate with influencers", completed: false },
+      { id: "g6", title: "Create YouTube unboxing video", completed: false },
+    ],
     assignees: ["SM", "RB"],
     platforms: ["Instagram", "YouTube", "TikTok"],
     createdAt: new Date().toISOString(),
@@ -456,8 +471,12 @@ const initialStrategies: Strategy[] = [
     progress: 100,
     startDate: "Nov 1, 2023",
     endDate: "Dec 31, 2023",
-    goals: 10,
-    completedGoals: 10,
+    goalItems: [
+      { id: "g1", title: "Launch holiday campaign", completed: true },
+      { id: "g2", title: "Create gift guide content", completed: true },
+      { id: "g3", title: "Run holiday giveaway", completed: true },
+      { id: "g4", title: "Send holiday newsletters", completed: true },
+    ],
     assignees: ["JD", "AK", "RB", "SM"],
     platforms: ["All Platforms"],
     createdAt: new Date().toISOString(),
@@ -470,8 +489,13 @@ const initialStrategies: Strategy[] = [
     progress: 40,
     startDate: "Jan 15, 2024",
     endDate: "Jun 30, 2024",
-    goals: 6,
-    completedGoals: 2,
+    goalItems: [
+      { id: "g1", title: "Identify 20 potential influencers", completed: true },
+      { id: "g2", title: "Reach out to top 10", completed: true },
+      { id: "g3", title: "Sign partnership agreements", completed: false },
+      { id: "g4", title: "Launch first collab campaign", completed: false },
+      { id: "g5", title: "Track and measure ROI", completed: false },
+    ],
     assignees: ["AK"],
     platforms: ["Instagram", "TikTok"],
     createdAt: new Date().toISOString(),
@@ -484,8 +508,12 @@ const initialStrategies: Strategy[] = [
     progress: 50,
     startDate: "Dec 1, 2023",
     endDate: "Feb 28, 2024",
-    goals: 4,
-    completedGoals: 2,
+    goalItems: [
+      { id: "g1", title: "Audit existing content library", completed: true },
+      { id: "g2", title: "Create repurposing workflow", completed: true },
+      { id: "g3", title: "Convert 10 blogs to videos", completed: false },
+      { id: "g4", title: "Create social snippets library", completed: false },
+    ],
     assignees: ["RB", "SM"],
     platforms: ["YouTube", "LinkedIn", "Twitter"],
     createdAt: new Date().toISOString(),
@@ -798,6 +826,21 @@ export const useAppStore = create<AppState>()(
           strategies: state.strategies.map((s) =>
             ids.includes(s.id) ? { ...s, status } : s
           ),
+        })),
+
+      toggleStrategyGoal: (strategyId, goalId) =>
+        set((state) => ({
+          strategies: state.strategies.map((s) => {
+            if (s.id !== strategyId) return s;
+            const updatedGoals = s.goalItems.map((g) =>
+              g.id === goalId ? { ...g, completed: !g.completed } : g
+            );
+            const completedCount = updatedGoals.filter((g) => g.completed).length;
+            const progress = updatedGoals.length > 0
+              ? Math.round((completedCount / updatedGoals.length) * 100)
+              : 0;
+            return { ...s, goalItems: updatedGoals, progress };
+          }),
         })),
     }),
     {

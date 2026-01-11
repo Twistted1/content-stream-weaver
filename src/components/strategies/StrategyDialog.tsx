@@ -19,8 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
-import { Strategy, StrategyStatus, platformOptions, teamMemberOptions } from "./strategiesData";
+import { X, Plus, Trash2 } from "lucide-react";
+import { Strategy, StrategyStatus, StrategyGoal, platformOptions, teamMemberOptions } from "./strategiesData";
 
 interface StrategyDialogProps {
   open: boolean;
@@ -37,11 +37,11 @@ export function StrategyDialog({ open, onOpenChange, strategy, onSave }: Strateg
     progress: 0,
     startDate: "",
     endDate: "",
-    goals: 1,
-    completedGoals: 0,
+    goalItems: [] as StrategyGoal[],
     assignees: [] as string[],
     platforms: [] as string[],
   });
+  const [newGoalTitle, setNewGoalTitle] = useState("");
 
   useEffect(() => {
     if (strategy) {
@@ -52,8 +52,7 @@ export function StrategyDialog({ open, onOpenChange, strategy, onSave }: Strateg
         progress: strategy.progress,
         startDate: strategy.startDate,
         endDate: strategy.endDate,
-        goals: strategy.goals,
-        completedGoals: strategy.completedGoals,
+        goalItems: strategy.goalItems,
         assignees: strategy.assignees,
         platforms: strategy.platforms,
       });
@@ -65,17 +64,21 @@ export function StrategyDialog({ open, onOpenChange, strategy, onSave }: Strateg
         progress: 0,
         startDate: "",
         endDate: "",
-        goals: 1,
-        completedGoals: 0,
+        goalItems: [],
         assignees: [],
         platforms: [],
       });
     }
+    setNewGoalTitle("");
   }, [strategy, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    const completedCount = formData.goalItems.filter((g) => g.completed).length;
+    const progress = formData.goalItems.length > 0
+      ? Math.round((completedCount / formData.goalItems.length) * 100)
+      : 0;
+    onSave({ ...formData, progress });
     onOpenChange(false);
   };
 
@@ -95,6 +98,34 @@ export function StrategyDialog({ open, onOpenChange, strategy, onSave }: Strateg
         ? prev.platforms.filter((p) => p !== platform)
         : [...prev.platforms, platform],
     }));
+  };
+
+  const addGoal = () => {
+    if (!newGoalTitle.trim()) return;
+    const newGoal: StrategyGoal = {
+      id: Date.now().toString(),
+      title: newGoalTitle.trim(),
+      completed: false,
+    };
+    setFormData((prev) => ({
+      ...prev,
+      goalItems: [...prev.goalItems, newGoal],
+    }));
+    setNewGoalTitle("");
+  };
+
+  const removeGoal = (goalId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      goalItems: prev.goalItems.filter((g) => g.id !== goalId),
+    }));
+  };
+
+  const handleGoalKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addGoal();
+    }
   };
 
   return (
@@ -150,15 +181,10 @@ export function StrategyDialog({ open, onOpenChange, strategy, onSave }: Strateg
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="progress">Progress (%)</Label>
-                <Input
-                  id="progress"
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={formData.progress}
-                  onChange={(e) => setFormData({ ...formData, progress: Number(e.target.value) })}
-                />
+                <Label>Progress</Label>
+                <div className="h-10 flex items-center text-sm text-muted-foreground">
+                  Calculated from goals ({formData.goalItems.filter(g => g.completed).length}/{formData.goalItems.length})
+                </div>
               </div>
             </div>
 
@@ -186,28 +212,41 @@ export function StrategyDialog({ open, onOpenChange, strategy, onSave }: Strateg
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Goals</Label>
               <div className="space-y-2">
-                <Label htmlFor="goals">Total Goals</Label>
-                <Input
-                  id="goals"
-                  type="number"
-                  min={1}
-                  value={formData.goals}
-                  onChange={(e) => setFormData({ ...formData, goals: Number(e.target.value) })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="completedGoals">Completed Goals</Label>
-                <Input
-                  id="completedGoals"
-                  type="number"
-                  min={0}
-                  max={formData.goals}
-                  value={formData.completedGoals}
-                  onChange={(e) => setFormData({ ...formData, completedGoals: Number(e.target.value) })}
-                />
+                {formData.goalItems.map((goal) => (
+                  <div
+                    key={goal.id}
+                    className="flex items-center gap-2 p-2 border rounded-md bg-muted/30"
+                  >
+                    <span className="flex-1 text-sm">{goal.title}</span>
+                    <Badge variant={goal.completed ? "default" : "outline"} className="text-xs">
+                      {goal.completed ? "Done" : "Pending"}
+                    </Badge>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => removeGoal(goal.id)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+                <div className="flex gap-2">
+                  <Input
+                    value={newGoalTitle}
+                    onChange={(e) => setNewGoalTitle(e.target.value)}
+                    onKeyDown={handleGoalKeyDown}
+                    placeholder="Add a new goal..."
+                    className="flex-1"
+                  />
+                  <Button type="button" variant="outline" size="icon" onClick={addGoal}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
 

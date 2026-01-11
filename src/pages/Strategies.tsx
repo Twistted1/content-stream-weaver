@@ -80,8 +80,8 @@ const Strategies = () => {
   }, [strategies, searchQuery, statusFilter]);
 
   const activeStrategies = strategies.filter((s) => s.status === "active").length;
-  const totalGoals = strategies.reduce((acc, s) => acc + s.goals, 0);
-  const completedGoals = strategies.reduce((acc, s) => acc + s.completedGoals, 0);
+  const totalGoals = strategies.reduce((acc, s) => acc + s.goalItems.length, 0);
+  const completedGoals = strategies.reduce((acc, s) => acc + s.goalItems.filter(g => g.completed).length, 0);
   const avgProgress = strategies.length
     ? Math.round(strategies.reduce((acc, s) => acc + s.progress, 0) / strategies.length)
     : 0;
@@ -358,7 +358,7 @@ const Strategies = () => {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {strategy.completedGoals}/{strategy.goals} completed
+                          {strategy.goalItems.filter(g => g.completed).length}/{strategy.goalItems.length} completed
                         </div>
                       </TableCell>
                       <TableCell>

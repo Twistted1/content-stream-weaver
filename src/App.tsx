@@ -17,6 +17,7 @@ import Templates from "./pages/Templates";
 import AIAssistant from "./pages/AIAssistant";
 import UsersPage from "./pages/Users";
 import ImportData from "./pages/ImportData";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
           <Route path="/ai" element={<AIAssistant />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path="/import" element={<ImportData />} />
+          <Route path="/settings" element={<Settings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

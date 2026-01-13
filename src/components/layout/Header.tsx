@@ -1,7 +1,8 @@
-import { Bell, Search, ChevronDown } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NotificationsDropdown } from "@/components/header/NotificationsDropdown";
+import { UserDropdown } from "@/components/header/UserDropdown";
+import { SearchCommand } from "@/components/header/SearchCommand";
 
 export function Header() {
   return (
@@ -19,37 +20,17 @@ export function Header() {
 
       {/* Search & Actions */}
       <div className="flex items-center gap-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search anything..."
-            className="w-80 pl-10 bg-secondary border-border"
-          />
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
-            <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded text-muted-foreground">⌘</kbd>
-            <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded text-muted-foreground">K</kbd>
-          </div>
-        </div>
+        <SearchCommand />
 
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
           <span className="text-xs uppercase">Local</span>
         </div>
 
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5 text-muted-foreground" />
-          <span className="absolute top-1 right-1 h-2 w-2 bg-primary rounded-full" />
-        </Button>
+        <NotificationsDropdown />
 
-        <div className="flex items-center gap-3 pl-2 border-l border-border">
-          <Avatar className="h-9 w-9 border-2 border-primary">
-            <AvatarFallback className="bg-primary/20 text-primary text-sm font-medium">
-              AD
-            </AvatarFallback>
-          </Avatar>
-          <div className="text-sm">
-            <p className="font-medium text-foreground">Admin</p>
-          </div>
+        <div className="pl-2 border-l border-border">
+          <UserDropdown />
         </div>
       </div>
     </header>

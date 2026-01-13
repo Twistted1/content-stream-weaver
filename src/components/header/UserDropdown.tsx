@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   User,
   Settings,
@@ -25,30 +26,17 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-
-interface UserProfile {
-  name: string;
-  email: string;
-  role: string;
-  avatar?: string;
-  initials: string;
-}
-
-const currentUser: UserProfile = {
-  name: "Admin User",
-  email: "admin@company.com",
-  role: "Administrator",
-  initials: "AD",
-};
+import { useUserPreferencesStore } from "@/stores/useUserPreferencesStore";
 
 export function UserDropdown() {
-  const [darkMode, setDarkMode] = useState(false);
+  const navigate = useNavigate();
+  const { profile, appearance, updateAppearance } = useUserPreferencesStore();
   const [open, setOpen] = useState(false);
 
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    // In a real app, this would toggle the theme
-    toast.success(`${!darkMode ? "Dark" : "Light"} mode enabled`);
+    const newTheme = appearance.theme === "dark" ? "light" : "dark";
+    updateAppearance({ theme: newTheme });
+    toast.success(`${newTheme === "dark" ? "Dark" : "Light"} mode enabled`);
   };
 
   const handleLogout = () => {
@@ -56,23 +44,18 @@ export function UserDropdown() {
     setOpen(false);
   };
 
-  const handleSettings = () => {
-    toast.info("Settings page coming soon");
-    setOpen(false);
-  };
-
-  const handleProfile = () => {
-    toast.info("Profile page coming soon");
-    setOpen(false);
-  };
-
-  const handleHelp = () => {
-    toast.info("Help center coming soon");
+  const handleNavigate = (path: string, tab?: string) => {
+    navigate(tab ? `${path}?tab=${tab}` : path);
     setOpen(false);
   };
 
   const handleKeyboardShortcuts = () => {
     toast.info("Keyboard shortcuts: ⌘K to search, ⌘/ for help");
+    setOpen(false);
+  };
+
+  const handleHelp = () => {
+    toast.info("Help center coming soon");
     setOpen(false);
   };
 
@@ -84,14 +67,14 @@ export function UserDropdown() {
           className="flex items-center gap-3 pl-2 h-auto py-1.5 hover:bg-secondary/50"
         >
           <Avatar className="h-9 w-9 border-2 border-primary">
-            <AvatarImage src={currentUser.avatar} />
+            <AvatarImage src={profile.avatar} />
             <AvatarFallback className="bg-primary/20 text-primary text-sm font-medium">
-              {currentUser.initials}
+              {profile.initials}
             </AvatarFallback>
           </Avatar>
           <div className="text-left hidden md:block">
-            <p className="text-sm font-medium text-foreground">{currentUser.name}</p>
-            <p className="text-xs text-muted-foreground">{currentUser.role}</p>
+            <p className="text-sm font-medium text-foreground">{profile.name}</p>
+            <p className="text-xs text-muted-foreground">{profile.role}</p>
           </div>
         </Button>
       </DropdownMenuTrigger>
@@ -99,37 +82,37 @@ export function UserDropdown() {
         <DropdownMenuLabel className="font-normal">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={currentUser.avatar} />
+              <AvatarImage src={profile.avatar} />
               <AvatarFallback className="bg-primary/20 text-primary">
-                {currentUser.initials}
+                {profile.initials}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium">{currentUser.name}</p>
-              <p className="text-xs text-muted-foreground">{currentUser.email}</p>
+              <p className="text-sm font-medium">{profile.name}</p>
+              <p className="text-xs text-muted-foreground">{profile.email}</p>
             </div>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={handleProfile}>
+          <DropdownMenuItem onClick={() => handleNavigate("/settings", "profile")}>
             <User className="mr-2 h-4 w-4" />
             <span>Profile</span>
             <Badge variant="secondary" className="ml-auto text-xs">
               Pro
             </Badge>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleSettings}>
+          <DropdownMenuItem onClick={() => handleNavigate("/settings")}>
             <Settings className="mr-2 h-4 w-4" />
             <span>Settings</span>
             <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
           </DropdownMenuItem>
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleNavigate("/settings", "notifications")}>
             <Bell className="mr-2 h-4 w-4" />
             <span>Notifications</span>
           </DropdownMenuItem>
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleNavigate("/settings", "security")}>
             <Shield className="mr-2 h-4 w-4" />
             <span>Security</span>
           </DropdownMenuItem>
@@ -153,7 +136,7 @@ export function UserDropdown() {
 
         <DropdownMenuItem className="justify-between" onClick={(e) => e.preventDefault()}>
           <div className="flex items-center">
-            {darkMode ? (
+            {appearance.theme === "dark" ? (
               <Moon className="mr-2 h-4 w-4" />
             ) : (
               <Sun className="mr-2 h-4 w-4" />
@@ -161,7 +144,7 @@ export function UserDropdown() {
             <span>Dark mode</span>
           </div>
           <Switch
-            checked={darkMode}
+            checked={appearance.theme === "dark"}
             onCheckedChange={toggleDarkMode}
             className="ml-2"
           />

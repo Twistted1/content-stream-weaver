@@ -1,4 +1,4 @@
-import { User, Bell, Shield, Palette, CreditCard, ChevronLeft } from "lucide-react";
+import { User, Bell, Shield, Palette, CreditCard, ChevronLeft, Link2, Database } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { NotificationSettings } from "@/components/settings/NotificationSettings
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
 import { BillingSettings } from "@/components/settings/BillingSettings";
+import { IntegrationsSettings } from "@/components/settings/IntegrationsSettings";
+import { DataSettings } from "@/components/settings/DataSettings";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 export default function Settings() {
@@ -41,7 +43,7 @@ export default function Settings() {
 
         {/* Settings Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full max-w-3xl grid-cols-5">
+          <TabsList className="grid w-full max-w-4xl grid-cols-7">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Profile</span>
@@ -57,6 +59,14 @@ export default function Settings() {
             <TabsTrigger value="billing" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
               <span className="hidden sm:inline">Billing</span>
+            </TabsTrigger>
+            <TabsTrigger value="integrations" className="flex items-center gap-2">
+              <Link2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Integrations</span>
+            </TabsTrigger>
+            <TabsTrigger value="data" className="flex items-center gap-2">
+              <Database className="h-4 w-4" />
+              <span className="hidden sm:inline">Data</span>
             </TabsTrigger>
             <TabsTrigger value="appearance" className="flex items-center gap-2">
               <Palette className="h-4 w-4" />
@@ -76,6 +86,12 @@ export default function Settings() {
             </TabsContent>
             <TabsContent value="billing" className="mt-0">
               <BillingSettings />
+            </TabsContent>
+            <TabsContent value="integrations" className="mt-0">
+              <IntegrationsSettings />
+            </TabsContent>
+            <TabsContent value="data" className="mt-0">
+              <DataSettings />
             </TabsContent>
             <TabsContent value="appearance" className="mt-0">
               <AppearanceSettings />

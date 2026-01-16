@@ -1,5 +1,6 @@
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
+import { NoveeMascot } from "../mascot/NoveeMascot";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -13,6 +14,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <Header />
         <main className="p-6">{children}</main>
       </div>
+      <NoveeMascot />
     </div>
   );
 }

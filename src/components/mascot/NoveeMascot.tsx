@@ -155,7 +155,7 @@ export function NoveeMascot() {
       {/* Chat Window */}
       <div
         className={cn(
-          "absolute bottom-20 right-0 w-80 md:w-96 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 transform origin-bottom-right",
+          "absolute bottom-24 right-0 w-72 md:w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 transform origin-bottom-right",
           isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0 pointer-events-none"
         )}
       >
@@ -189,7 +189,7 @@ export function NoveeMascot() {
         </div>
 
         {/* Messages */}
-        <ScrollArea className="h-80 p-4">
+        <ScrollArea className="h-[420px] p-4">
           <div className="space-y-4">
             {messages.map((message) => (
               <div

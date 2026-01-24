@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { 
   Zap, 
   BarChart3, 
@@ -10,8 +11,13 @@ import {
   Shield, 
   ArrowRight,
   CheckCircle2,
-  Play
+  Play,
+  Check,
+  Building2,
+  Rocket,
+  Star
 } from 'lucide-react';
+import { NoveeMascot } from '@/components/mascot/NoveeMascot';
 
 const features = [
   {
@@ -53,6 +59,85 @@ const stats = [
   { value: "24/7", label: "Support" }
 ];
 
+const plans = [
+  {
+    name: "Free",
+    description: "Perfect for individuals getting started",
+    price: "$0",
+    period: "forever",
+    icon: Rocket,
+    features: [
+      "Up to 3 connected platforms",
+      "100 scheduled posts/month",
+      "Basic analytics",
+      "1 team member",
+      "Novee AI (10 requests/day)"
+    ],
+    cta: "Get Started Free",
+    popular: false
+  },
+  {
+    name: "Pro",
+    description: "For growing creators and small teams",
+    price: "$29",
+    period: "/month",
+    icon: Zap,
+    features: [
+      "Unlimited platforms",
+      "Unlimited scheduled posts",
+      "Advanced analytics & reports",
+      "Up to 5 team members",
+      "Novee AI (unlimited)",
+      "Custom automation workflows",
+      "Priority support"
+    ],
+    cta: "Start Free Trial",
+    popular: true
+  },
+  {
+    name: "Enterprise",
+    description: "For large teams and organizations",
+    price: "$99",
+    period: "/month",
+    icon: Building2,
+    features: [
+      "Everything in Pro",
+      "Unlimited team members",
+      "SSO & advanced security",
+      "Custom integrations",
+      "Dedicated account manager",
+      "24/7 phone support",
+      "SLA guarantee"
+    ],
+    cta: "Contact Sales",
+    popular: false
+  }
+];
+
+const testimonials = [
+  {
+    name: "Sarah Chen",
+    role: "Content Director",
+    company: "TechFlow Inc.",
+    quote: "Novee has transformed how we manage content. The AI suggestions alone have saved us 10+ hours per week.",
+    avatar: "SC"
+  },
+  {
+    name: "Marcus Johnson",
+    role: "Social Media Manager",
+    company: "Bloom Agency",
+    quote: "The automation workflows are incredible. We've doubled our output without adding headcount.",
+    avatar: "MJ"
+  },
+  {
+    name: "Emily Rodriguez",
+    role: "Marketing Lead",
+    company: "StartupXYZ",
+    quote: "Finally, a CMS that actually understands modern content needs. The analytics are game-changing.",
+    avatar: "ER"
+  }
+];
+
 export default function Landing() {
   return (
     <div className="min-h-screen bg-background">
@@ -66,11 +151,11 @@ export default function Landing() {
             <span className="font-bold text-xl text-foreground">Novee</span>
           </Link>
           <div className="hidden md:flex items-center gap-8">
-            <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
-              Pricing
-            </Link>
             <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
               Features
+            </a>
+            <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+              Pricing
             </a>
             <a href="#testimonials" className="text-muted-foreground hover:text-foreground transition-colors">
               Testimonials
@@ -78,10 +163,10 @@ export default function Landing() {
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" asChild>
-              <Link to="/auth">Sign In</Link>
+              <Link to="/dashboard">Try Demo</Link>
             </Button>
             <Button asChild>
-              <Link to="/auth">Get Started</Link>
+              <Link to="/auth">Sign Up</Link>
             </Button>
           </div>
         </div>
@@ -109,9 +194,11 @@ export default function Landing() {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto">
-              <Play className="mr-2 h-4 w-4" />
-              Watch Demo
+            <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
+              <Link to="/dashboard">
+                <Play className="mr-2 h-4 w-4" />
+                Try Demo
+              </Link>
             </Button>
           </div>
         </div>
@@ -159,6 +246,110 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section id="pricing" className="py-20 px-4 bg-muted/30">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Simple, Transparent Pricing
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Choose the plan that fits your needs. Start free, upgrade as you grow.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {plans.map((plan) => (
+              <Card 
+                key={plan.name} 
+                className={`relative flex flex-col ${
+                  plan.popular 
+                    ? 'border-primary shadow-lg shadow-primary/10 scale-105' 
+                    : 'border-border'
+                }`}
+              >
+                {plan.popular && (
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    Most Popular
+                  </Badge>
+                )}
+                <CardHeader>
+                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                    <plan.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                  <CardDescription>{plan.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex-1">
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold text-foreground">{plan.price}</span>
+                    <span className="text-muted-foreground">{plan.period}</span>
+                  </div>
+                  <ul className="space-y-3">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-3">
+                        <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm text-muted-foreground">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+                <CardFooter>
+                  <Button 
+                    className="w-full" 
+                    variant={plan.popular ? "default" : "outline"}
+                    asChild
+                  >
+                    <Link to="/auth">{plan.cta}</Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+          <div className="mt-8 text-center">
+            <Link to="/pricing" className="text-primary hover:underline text-sm">
+              View full pricing details and FAQ →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section id="testimonials" className="py-20 px-4">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Loved by Content Creators
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              See what our users have to say about transforming their content workflow.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {testimonials.map((testimonial) => (
+              <Card key={testimonial.name} className="bg-card border-border">
+                <CardContent className="p-6">
+                  <div className="flex gap-1 mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                    ))}
+                  </div>
+                  <p className="text-foreground mb-6 italic">"{testimonial.quote}"</p>
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-sm font-semibold text-primary">{testimonial.avatar}</span>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-foreground">{testimonial.name}</div>
+                      <div className="text-sm text-muted-foreground">{testimonial.role}, {testimonial.company}</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 px-4 bg-primary/5 border-y border-primary/20">
         <div className="container mx-auto text-center max-w-3xl">
@@ -177,7 +368,7 @@ export default function Landing() {
               </Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link to="/pricing">View Pricing</Link>
+              <Link to="/dashboard">Try the Demo</Link>
             </Button>
           </div>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
@@ -219,6 +410,9 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+
+      {/* Novee AI Mascot */}
+      <NoveeMascot />
     </div>
   );
 }

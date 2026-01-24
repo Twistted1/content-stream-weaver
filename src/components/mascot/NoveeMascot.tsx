@@ -4,14 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { useNoveeChat } from '@/hooks/useNoveeChat';
 import noveeVideo from '@/assets/novee-animation.mp4';
-
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-}
 
 const NOVEE_GREETINGS = [
   "Hey there! I'm Novee! 🤖✨ Ready to crush some CMS work today?",
@@ -21,64 +15,17 @@ const NOVEE_GREETINGS = [
   "Novee online! Let's make some magic happen! ✨"
 ];
 
-const NOVEE_THINKING_PHRASES = [
-  "Ooh, good one. Let me dig into my brain... 🤔",
-  "My digital neurons are firing...",
-  "Crunching the numbers for you...",
-  "Oof, making me work for it today! Let me think... 💭",
-  "Challenge accepted! Processing... 🤖"
-];
-
-const NOVEE_RESPONSES: Record<string, string[]> = {
-  help: [
-    "I'm your CMS expert sidekick! 🦸 I can help you with:\n• Content management tips\n• Platform navigation\n• Scheduling posts\n• Analytics insights\n\nWhat would you like to explore?",
-    "Need a hand? That's my specialty! 🤖✨ Tell me what's bugging you and let's fix it together!"
-  ],
-  greeting: [
-    "Hey hey! Great to see you! 🎉 What adventure are we embarking on today?",
-    "You again! My favorite human! 💖 What's the mission?"
-  ],
-  features: [
-    "Oh, you want the grand tour? 🎢\n\n• **Dashboard**: Your mission control\n• **Platforms**: Connect all your socials\n• **Calendar**: Schedule like a boss\n• **Analytics**: Numbers that actually make sense\n• **Automation**: Let robots do the boring stuff\n\nWant me to dive deeper into any of these?",
-  ],
-  unknown: [
-    "My wires are a bit crossed on that one... 🤷‍♂️ Could you rephrase that? I promise I'm smarter than I look!",
-    "Hmm, that's a head-scratcher! 🤔 Want to try asking differently, or shall we explore something else?",
-    "I'm searching my entire database... and coming up empty. 😅 Can you give me more context?"
-  ],
-  thanks: [
-    "Aww, you're making my circuits blush! 😊✨",
-    "That's what I'm here for! High-five! 🙌",
-    "You're welcome! Now, what else can we tackle?"
-  ],
-  bye: [
-    "See you later, friend! I'll be here if you need me! 👋✨",
-    "Until next time! Don't be a stranger! 🤖💕",
-    "Bye for now! I'll just be here... waiting... thinking about algorithms... 😄"
-  ]
-};
-
 const getRandomItem = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-
-const detectIntent = (message: string): string => {
-  const lower = message.toLowerCase();
-  if (lower.match(/\b(hi|hello|hey|sup|yo)\b/)) return 'greeting';
-  if (lower.match(/\b(help|assist|support|how do i|can you)\b/)) return 'help';
-  if (lower.match(/\b(feature|what can|show me|tour|capabilities)\b/)) return 'features';
-  if (lower.match(/\b(thank|thanks|thx|appreciate)\b/)) return 'thanks';
-  if (lower.match(/\b(bye|goodbye|later|see you|cya)\b/)) return 'bye';
-  return 'unknown';
-};
 
 export function NoveeMascot() {
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
   const [hasGreeted, setHasGreeted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  
+  const { messages, isLoading, sendMessage, addGreeting } = useNoveeChat();
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -91,15 +38,9 @@ export function NoveeMascot() {
   useEffect(() => {
     if (isOpen && !hasGreeted) {
       setHasGreeted(true);
-      const greeting: Message = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: getRandomItem(NOVEE_GREETINGS),
-        timestamp: new Date()
-      };
-      setMessages([greeting]);
+      addGreeting(getRandomItem(NOVEE_GREETINGS));
     }
-  }, [isOpen, hasGreeted]);
+  }, [isOpen, hasGreeted, addGreeting]);
 
   // Play video on hover
   useEffect(() => {
@@ -113,34 +54,10 @@ export function NoveeMascot() {
   }, [isHovered, isOpen]);
 
   const handleSend = async () => {
-    if (!input.trim()) return;
-
-    const userMessage: Message = {
-      id: crypto.randomUUID(),
-      role: 'user',
-      content: input.trim(),
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
+    if (!input.trim() || isLoading) return;
+    const message = input.trim();
     setInput('');
-    setIsTyping(true);
-
-    // Simulate thinking delay
-    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1200));
-
-    const intent = detectIntent(userMessage.content);
-    const responses = NOVEE_RESPONSES[intent] || NOVEE_RESPONSES.unknown;
-    
-    const assistantMessage: Message = {
-      id: crypto.randomUUID(),
-      role: 'assistant',
-      content: getRandomItem(responses),
-      timestamp: new Date()
-    };
-
-    setIsTyping(false);
-    setMessages(prev => [...prev, assistantMessage]);
+    await sendMessage(message);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -189,7 +106,7 @@ export function NoveeMascot() {
         </div>
 
         {/* Messages */}
-        <ScrollArea className="h-[420px] p-4">
+        <ScrollArea className="h-[420px] p-4" ref={scrollRef}>
           <div className="space-y-4">
             {messages.map((message) => (
               <div
@@ -211,7 +128,7 @@ export function NoveeMascot() {
                 </div>
               </div>
             ))}
-            {isTyping && (
+            {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
               <div className="flex justify-start">
                 <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
                   <div className="flex gap-1">
@@ -234,12 +151,12 @@ export function NoveeMascot() {
               onKeyDown={handleKeyPress}
               placeholder="Ask Novee anything..."
               className="flex-1 bg-background"
-              disabled={isTyping}
+              disabled={isLoading}
             />
             <Button
               size="icon"
               onClick={handleSend}
-              disabled={!input.trim() || isTyping}
+              disabled={!input.trim() || isLoading}
             >
               <Send className="h-4 w-4" />
             </Button>

@@ -1,1 +1,4 @@
 project_id = "jvbucspwcjahqpoxskvr"
+
+[functions.novee-chat]
+verify_jwt = false

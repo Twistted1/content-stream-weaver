@@ -14,6 +14,130 @@ export type Database = {
   }
   public: {
     Tables: {
+      media: {
+        Row: {
+          created_at: string
+          filename: string
+          id: string
+          mime_type: string | null
+          post_id: string | null
+          size_bytes: number | null
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          filename: string
+          id?: string
+          mime_type?: string | null
+          post_id?: string | null
+          size_bytes?: number | null
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          filename?: string
+          id?: string
+          mime_type?: string | null
+          post_id?: string | null
+          size_bytes?: number | null
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_platforms: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          platform: Database["public"]["Enums"]["platform_type"]
+          platform_post_id: string | null
+          post_id: string
+          published_at: string | null
+          status: Database["public"]["Enums"]["post_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          platform: Database["public"]["Enums"]["platform_type"]
+          platform_post_id?: string | null
+          post_id: string
+          published_at?: string | null
+          status?: Database["public"]["Enums"]["post_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          platform?: Database["public"]["Enums"]["platform_type"]
+          platform_post_id?: string | null
+          post_id?: string
+          published_at?: string | null
+          status?: Database["public"]["Enums"]["post_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_platforms_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      posts: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          published_at: string | null
+          scheduled_at: string | null
+          status: Database["public"]["Enums"]["post_status"]
+          title: string
+          type: Database["public"]["Enums"]["post_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          published_at?: string | null
+          scheduled_at?: string | null
+          status?: Database["public"]["Enums"]["post_status"]
+          title: string
+          type?: Database["public"]["Enums"]["post_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          published_at?: string | null
+          scheduled_at?: string | null
+          status?: Database["public"]["Enums"]["post_status"]
+          title?: string
+          type?: Database["public"]["Enums"]["post_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -113,6 +237,24 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      platform_type:
+        | "instagram"
+        | "twitter"
+        | "youtube"
+        | "tiktok"
+        | "facebook"
+        | "linkedin"
+        | "website"
+        | "podcast"
+      post_status: "draft" | "scheduled" | "published" | "failed"
+      post_type:
+        | "text"
+        | "image"
+        | "video"
+        | "carousel"
+        | "reel"
+        | "thread"
+        | "article"
       subscription_tier: "free" | "pro" | "enterprise"
     }
     CompositeTypes: {
@@ -242,6 +384,26 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      platform_type: [
+        "instagram",
+        "twitter",
+        "youtube",
+        "tiktok",
+        "facebook",
+        "linkedin",
+        "website",
+        "podcast",
+      ],
+      post_status: ["draft", "scheduled", "published", "failed"],
+      post_type: [
+        "text",
+        "image",
+        "video",
+        "carousel",
+        "reel",
+        "thread",
+        "article",
+      ],
       subscription_tier: ["free", "pro", "enterprise"],
     },
   },

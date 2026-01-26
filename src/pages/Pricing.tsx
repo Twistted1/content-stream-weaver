@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Check, ArrowLeft, Zap, Building2, Rocket } from 'lucide-react';
+import { Footer } from '@/components/layout/Footer';
 
 const plans = [
   {
@@ -89,11 +90,11 @@ export default function Pricing() {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/landing" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">N</span>
+              <span className="text-primary-foreground font-bold text-lg">CH</span>
             </div>
-            <span className="font-bold text-xl text-foreground">Novee</span>
+            <span className="font-bold text-xl text-foreground">Content Hub</span>
           </Link>
           <div className="flex items-center gap-3">
             <Button variant="ghost" asChild>
@@ -205,17 +206,13 @@ export default function Pricing() {
             Our team is here to help. Contact us for personalized guidance.
           </p>
           <Button variant="outline" asChild>
-            <a href="mailto:support@novee.app">Contact Support</a>
+            <a href="mailto:support@contenthub.io">Contact Support</a>
           </Button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-4 border-t border-border">
-        <div className="container mx-auto text-center text-sm text-muted-foreground">
-          © 2025 Novee. All rights reserved.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

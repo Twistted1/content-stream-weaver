@@ -117,10 +117,10 @@ export default function Auth() {
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
             <div className="h-12 w-12 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xl">N</span>
+              <span className="text-primary-foreground font-bold text-xl">CH</span>
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Welcome to Novee CMS</CardTitle>
+          <CardTitle className="text-2xl font-bold">Welcome to Content Hub</CardTitle>
           <CardDescription>
             Sign in to your account or create a new one
           </CardDescription>

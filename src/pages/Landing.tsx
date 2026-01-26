@@ -18,6 +18,7 @@ import {
   Star
 } from 'lucide-react';
 import { NoveeMascot } from '@/components/mascot/NoveeMascot';
+import { Footer } from '@/components/layout/Footer';
 
 const features = [
   {
@@ -146,9 +147,9 @@ export default function Landing() {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">N</span>
+              <span className="text-primary-foreground font-bold text-lg">CH</span>
             </div>
-            <span className="font-bold text-xl text-foreground">Novee</span>
+            <span className="font-bold text-xl text-foreground">Content Hub</span>
           </Link>
           <div className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -185,7 +186,7 @@ export default function Landing() {
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Manage, schedule, and optimize your content across all platforms with AI-powered 
-            automation and real-time analytics. Meet Novee, your intelligent content companion.
+            automation and real-time analytics.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button size="lg" asChild className="w-full sm:w-auto">
@@ -226,7 +227,7 @@ export default function Landing() {
               Everything You Need to Succeed
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              From content creation to analytics, Novee provides all the tools you need to 
+              From content creation to analytics, Content Hub provides all the tools you need to 
               grow your audience and streamline your workflow.
             </p>
           </div>
@@ -357,7 +358,7 @@ export default function Landing() {
             Ready to Transform Your Content Strategy?
           </h2>
           <p className="text-lg text-muted-foreground mb-8">
-            Join thousands of creators and businesses who trust Novee to manage their content.
+            Join thousands of creators and businesses who trust Content Hub to manage their content.
             Start your free trial today — no credit card required.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -389,27 +390,7 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-4 border-t border-border">
-        <div className="container mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">N</span>
-              </div>
-              <span className="font-bold text-xl text-foreground">Novee</span>
-            </div>
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <Link to="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
-              <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
-              <a href="#" className="hover:text-foreground transition-colors">Terms</a>
-              <a href="#" className="hover:text-foreground transition-colors">Contact</a>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              © 2025 Novee. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       {/* Novee AI Mascot */}
       <NoveeMascot />

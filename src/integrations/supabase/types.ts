@@ -14,6 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
+      automation_runs: {
+        Row: {
+          automation_id: string
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          result: Json | null
+          started_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          automation_id: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          result?: Json | null
+          started_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          automation_id?: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          result?: Json | null
+          started_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_runs_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "automations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automations: {
+        Row: {
+          actions: Json
+          conditions: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          last_run: string | null
+          name: string
+          next_run: string | null
+          platforms: string[]
+          run_count: number
+          schedule: Database["public"]["Enums"]["automation_schedule"] | null
+          status: Database["public"]["Enums"]["automation_status"]
+          trigger: Database["public"]["Enums"]["automation_trigger"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actions?: Json
+          conditions?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          last_run?: string | null
+          name: string
+          next_run?: string | null
+          platforms?: string[]
+          run_count?: number
+          schedule?: Database["public"]["Enums"]["automation_schedule"] | null
+          status?: Database["public"]["Enums"]["automation_status"]
+          trigger?: Database["public"]["Enums"]["automation_trigger"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actions?: Json
+          conditions?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          last_run?: string | null
+          name?: string
+          next_run?: string | null
+          platforms?: string[]
+          run_count?: number
+          schedule?: Database["public"]["Enums"]["automation_schedule"] | null
+          status?: Database["public"]["Enums"]["automation_status"]
+          trigger?: Database["public"]["Enums"]["automation_trigger"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       media: {
         Row: {
           created_at: string
@@ -171,6 +269,45 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          end_date: string | null
+          id: string
+          name: string
+          start_date: string | null
+          status: Database["public"]["Enums"]["project_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          name: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["project_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          name?: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["project_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           created_at: string
@@ -200,6 +337,71 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      tasks: {
+        Row: {
+          assignee_id: string | null
+          created_at: string
+          dependencies: string[] | null
+          description: string | null
+          due_date: string | null
+          duration: number | null
+          id: string
+          name: string
+          priority: Database["public"]["Enums"]["task_priority"]
+          progress: number
+          project_id: string
+          sort_order: number
+          start_date: number | null
+          status: Database["public"]["Enums"]["task_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          created_at?: string
+          dependencies?: string[] | null
+          description?: string | null
+          due_date?: string | null
+          duration?: number | null
+          id?: string
+          name: string
+          priority?: Database["public"]["Enums"]["task_priority"]
+          progress?: number
+          project_id: string
+          sort_order?: number
+          start_date?: number | null
+          status?: Database["public"]["Enums"]["task_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assignee_id?: string | null
+          created_at?: string
+          dependencies?: string[] | null
+          description?: string | null
+          due_date?: string | null
+          duration?: number | null
+          id?: string
+          name?: string
+          priority?: Database["public"]["Enums"]["task_priority"]
+          progress?: number
+          project_id?: string
+          sort_order?: number
+          start_date?: number | null
+          status?: Database["public"]["Enums"]["task_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -237,6 +439,9 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      automation_schedule: "hourly" | "daily" | "weekly" | "monthly"
+      automation_status: "active" | "paused" | "draft"
+      automation_trigger: "scheduled" | "new-content" | "engagement" | "manual"
       platform_type:
         | "instagram"
         | "twitter"
@@ -255,7 +460,15 @@ export type Database = {
         | "reel"
         | "thread"
         | "article"
+      project_status:
+        | "planning"
+        | "in-progress"
+        | "review"
+        | "completed"
+        | "on-hold"
       subscription_tier: "free" | "pro" | "enterprise"
+      task_priority: "low" | "medium" | "high" | "urgent"
+      task_status: "todo" | "in-progress" | "review" | "done" | "blocked"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -384,6 +597,9 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      automation_schedule: ["hourly", "daily", "weekly", "monthly"],
+      automation_status: ["active", "paused", "draft"],
+      automation_trigger: ["scheduled", "new-content", "engagement", "manual"],
       platform_type: [
         "instagram",
         "twitter",
@@ -404,7 +620,16 @@ export const Constants = {
         "thread",
         "article",
       ],
+      project_status: [
+        "planning",
+        "in-progress",
+        "review",
+        "completed",
+        "on-hold",
+      ],
       subscription_tier: ["free", "pro", "enterprise"],
+      task_priority: ["low", "medium", "high", "urgent"],
+      task_status: ["todo", "in-progress", "review", "done", "blocked"],
     },
   },
 } as const

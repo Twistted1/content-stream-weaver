@@ -20,13 +20,20 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { X, Plus, Trash2 } from "lucide-react";
-import { Strategy, StrategyStatus, StrategyGoal, platformOptions, teamMemberOptions } from "./strategiesData";
+import { platformOptions, teamMemberOptions } from "./strategiesData";
+import type { Strategy, StrategyStatus, StrategyGoal, StrategyInsert } from "@/hooks/useStrategies";
 
 interface StrategyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   strategy?: Strategy | null;
-  onSave: (data: Omit<Strategy, "id" | "createdAt">) => void;
+  onSave: (data: StrategyInsert) => void;
+}
+
+interface FormGoal {
+  id: string;
+  title: string;
+  completed: boolean;
 }
 
 export function StrategyDialog({ open, onOpenChange, strategy, onSave }: StrategyDialogProps) {
@@ -35,9 +42,9 @@ export function StrategyDialog({ open, onOpenChange, strategy, onSave }: Strateg
     description: "",
     status: "planning" as StrategyStatus,
     progress: 0,
-    startDate: "",
-    endDate: "",
-    goalItems: [] as StrategyGoal[],
+    start_date: "",
+    end_date: "",
+    goalItems: [] as FormGoal[],
     assignees: [] as string[],
     platforms: [] as string[],
   });
@@ -47,12 +54,16 @@ export function StrategyDialog({ open, onOpenChange, strategy, onSave }: Strateg
     if (strategy) {
       setFormData({
         name: strategy.name,
-        description: strategy.description,
+        description: strategy.description || "",
         status: strategy.status,
         progress: strategy.progress,
-        startDate: strategy.startDate,
-        endDate: strategy.endDate,
-        goalItems: strategy.goalItems,
+        start_date: strategy.start_date || "",
+        end_date: strategy.end_date || "",
+        goalItems: strategy.goalItems.map(g => ({
+          id: g.id,
+          title: g.title,
+          completed: g.completed,
+        })),
         assignees: strategy.assignees,
         platforms: strategy.platforms,
       });
@@ -62,8 +73,8 @@ export function StrategyDialog({ open, onOpenChange, strategy, onSave }: Strateg
         description: "",
         status: "planning",
         progress: 0,
-        startDate: "",
-        endDate: "",
+        start_date: "",
+        end_date: "",
         goalItems: [],
         assignees: [],
         platforms: [],
@@ -78,7 +89,22 @@ export function StrategyDialog({ open, onOpenChange, strategy, onSave }: Strateg
     const progress = formData.goalItems.length > 0
       ? Math.round((completedCount / formData.goalItems.length) * 100)
       : 0;
-    onSave({ ...formData, progress });
+    
+    onSave({
+      name: formData.name,
+      description: formData.description,
+      status: formData.status,
+      progress,
+      start_date: formData.start_date || undefined,
+      end_date: formData.end_date || undefined,
+      platforms: formData.platforms,
+      assignees: formData.assignees,
+      goalItems: formData.goalItems.map(g => ({
+        title: g.title,
+        completed: g.completed,
+        sort_order: 0,
+      })),
+    });
     onOpenChange(false);
   };
 
@@ -102,7 +128,7 @@ export function StrategyDialog({ open, onOpenChange, strategy, onSave }: Strateg
 
   const addGoal = () => {
     if (!newGoalTitle.trim()) return;
-    const newGoal: StrategyGoal = {
+    const newGoal: FormGoal = {
       id: Date.now().toString(),
       title: newGoalTitle.trim(),
       completed: false,
@@ -190,24 +216,22 @@ export function StrategyDialog({ open, onOpenChange, strategy, onSave }: Strateg
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startDate">Start Date</Label>
+                <Label htmlFor="start_date">Start Date</Label>
                 <Input
-                  id="startDate"
-                  value={formData.startDate}
-                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                  placeholder="Jan 1, 2024"
-                  required
+                  id="start_date"
+                  type="date"
+                  value={formData.start_date}
+                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="endDate">End Date</Label>
+                <Label htmlFor="end_date">End Date</Label>
                 <Input
-                  id="endDate"
-                  value={formData.endDate}
-                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                  placeholder="Mar 31, 2024"
-                  required
+                  id="end_date"
+                  type="date"
+                  value={formData.end_date}
+                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                 />
               </div>
             </div>

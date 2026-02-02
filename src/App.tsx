@@ -3,8 +3,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Landing from "./pages/Landing";
 import Pricing from "./pages/Pricing";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 import Auth from "./pages/Auth";
 import Index from "./pages/Index";
 import Automation from "./pages/Automation";
@@ -32,27 +35,29 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* Public landing page as default */}
+          {/* Public pages */}
           <Route path="/" element={<Landing />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route path="/auth" element={<Auth />} />
           
-          {/* Dashboard routes (auth disabled for now) */}
-          <Route path="/dashboard" element={<Index />} />
-          <Route path="/automation" element={<Automation />} />
-          <Route path="/platforms" element={<Platforms />} />
-          <Route path="/calendar" element={<ContentCalendar />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/strategies" element={<Strategies />} />
-          <Route path="/notes" element={<Notes />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/gantt" element={<GanttChart />} />
-          <Route path="/templates" element={<Templates />} />
-          <Route path="/ai" element={<AIAssistant />} />
-          <Route path="/users" element={<UsersPage />} />
-          <Route path="/import" element={<ImportData />} />
-          <Route path="/settings" element={<Settings />} />
+          {/* Protected dashboard routes */}
+          <Route path="/dashboard" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+          <Route path="/automation" element={<ProtectedRoute><Automation /></ProtectedRoute>} />
+          <Route path="/platforms" element={<ProtectedRoute><Platforms /></ProtectedRoute>} />
+          <Route path="/calendar" element={<ProtectedRoute><ContentCalendar /></ProtectedRoute>} />
+          <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+          <Route path="/strategies" element={<ProtectedRoute><Strategies /></ProtectedRoute>} />
+          <Route path="/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
+          <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+          <Route path="/gantt" element={<ProtectedRoute><GanttChart /></ProtectedRoute>} />
+          <Route path="/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
+          <Route path="/ai" element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
+          <Route path="/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
+          <Route path="/import" element={<ProtectedRoute><ImportData /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

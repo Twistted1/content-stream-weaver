@@ -308,6 +308,89 @@ export type Database = {
         }
         Relationships: []
       }
+      strategies: {
+        Row: {
+          assignees: string[]
+          created_at: string
+          description: string | null
+          end_date: string | null
+          id: string
+          name: string
+          platforms: string[]
+          progress: number
+          start_date: string | null
+          status: Database["public"]["Enums"]["strategy_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assignees?: string[]
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          name: string
+          platforms?: string[]
+          progress?: number
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["strategy_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assignees?: string[]
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          name?: string
+          platforms?: string[]
+          progress?: number
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["strategy_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      strategy_goals: {
+        Row: {
+          completed: boolean
+          created_at: string
+          id: string
+          sort_order: number
+          strategy_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          sort_order?: number
+          strategy_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          sort_order?: number
+          strategy_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strategy_goals_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "strategies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           created_at: string
@@ -466,6 +549,7 @@ export type Database = {
         | "review"
         | "completed"
         | "on-hold"
+      strategy_status: "active" | "planning" | "completed" | "paused"
       subscription_tier: "free" | "pro" | "enterprise"
       task_priority: "low" | "medium" | "high" | "urgent"
       task_status: "todo" | "in-progress" | "review" | "done" | "blocked"
@@ -627,6 +711,7 @@ export const Constants = {
         "completed",
         "on-hold",
       ],
+      strategy_status: ["active", "planning", "completed", "paused"],
       subscription_tier: ["free", "pro", "enterprise"],
       task_priority: ["low", "medium", "high", "urgent"],
       task_status: ["todo", "in-progress", "review", "done", "blocked"],

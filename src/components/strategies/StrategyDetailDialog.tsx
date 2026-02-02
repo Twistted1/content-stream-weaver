@@ -9,8 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar, Target, Users } from "lucide-react";
-import { Strategy, statusConfig } from "./strategiesData";
-import { useAppStore } from "@/stores/useAppStore";
+import { statusConfig } from "./strategiesData";
+import { useStrategies, Strategy } from "@/hooks/useStrategies";
 
 interface StrategyDetailDialogProps {
   open: boolean;
@@ -19,7 +19,7 @@ interface StrategyDetailDialogProps {
 }
 
 export function StrategyDetailDialog({ open, onOpenChange, strategy }: StrategyDetailDialogProps) {
-  const { toggleStrategyGoal, strategies } = useAppStore();
+  const { strategies, toggleStrategyGoal } = useStrategies();
   
   // Get fresh strategy data from store
   const currentStrategy = strategy ? strategies.find(s => s.id === strategy.id) : null;
@@ -32,6 +32,15 @@ export function StrategyDetailDialog({ open, onOpenChange, strategy }: StrategyD
 
   const handleToggleGoal = (goalId: string) => {
     toggleStrategyGoal(currentStrategy.id, goalId);
+  };
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return 'Not set';
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
   };
 
   return (
@@ -65,7 +74,7 @@ export function StrategyDetailDialog({ open, onOpenChange, strategy }: StrategyD
                 Timeline
               </div>
               <p className="text-sm font-medium">
-                {currentStrategy.startDate} - {currentStrategy.endDate}
+                {formatDate(currentStrategy.start_date)} - {formatDate(currentStrategy.end_date)}
               </p>
             </div>
 

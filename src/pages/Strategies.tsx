@@ -36,6 +36,7 @@ import {
   Search,
   Play,
   Pause,
+  Loader2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -44,8 +45,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useAppStore } from "@/stores/useAppStore";
-import { statusConfig, StrategyStatus, Strategy } from "@/components/strategies/strategiesData";
+import { useStrategies, Strategy, StrategyStatus } from "@/hooks/useStrategies";
+import { statusConfig } from "@/components/strategies/strategiesData";
 import { StrategyDialog } from "@/components/strategies/StrategyDialog";
 import { StrategyDetailDialog } from "@/components/strategies/StrategyDetailDialog";
 import { toast } from "sonner";
@@ -53,13 +54,14 @@ import { toast } from "sonner";
 const Strategies = () => {
   const {
     strategies,
+    isLoading,
     addStrategy,
     updateStrategy,
     deleteStrategy,
     deleteStrategies,
     duplicateStrategy,
     changeStrategiesStatus,
-  } = useAppStore();
+  } = useStrategies();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -73,7 +75,7 @@ const Strategies = () => {
     return strategies.filter((strategy) => {
       const matchesSearch =
         strategy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        strategy.description.toLowerCase().includes(searchQuery.toLowerCase());
+        (strategy.description || '').toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === "all" || strategy.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
@@ -103,36 +105,40 @@ const Strategies = () => {
     }
   };
 
-  const handleSaveStrategy = (data: Omit<Strategy, "id" | "createdAt">) => {
-    if (editingStrategy) {
-      updateStrategy(editingStrategy.id, data);
-      toast.success("Strategy updated successfully");
-    } else {
-      addStrategy(data);
-      toast.success("Strategy created successfully");
+  const handleSaveStrategy = async (data: Omit<Strategy, "id" | "created_at" | "updated_at">) => {
+    try {
+      if (editingStrategy) {
+        await updateStrategy(editingStrategy.id, data);
+        toast.success("Strategy updated successfully");
+      } else {
+        await addStrategy(data);
+        toast.success("Strategy created successfully");
+      }
+      setEditingStrategy(null);
+    } catch {
+      // Error handled by hook
     }
-    setEditingStrategy(null);
   };
 
-  const handleDelete = (id: string) => {
-    deleteStrategy(id);
+  const handleDelete = async (id: string) => {
+    await deleteStrategy(id);
     toast.success("Strategy deleted");
   };
 
-  const handleBulkDelete = () => {
-    deleteStrategies(selectedStrategies);
+  const handleBulkDelete = async () => {
+    await deleteStrategies(selectedStrategies);
     toast.success(`Deleted ${selectedStrategies.length} strategies`);
     setSelectedStrategies([]);
   };
 
-  const handleBulkStatusChange = (status: StrategyStatus) => {
-    changeStrategiesStatus(selectedStrategies, status);
+  const handleBulkStatusChange = async (status: StrategyStatus) => {
+    await changeStrategiesStatus(selectedStrategies, status);
     toast.success(`Updated ${selectedStrategies.length} strategies to ${status}`);
     setSelectedStrategies([]);
   };
 
-  const handleDuplicate = (id: string) => {
-    duplicateStrategy(id);
+  const handleDuplicate = async (id: string) => {
+    await duplicateStrategy(id);
     toast.success("Strategy duplicated");
   };
 
@@ -145,6 +151,27 @@ const Strategies = () => {
     setEditingStrategy(strategy);
     setDialogOpen(true);
   };
+
+  // Convert DB strategy to dialog format
+  const toDialogStrategy = (s: Strategy | null) => {
+    if (!s) return null;
+    return {
+      ...s,
+      startDate: s.start_date || '',
+      endDate: s.end_date || '',
+      createdAt: s.created_at,
+    };
+  };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -352,7 +379,7 @@ const Strategies = () => {
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <Calendar className="h-3 w-3" />
                           <span>
-                            {strategy.startDate} - {strategy.endDate}
+                            {strategy.start_date || 'N/A'} - {strategy.end_date || 'N/A'}
                           </span>
                         </div>
                       </TableCell>

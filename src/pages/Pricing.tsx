@@ -1,9 +1,13 @@
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Check, ArrowLeft, Zap, Building2, Rocket } from 'lucide-react';
+import { Check, ArrowLeft, Zap, Building2, Rocket, Loader2 } from 'lucide-react';
 import { Footer } from '@/components/layout/Footer';
+import { useSubscription } from '@/hooks/useSubscription';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 const plans = [
   {
@@ -85,6 +89,55 @@ const faqs = [
 ];
 
 export default function Pricing() {
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  const { tier, createCheckout, isLoading: subLoading } = useSubscription();
+
+  useEffect(() => {
+    if (searchParams.get('checkout') === 'canceled') {
+      toast.info('Checkout was canceled');
+    }
+  }, [searchParams]);
+
+  const handleSubscribe = async (planKey: 'pro' | 'enterprise') => {
+    if (!user) {
+      toast.error('Please sign in to subscribe');
+      return;
+    }
+    try {
+      await createCheckout(planKey);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to start checkout');
+    }
+  };
+
+  const getButtonContent = (planName: string, planCta: string) => {
+    const planKey = planName.toLowerCase() as 'pro' | 'enterprise';
+    const isCurrentPlan = tier === planKey;
+    
+    if (planName === 'Free') {
+      return tier === 'free' ? 'Current Plan' : 'Downgrade';
+    }
+    
+    if (isCurrentPlan) {
+      return 'Current Plan';
+    }
+    
+    return planCta;
+  };
+
+  const handlePlanClick = (planName: string) => {
+    const planKey = planName.toLowerCase() as 'pro' | 'enterprise';
+    
+    if (planName === 'Free' || tier === planKey) {
+      return;
+    }
+    
+    if (planKey === 'pro' || planKey === 'enterprise') {
+      handleSubscribe(planKey);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
@@ -165,13 +218,32 @@ export default function Pricing() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <Button 
-                    className="w-full" 
-                    variant={plan.popular ? "default" : "outline"}
-                    asChild
-                  >
-                    <Link to="/auth">{plan.cta}</Link>
-                  </Button>
+                  {plan.name === 'Free' ? (
+                    <Button 
+                      className="w-full" 
+                      variant="outline"
+                      disabled={tier === 'free'}
+                      asChild={tier !== 'free'}
+                    >
+                      {tier === 'free' ? (
+                        <span>Current Plan</span>
+                      ) : (
+                        <Link to="/dashboard">{plan.cta}</Link>
+                      )}
+                    </Button>
+                  ) : (
+                    <Button 
+                      className="w-full" 
+                      variant={plan.popular ? "default" : "outline"}
+                      disabled={subLoading || tier === plan.name.toLowerCase()}
+                      onClick={() => handlePlanClick(plan.name)}
+                    >
+                      {subLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : null}
+                      {getButtonContent(plan.name, plan.cta)}
+                    </Button>
+                  )}
                 </CardFooter>
               </Card>
             ))}

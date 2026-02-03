@@ -1,9 +1,12 @@
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { toast } from "sonner";
 import {
   FileText,
   Plus,
@@ -21,6 +24,8 @@ import {
   Heart,
   TrendingUp,
   Users,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -28,8 +33,41 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-const templates = [
+interface Template {
+  id: number;
+  name: string;
+  description: string;
+  category: string;
+  platforms: string[];
+  uses: number;
+  isFavorite: boolean;
+  createdAt: string;
+  content?: string;
+}
+
+const initialTemplates: Template[] = [
   {
     id: 1,
     name: "Product Launch Announcement",
@@ -39,6 +77,7 @@ const templates = [
     uses: 234,
     isFavorite: true,
     createdAt: "2024-01-15",
+    content: "🚀 Exciting news! We're thrilled to announce [Product Name]...",
   },
   {
     id: 2,
@@ -49,6 +88,7 @@ const templates = [
     uses: 156,
     isFavorite: true,
     createdAt: "2024-01-10",
+    content: "Hello [Name],\n\nHere's what's new this week...",
   },
   {
     id: 3,
@@ -59,6 +99,7 @@ const templates = [
     uses: 89,
     isFavorite: false,
     createdAt: "2024-01-08",
+    content: "🎉 GIVEAWAY TIME! 🎉\n\nTo enter:\n1. Follow us\n2. Like this post\n3. Tag 2 friends",
   },
   {
     id: 4,
@@ -69,6 +110,7 @@ const templates = [
     uses: 67,
     isFavorite: false,
     createdAt: "2024-01-05",
+    content: "# Case Study: [Client Name]\n\n## Challenge\n\n## Solution\n\n## Results",
   },
   {
     id: 5,
@@ -79,6 +121,7 @@ const templates = [
     uses: 145,
     isFavorite: true,
     createdAt: "2024-01-03",
+    content: "📅 Mark your calendars!\n\nJoin us for [Event Name]...",
   },
   {
     id: 6,
@@ -89,16 +132,17 @@ const templates = [
     uses: 112,
     isFavorite: false,
     createdAt: "2024-01-01",
+    content: '"[Quote from customer]"\n\n— [Customer Name], [Title]',
   },
 ];
 
 const categories = [
-  { name: "All Templates", count: 24, icon: FileText },
-  { name: "Marketing", count: 8, icon: Megaphone },
-  { name: "Email", count: 5, icon: Mail },
-  { name: "Engagement", count: 6, icon: Heart },
-  { name: "Content", count: 3, icon: Calendar },
-  { name: "Social Proof", count: 2, icon: TrendingUp },
+  { name: "All Templates", icon: FileText },
+  { name: "Marketing", icon: Megaphone },
+  { name: "Email", icon: Mail },
+  { name: "Engagement", icon: Heart },
+  { name: "Content", icon: Calendar },
+  { name: "Social Proof", icon: TrendingUp },
 ];
 
 const platformIcons: Record<string, React.ElementType> = {
@@ -109,14 +153,23 @@ const platformIcons: Record<string, React.ElementType> = {
   email: Mail,
 };
 
-const stats = [
-  { label: "Total Templates", value: "24", icon: FileText, trend: "+3 this month" },
-  { label: "Times Used", value: "1,247", icon: Copy, trend: "+18% vs last month" },
-  { label: "Favorites", value: "8", icon: Star, trend: "Most used category" },
-  { label: "Team Members", value: "12", icon: Users, trend: "Using templates" },
-];
+const allPlatforms = ["instagram", "twitter", "linkedin", "facebook", "email"];
 
-function TemplateCard({ template }: { template: typeof templates[0] }) {
+function TemplateCard({ 
+  template, 
+  onEdit, 
+  onDuplicate, 
+  onToggleFavorite, 
+  onDelete,
+  onUse,
+}: { 
+  template: Template;
+  onEdit: (template: Template) => void;
+  onDuplicate: (template: Template) => void;
+  onToggleFavorite: (template: Template) => void;
+  onDelete: (template: Template) => void;
+  onUse: (template: Template) => void;
+}) {
   return (
     <Card className="group hover:shadow-md transition-all duration-200">
       <CardHeader className="pb-3">
@@ -137,10 +190,25 @@ function TemplateCard({ template }: { template: typeof templates[0] }) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>Edit Template</DropdownMenuItem>
-              <DropdownMenuItem>Duplicate</DropdownMenuItem>
-              <DropdownMenuItem>Add to Favorites</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onEdit(template)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Template
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onDuplicate(template)}>
+                <Copy className="mr-2 h-4 w-4" />
+                Duplicate
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onToggleFavorite(template)}>
+                <Star className="mr-2 h-4 w-4" />
+                {template.isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-destructive"
+                onClick={() => onDelete(template)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -167,7 +235,7 @@ function TemplateCard({ template }: { template: typeof templates[0] }) {
             <span className="text-xs text-muted-foreground">
               {template.uses} uses
             </span>
-            <Button size="sm">Use Template</Button>
+            <Button size="sm" onClick={() => onUse(template)}>Use Template</Button>
           </div>
         </div>
       </CardContent>
@@ -176,6 +244,167 @@ function TemplateCard({ template }: { template: typeof templates[0] }) {
 }
 
 export default function Templates() {
+  const [templates, setTemplates] = useState<Template[]>(initialTemplates);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All Templates");
+  const [activeTab, setActiveTab] = useState("all");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+  const [deleteTemplate, setDeleteTemplate] = useState<Template | null>(null);
+  
+  // Form state
+  const [formName, setFormName] = useState("");
+  const [formDescription, setFormDescription] = useState("");
+  const [formCategory, setFormCategory] = useState("Marketing");
+  const [formContent, setFormContent] = useState("");
+  const [formPlatforms, setFormPlatforms] = useState<string[]>([]);
+
+  const filteredTemplates = useMemo(() => {
+    return templates.filter((template) => {
+      const matchesSearch =
+        template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        template.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory =
+        activeCategory === "All Templates" || template.category === activeCategory;
+      const matchesTab =
+        activeTab === "all" ||
+        (activeTab === "favorites" && template.isFavorite) ||
+        (activeTab === "recent" && new Date(template.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
+      return matchesSearch && matchesCategory && matchesTab;
+    });
+  }, [templates, searchQuery, activeCategory, activeTab]);
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { "All Templates": templates.length };
+    templates.forEach((t) => {
+      counts[t.category] = (counts[t.category] || 0) + 1;
+    });
+    return counts;
+  }, [templates]);
+
+  const stats = [
+    { label: "Total Templates", value: templates.length.toString(), icon: FileText, trend: "+3 this month" },
+    { label: "Times Used", value: templates.reduce((sum, t) => sum + t.uses, 0).toLocaleString(), icon: Copy, trend: "+18% vs last month" },
+    { label: "Favorites", value: templates.filter(t => t.isFavorite).length.toString(), icon: Star, trend: "Most used category" },
+    { label: "Team Members", value: "12", icon: Users, trend: "Using templates" },
+  ];
+
+  const resetForm = () => {
+    setFormName("");
+    setFormDescription("");
+    setFormCategory("Marketing");
+    setFormContent("");
+    setFormPlatforms([]);
+    setEditingTemplate(null);
+  };
+
+  const openCreateDialog = () => {
+    resetForm();
+    setDialogOpen(true);
+  };
+
+  const openEditDialog = (template: Template) => {
+    setEditingTemplate(template);
+    setFormName(template.name);
+    setFormDescription(template.description);
+    setFormCategory(template.category);
+    setFormContent(template.content || "");
+    setFormPlatforms(template.platforms);
+    setDialogOpen(true);
+  };
+
+  const handleSaveTemplate = () => {
+    if (!formName.trim()) {
+      toast.error("Please enter a template name");
+      return;
+    }
+
+    if (editingTemplate) {
+      setTemplates((prev) =>
+        prev.map((t) =>
+          t.id === editingTemplate.id
+            ? {
+                ...t,
+                name: formName,
+                description: formDescription,
+                category: formCategory,
+                content: formContent,
+                platforms: formPlatforms,
+              }
+            : t
+        )
+      );
+      toast.success("Template updated successfully");
+    } else {
+      const newTemplate: Template = {
+        id: Date.now(),
+        name: formName,
+        description: formDescription,
+        category: formCategory,
+        platforms: formPlatforms,
+        uses: 0,
+        isFavorite: false,
+        createdAt: new Date().toISOString().split("T")[0],
+        content: formContent,
+      };
+      setTemplates((prev) => [newTemplate, ...prev]);
+      toast.success("Template created successfully");
+    }
+
+    setDialogOpen(false);
+    resetForm();
+  };
+
+  const handleDuplicate = (template: Template) => {
+    const duplicate: Template = {
+      ...template,
+      id: Date.now(),
+      name: `${template.name} (Copy)`,
+      uses: 0,
+      createdAt: new Date().toISOString().split("T")[0],
+    };
+    setTemplates((prev) => [duplicate, ...prev]);
+    toast.success("Template duplicated");
+  };
+
+  const handleToggleFavorite = (template: Template) => {
+    setTemplates((prev) =>
+      prev.map((t) =>
+        t.id === template.id ? { ...t, isFavorite: !t.isFavorite } : t
+      )
+    );
+    toast.success(template.isFavorite ? "Removed from favorites" : "Added to favorites");
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deleteTemplate) return;
+    setTemplates((prev) => prev.filter((t) => t.id !== deleteTemplate.id));
+    toast.success("Template deleted");
+    setDeleteTemplate(null);
+  };
+
+  const handleUseTemplate = (template: Template) => {
+    setTemplates((prev) =>
+      prev.map((t) =>
+        t.id === template.id ? { ...t, uses: t.uses + 1 } : t
+      )
+    );
+    if (template.content) {
+      navigator.clipboard.writeText(template.content);
+      toast.success("Template content copied to clipboard!");
+    } else {
+      toast.success("Template applied!");
+    }
+  };
+
+  const togglePlatform = (platform: string) => {
+    setFormPlatforms((prev) =>
+      prev.includes(platform)
+        ? prev.filter((p) => p !== platform)
+        : [...prev, platform]
+    );
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -187,7 +416,7 @@ export default function Templates() {
               Create and manage reusable content templates
             </p>
           </div>
-          <Button>
+          <Button onClick={openCreateDialog}>
             <Plus className="mr-2 h-4 w-4" />
             Create Template
           </Button>
@@ -216,7 +445,7 @@ export default function Templates() {
         {/* Main Content */}
         <div className="grid gap-6 lg:grid-cols-4">
           {/* Categories Sidebar */}
-          <Card className="lg:col-span-1">
+          <Card className="lg:col-span-1 h-fit">
             <CardHeader>
               <CardTitle className="text-base">Categories</CardTitle>
             </CardHeader>
@@ -224,14 +453,22 @@ export default function Templates() {
               {categories.map((category) => (
                 <button
                   key={category.name}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-muted transition-colors text-sm"
+                  onClick={() => setActiveCategory(category.name)}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors text-sm ${
+                    activeCategory === category.name
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted"
+                  }`}
                 >
                   <div className="flex items-center gap-2">
-                    <category.icon className="h-4 w-4 text-muted-foreground" />
+                    <category.icon className="h-4 w-4" />
                     <span>{category.name}</span>
                   </div>
-                  <Badge variant="secondary" className="text-xs">
-                    {category.count}
+                  <Badge 
+                    variant={activeCategory === category.name ? "secondary" : "outline"} 
+                    className="text-xs"
+                  >
+                    {categoryCounts[category.name] || 0}
                   </Badge>
                 </button>
               ))}
@@ -247,9 +484,11 @@ export default function Templates() {
                 <Input
                   placeholder="Search templates..."
                   className="pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Tabs defaultValue="all" className="w-auto">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-auto">
                 <TabsList>
                   <TabsTrigger value="all">All</TabsTrigger>
                   <TabsTrigger value="favorites">Favorites</TabsTrigger>
@@ -259,14 +498,147 @@ export default function Templates() {
             </div>
 
             {/* Templates Grid */}
-            <div className="grid gap-4 md:grid-cols-2">
-              {templates.map((template) => (
-                <TemplateCard key={template.id} template={template} />
-              ))}
-            </div>
+            {filteredTemplates.length > 0 ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {filteredTemplates.map((template) => (
+                  <TemplateCard 
+                    key={template.id} 
+                    template={template}
+                    onEdit={openEditDialog}
+                    onDuplicate={handleDuplicate}
+                    onToggleFavorite={handleToggleFavorite}
+                    onDelete={setDeleteTemplate}
+                    onUse={handleUseTemplate}
+                  />
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent>
+                  <EmptyState
+                    icon={FileText}
+                    title="No templates found"
+                    description={
+                      searchQuery || activeCategory !== "All Templates"
+                        ? "Try adjusting your search or filters"
+                        : "Create your first template to get started"
+                    }
+                    action={{
+                      label: "Create Template",
+                      onClick: openCreateDialog,
+                      icon: Plus,
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Create/Edit Template Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editingTemplate ? "Edit Template" : "Create Template"}</DialogTitle>
+            <DialogDescription>
+              {editingTemplate 
+                ? "Update your template details below."
+                : "Create a new reusable content template."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                placeholder="e.g., Product Launch Announcement"
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Input
+                id="description"
+                placeholder="Brief description of this template"
+                value={formDescription}
+                onChange={(e) => setFormDescription(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <select
+                id="category"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                value={formCategory}
+                onChange={(e) => setFormCategory(e.target.value)}
+              >
+                {categories.filter(c => c.name !== "All Templates").map((cat) => (
+                  <option key={cat.name} value={cat.name}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Platforms</Label>
+              <div className="flex flex-wrap gap-3">
+                {allPlatforms.map((platform) => {
+                  const Icon = platformIcons[platform];
+                  return (
+                    <label key={platform} className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox
+                        checked={formPlatforms.includes(platform)}
+                        onCheckedChange={() => togglePlatform(platform)}
+                      />
+                      <Icon className="h-4 w-4" />
+                      <span className="text-sm capitalize">{platform}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="content">Template Content</Label>
+              <Textarea
+                id="content"
+                placeholder="Enter your template content here..."
+                rows={5}
+                value={formContent}
+                onChange={(e) => setFormContent(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveTemplate}>
+              {editingTemplate ? "Save Changes" : "Create Template"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteTemplate} onOpenChange={(open) => !open && setDeleteTemplate(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Template</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deleteTemplate?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { 
   Send, 
   Bot, 
@@ -24,13 +25,7 @@ import {
   TrendingUp
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-}
+import { useNoveeChat } from "@/hooks/useNoveeChat";
 
 const quickPrompts = [
   { icon: FileText, label: "Blog Post", prompt: "Write a blog post about" },
@@ -47,76 +42,75 @@ const contentTemplates = [
     description: "Announce your new product with impact",
     icon: Zap,
     category: "Marketing",
+    prompt: "Help me write a product launch announcement for",
   },
   {
     title: "Behind the Scenes",
     description: "Share your creative process",
     icon: PenTool,
     category: "Engagement",
+    prompt: "Create a behind-the-scenes post about",
   },
   {
     title: "Tips & Tricks",
     description: "Educational content for your audience",
     icon: Lightbulb,
     category: "Educational",
+    prompt: "Write a tips and tricks post about",
   },
   {
     title: "User Testimonial",
     description: "Showcase customer success stories",
     icon: MessageSquare,
     category: "Social Proof",
+    prompt: "Help me format a customer testimonial for",
   },
 ];
 
+const GREETING = "Hello! I'm Novee, your AI content assistant. 🤖✨ I can help you create engaging social media posts, generate hashtags, write captions, and brainstorm content ideas. How can I help you today?";
+
 const AIAssistant = () => {
   const { toast } = useToast();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content: "Hello! I'm your AI content assistant. I can help you create engaging social media posts, generate hashtags, write captions, and brainstorm content ideas. How can I help you today?",
-      timestamp: new Date(),
-    },
-  ]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const { messages, isLoading, sendMessage, resetChat, addGreeting } = useNoveeChat();
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Add greeting on mount
+  useEffect(() => {
+    if (messages.length === 0) {
+      addGreeting(GREETING);
+    }
+  }, []);
+
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim()) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: input,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setIsLoading(true);
-
-    // Simulate AI response
-    setTimeout(() => {
-      const responses = [
-        "Here's a creative approach for your content:\n\n✨ **Hook:** Start with a question or bold statement\n📝 **Body:** Share your main message with value\n🎯 **CTA:** End with a clear call-to-action\n\nWould you like me to elaborate on any of these points?",
-        "Great idea! Here are some suggestions:\n\n1. **Use storytelling** - People connect with narratives\n2. **Add visuals** - Images increase engagement by 150%\n3. **Include hashtags** - 3-5 relevant ones work best\n4. **Post at peak times** - Usually 9 AM or 7 PM\n\nShall I help you craft specific content?",
-        "I've analyzed your request. Here's my recommendation:\n\n🎨 **Visual Style:** Clean and modern\n📱 **Platform:** Best suited for Instagram/LinkedIn\n⏰ **Timing:** Schedule for Tuesday or Thursday\n💡 **Tip:** Use carousel format for higher engagement\n\nWant me to generate the full content?",
-      ];
-
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: responses[Math.floor(Math.random() * responses.length)],
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-      setIsLoading(false);
-    }, 1500);
+    const input = inputRef.current?.value?.trim();
+    if (!input || isLoading) return;
+    
+    if (inputRef.current) inputRef.current.value = "";
+    await sendMessage(input);
   };
 
   const handleQuickPrompt = (prompt: string) => {
-    setInput(prompt + " ");
+    if (inputRef.current) {
+      inputRef.current.value = prompt + " ";
+      inputRef.current.focus();
+    }
+  };
+
+  const handleTemplateUse = (prompt: string) => {
+    if (inputRef.current) {
+      inputRef.current.value = prompt + " ";
+      inputRef.current.focus();
+    }
+    toast({
+      title: "Template loaded",
+      description: "Complete your prompt and send it!",
+    });
   };
 
   const copyToClipboard = (text: string) => {
@@ -127,57 +121,72 @@ const AIAssistant = () => {
     });
   };
 
+  const handleNewChat = () => {
+    resetChat();
+    addGreeting(GREETING);
+    toast({
+      title: "New chat started",
+      description: "Ready for a fresh conversation!",
+    });
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">AI Assistant</h1>
-          <p className="text-muted-foreground">
-            Your intelligent content creation companion
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">AI Assistant</h1>
+            <p className="text-muted-foreground">
+              Your intelligent content creation companion
+            </p>
+          </div>
+          <Button variant="outline" onClick={handleNewChat}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            New Chat
+          </Button>
         </div>
 
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Generated Today</CardTitle>
+              <CardTitle className="text-sm font-medium">Messages Today</CardTitle>
               <Sparkles className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">24</div>
-              <p className="text-xs text-muted-foreground">+12 from yesterday</p>
+              <div className="text-2xl font-bold">{messages.filter(m => m.role === 'user').length}</div>
+              <p className="text-xs text-muted-foreground">In this session</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Templates Used</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">AI Responses</CardTitle>
+              <Bot className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">8</div>
-              <p className="text-xs text-muted-foreground">Most: Social Posts</p>
+              <div className="text-2xl font-bold">{messages.filter(m => m.role === 'assistant').length}</div>
+              <p className="text-xs text-muted-foreground">Helpful answers</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Words Generated</CardTitle>
-              <PenTool className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">3,847</div>
-              <p className="text-xs text-muted-foreground">This week</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Time Saved</CardTitle>
+              <CardTitle className="text-sm font-medium">Status</CardTitle>
               <Zap className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">4.2h</div>
-              <p className="text-xs text-muted-foreground">This week</p>
+              <div className="text-2xl font-bold text-green-500">Online</div>
+              <p className="text-xs text-muted-foreground">Novee is ready</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Model</CardTitle>
+              <PenTool className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">Gemini</div>
+              <p className="text-xs text-muted-foreground">Fast & capable</p>
             </CardContent>
           </Card>
         </div>
@@ -187,7 +196,6 @@ const AIAssistant = () => {
           <TabsList>
             <TabsTrigger value="chat">Chat</TabsTrigger>
             <TabsTrigger value="templates">Content Templates</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
 
           <TabsContent value="chat" className="space-y-4">
@@ -197,10 +205,10 @@ const AIAssistant = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Bot className="h-5 w-5" />
-                    Content Assistant
+                    Novee - Content Assistant
                   </CardTitle>
                   <CardDescription>
-                    Ask me anything about content creation
+                    Powered by AI to help with content creation
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -233,7 +241,7 @@ const AIAssistant = () => {
                                 minute: "2-digit",
                               })}
                             </span>
-                            {message.role === "assistant" && (
+                            {message.role === "assistant" && message.content !== GREETING && (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -265,6 +273,7 @@ const AIAssistant = () => {
                           </div>
                         </div>
                       )}
+                      <div ref={messagesEndRef} />
                     </div>
                   </ScrollArea>
 
@@ -277,6 +286,7 @@ const AIAssistant = () => {
                         size="sm"
                         onClick={() => handleQuickPrompt(prompt.prompt)}
                         className="gap-1"
+                        disabled={isLoading}
                       >
                         <prompt.icon className="h-3 w-3" />
                         {prompt.label}
@@ -287,9 +297,8 @@ const AIAssistant = () => {
                   {/* Input */}
                   <div className="flex gap-2">
                     <Textarea
-                      placeholder="Ask me to create content, generate ideas, or help with your social media strategy..."
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
+                      ref={inputRef}
+                      placeholder="Ask Novee to create content, generate ideas, or help with your social media strategy..."
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
                           e.preventDefault();
@@ -297,13 +306,11 @@ const AIAssistant = () => {
                         }
                       }}
                       className="min-h-[80px]"
+                      disabled={isLoading}
                     />
                     <div className="flex flex-col gap-2">
-                      <Button onClick={handleSend} disabled={isLoading || !input.trim()}>
+                      <Button onClick={handleSend} disabled={isLoading}>
                         <Send className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" onClick={() => setInput("")}>
-                        <RefreshCw className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -317,19 +324,39 @@ const AIAssistant = () => {
                     <CardTitle className="text-sm">Quick Actions</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    <Button variant="outline" className="w-full justify-start gap-2">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start gap-2"
+                      onClick={() => handleQuickPrompt("Generate a social media post about")}
+                      disabled={isLoading}
+                    >
                       <Wand2 className="h-4 w-4" />
                       Generate Post
                     </Button>
-                    <Button variant="outline" className="w-full justify-start gap-2">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start gap-2"
+                      onClick={() => handleQuickPrompt("Find trending hashtags for")}
+                      disabled={isLoading}
+                    >
                       <Hash className="h-4 w-4" />
                       Find Hashtags
                     </Button>
-                    <Button variant="outline" className="w-full justify-start gap-2">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start gap-2"
+                      onClick={() => handleQuickPrompt("Write an engaging caption for my image about")}
+                      disabled={isLoading}
+                    >
                       <Image className="h-4 w-4" />
                       Caption Image
                     </Button>
-                    <Button variant="outline" className="w-full justify-start gap-2">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start gap-2"
+                      onClick={() => handleQuickPrompt("Brainstorm content ideas for")}
+                      disabled={isLoading}
+                    >
                       <Lightbulb className="h-4 w-4" />
                       Brainstorm Ideas
                     </Button>
@@ -364,47 +391,24 @@ const AIAssistant = () => {
                     <CardDescription>{template.description}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Button className="w-full">Use Template</Button>
+                    <Button 
+                      className="w-full" 
+                      onClick={() => handleTemplateUse(template.prompt)}
+                    >
+                      Use Template
+                    </Button>
                   </CardContent>
                 </Card>
               ))}
             </div>
-          </TabsContent>
 
-          <TabsContent value="history" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Generations</CardTitle>
-                <CardDescription>Your content generation history</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[
-                    { type: "Social Post", platform: "Instagram", time: "2 hours ago" },
-                    { type: "Blog Outline", platform: "Website", time: "5 hours ago" },
-                    { type: "Hashtags", platform: "Twitter", time: "Yesterday" },
-                    { type: "Caption", platform: "LinkedIn", time: "Yesterday" },
-                    { type: "Content Ideas", platform: "All", time: "2 days ago" },
-                  ].map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <FileText className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{item.type}</p>
-                          <p className="text-sm text-muted-foreground">{item.platform}</p>
-                        </div>
-                      </div>
-                      <div className="text-sm text-muted-foreground">{item.time}</div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            {contentTemplates.length === 0 && (
+              <EmptyState
+                icon={FileText}
+                title="No templates available"
+                description="Templates will appear here once created"
+              />
+            )}
           </TabsContent>
         </Tabs>
       </div>

@@ -1,0 +1,140 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "close": "Close",
+    "logout": "Logout",
+    "login": "Login",
+    "signup": "Sign Up"
+  },
+  "nav": {
+    "main": "Main",
+    "tools": "Tools",
+    "admin": "Admin",
+    "overview": "Overview",
+    "platforms": "Platforms",
+    "projects": "Projects",
+    "calendar": "Calendar",
+    "notes": "Notes",
+    "strategies": "Strategies",
+    "aiAssistant": "AI Assistant",
+    "automation": "Automation",
+    "templates": "Templates",
+    "analytics": "Analytics",
+    "reports": "Reports",
+    "ganttChart": "Gantt Chart",
+    "users": "Users",
+    "importData": "Import Data"
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "overview": "Overview",
+    "recentPosts": "Recent Posts",
+    "quickNotes": "Quick Notes",
+    "platformPerformance": "Platform Performance",
+    "audienceGrowth": "Audience Growth",
+    "stats": {
+      "totalPosts": "Total Posts",
+      "scheduledPosts": "Scheduled Posts",
+      "publishedPosts": "Published Posts",
+      "engagement": "Engagement"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "notifications": "Notifications",
+    "security": "Security",
+    "billing": "Billing",
+    "integrations": "Integrations",
+    "data": "Data",
+    "appearance": "Appearance",
+    "theme": {
+      "title": "Theme",
+      "description": "Choose your preferred color theme for the interface.",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "display": {
+      "title": "Display Preferences",
+      "description": "Customize how the interface looks and behaves.",
+      "compactMode": "Compact Mode",
+      "compactModeDescription": "Reduce spacing and padding for a denser layout",
+      "animations": "Animations",
+      "animationsDescription": "Enable smooth transitions and animations"
+    },
+    "language": {
+      "title": "Language & Region",
+      "description": "Set your language and regional preferences.",
+      "language": "Language",
+      "dateFormat": "Date Format",
+      "timeFormat": "Time Format",
+      "12hour": "12-hour (1:30 PM)",
+      "24hour": "24-hour (13:30)"
+    }
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot Password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "orContinueWith": "Or continue with",
+    "google": "Google"
+  },
+  "platforms": {
+    "title": "Platforms",
+    "connected": "Connected",
+    "notConnected": "Not Connected",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "posts": "posts"
+  },
+  "projects": {
+    "title": "Projects",
+    "newProject": "New Project",
+    "status": {
+      "planning": "Planning",
+      "inProgress": "In Progress",
+      "review": "Review",
+      "completed": "Completed",
+      "onHold": "On Hold"
+    }
+  },
+  "automation": {
+    "title": "Automation",
+    "newAutomation": "New Automation",
+    "active": "Active",
+    "paused": "Paused",
+    "draft": "Draft",
+    "runs": "runs",
+    "lastRun": "Last run",
+    "nextRun": "Next run"
+  },
+  "reports": {
+    "title": "Reports",
+    "newReport": "New Report",
+    "generate": "Generate Report",
+    "download": "Download"
+  },
+  "users": {
+    "title": "Users",
+    "addUser": "Add User",
+    "role": "Role",
+    "lastActive": "Last Active"
+  }
+}

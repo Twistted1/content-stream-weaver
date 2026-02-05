@@ -27,10 +27,12 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useUserPreferencesStore } from "@/stores/useUserPreferencesStore";
+import { useAuth } from "@/hooks/useAuth";
 
 export function UserDropdown() {
   const navigate = useNavigate();
   const { profile, appearance, updateAppearance } = useUserPreferencesStore();
+  const { signOut } = useAuth();
   const [open, setOpen] = useState(false);
 
   const toggleDarkMode = () => {
@@ -39,9 +41,15 @@ export function UserDropdown() {
     toast.success(`${newTheme === "dark" ? "Dark" : "Light"} mode enabled`);
   };
 
-  const handleLogout = () => {
-    toast.success("Logged out successfully");
+  const handleLogout = async () => {
+    const { error } = await signOut();
     setOpen(false);
+    if (error) {
+      toast.error("Failed to log out");
+    } else {
+      toast.success("Logged out successfully");
+      navigate("/auth");
+    }
   };
 
   const handleNavigate = (path: string, tab?: string) => {

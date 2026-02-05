@@ -19,7 +19,7 @@ import {
 import { NavLink } from "@/components/NavLink";
 
 const mainNavItems = [
-  { icon: LayoutDashboard, label: "Overview", href: "/" },
+  { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
   { icon: Share2, label: "Platforms", href: "/platforms" },
   { icon: FolderKanban, label: "Projects", href: "/projects" },
   { icon: Calendar, label: "Calendar", href: "/calendar" },

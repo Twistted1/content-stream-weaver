@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Chrome } from 'lucide-react';
 import { z } from 'zod';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
 
 const authSchema = z.object({
   email: z.string().trim().email({ message: "Invalid email address" }).max(255),
@@ -229,6 +231,22 @@ export default function Auth() {
             <Chrome className="mr-2 h-4 w-4" />
             Google
           </Button>
+
+          <Alert className="mt-4">
+            <Info className="h-4 w-4" />
+            <AlertDescription className="text-xs">
+              <strong>Google Sign-In:</strong> Requires OAuth configuration in your{' '}
+              <a 
+                href="https://supabase.com/dashboard/project/jvbucspwcjahqpoxskvr/auth/providers" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="underline text-primary"
+              >
+                Supabase Dashboard
+              </a>
+              . For email login, create an account using the Sign Up tab.
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
     </div>

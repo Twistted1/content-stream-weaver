@@ -1,0 +1,140 @@
+{
+  "common": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "create": "Criar",
+    "search": "Pesquisar",
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso",
+    "confirm": "Confirmar",
+    "back": "Voltar",
+    "next": "Próximo",
+    "submit": "Enviar",
+    "close": "Fechar",
+    "logout": "Sair",
+    "login": "Entrar",
+    "signup": "Cadastrar"
+  },
+  "nav": {
+    "main": "Principal",
+    "tools": "Ferramentas",
+    "admin": "Admin",
+    "overview": "Visão Geral",
+    "platforms": "Plataformas",
+    "projects": "Projetos",
+    "calendar": "Calendário",
+    "notes": "Notas",
+    "strategies": "Estratégias",
+    "aiAssistant": "Assistente IA",
+    "automation": "Automação",
+    "templates": "Modelos",
+    "analytics": "Análises",
+    "reports": "Relatórios",
+    "ganttChart": "Gráfico Gantt",
+    "users": "Usuários",
+    "importData": "Importar Dados"
+  },
+  "dashboard": {
+    "welcome": "Bem-vindo de volta",
+    "overview": "Visão Geral",
+    "recentPosts": "Posts Recentes",
+    "quickNotes": "Notas Rápidas",
+    "platformPerformance": "Desempenho das Plataformas",
+    "audienceGrowth": "Crescimento do Público",
+    "stats": {
+      "totalPosts": "Total de Posts",
+      "scheduledPosts": "Posts Agendados",
+      "publishedPosts": "Posts Publicados",
+      "engagement": "Engajamento"
+    }
+  },
+  "settings": {
+    "title": "Configurações",
+    "profile": "Perfil",
+    "notifications": "Notificações",
+    "security": "Segurança",
+    "billing": "Faturamento",
+    "integrations": "Integrações",
+    "data": "Dados",
+    "appearance": "Aparência",
+    "theme": {
+      "title": "Tema",
+      "description": "Escolha seu tema de cores preferido para a interface.",
+      "light": "Claro",
+      "dark": "Escuro",
+      "system": "Sistema"
+    },
+    "display": {
+      "title": "Preferências de Exibição",
+      "description": "Personalize a aparência e o comportamento da interface.",
+      "compactMode": "Modo Compacto",
+      "compactModeDescription": "Reduz espaçamento para um layout mais denso",
+      "animations": "Animações",
+      "animationsDescription": "Ativar transições e animações suaves"
+    },
+    "language": {
+      "title": "Idioma e Região",
+      "description": "Defina suas preferências de idioma e região.",
+      "language": "Idioma",
+      "dateFormat": "Formato de Data",
+      "timeFormat": "Formato de Hora",
+      "12hour": "12 horas (1:30 PM)",
+      "24hour": "24 horas (13:30)"
+    }
+  },
+  "auth": {
+    "signIn": "Entrar",
+    "signUp": "Cadastrar",
+    "email": "Email",
+    "password": "Senha",
+    "forgotPassword": "Esqueceu a senha?",
+    "noAccount": "Não tem uma conta?",
+    "hasAccount": "Já tem uma conta?",
+    "orContinueWith": "Ou continue com",
+    "google": "Google"
+  },
+  "platforms": {
+    "title": "Plataformas",
+    "connected": "Conectado",
+    "notConnected": "Não Conectado",
+    "connect": "Conectar",
+    "disconnect": "Desconectar",
+    "posts": "posts"
+  },
+  "projects": {
+    "title": "Projetos",
+    "newProject": "Novo Projeto",
+    "status": {
+      "planning": "Planejamento",
+      "inProgress": "Em Progresso",
+      "review": "Revisão",
+      "completed": "Concluído",
+      "onHold": "Em Espera"
+    }
+  },
+  "automation": {
+    "title": "Automação",
+    "newAutomation": "Nova Automação",
+    "active": "Ativo",
+    "paused": "Pausado",
+    "draft": "Rascunho",
+    "runs": "execuções",
+    "lastRun": "Última execução",
+    "nextRun": "Próxima execução"
+  },
+  "reports": {
+    "title": "Relatórios",
+    "newReport": "Novo Relatório",
+    "generate": "Gerar Relatório",
+    "download": "Baixar"
+  },
+  "users": {
+    "title": "Usuários",
+    "addUser": "Adicionar Usuário",
+    "role": "Função",
+    "lastActive": "Última Atividade"
+  }
+}

@@ -18,6 +18,8 @@ import {
   Calendar,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface PlatformData {
   id: string;
@@ -45,15 +47,26 @@ interface PlatformCardProps {
   isSelected: boolean;
   onSelect: (id: string) => void;
   getPlatformColor: (id: string) => string;
+  onOpenDetail: (platform: PlatformData) => void;
 }
 
-export function PlatformCard({ platform, isSelected, onSelect, getPlatformColor }: PlatformCardProps) {
+export function PlatformCard({ platform, isSelected, onSelect, getPlatformColor, onOpenDetail }: PlatformCardProps) {
+  const navigate = useNavigate();
+
+  const handleCardClick = () => {
+    onOpenDetail(platform);
+  };
+
+  const stopPropagation = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <Card
       className={`bg-card border-border overflow-hidden transition-all duration-300 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 cursor-pointer ${
         isSelected ? "ring-2 ring-primary" : ""
       }`}
-      onClick={() => onSelect(platform.id)}
+      onClick={handleCardClick}
     >
       <div
         className="h-1.5"
@@ -91,7 +104,7 @@ export function PlatformCard({ platform, isSelected, onSelect, getPlatformColor 
           </div>
           <Badge
             variant="default"
-            className="bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30 border-0"
+            className="bg-[hsl(var(--success))]/20 text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/30 border-0"
           >
             <CheckCircle2 className="h-3 w-3 mr-1" />
             Active
@@ -134,7 +147,7 @@ export function PlatformCard({ platform, isSelected, onSelect, getPlatformColor 
           <div className="flex justify-between text-xs">
             <span className="text-muted-foreground">Weekly Growth</span>
             <span
-              className={platform.weeklyGrowth >= 0 ? "text-emerald-500" : "text-red-500"}
+              className={platform.weeklyGrowth >= 0 ? "text-[hsl(var(--success))]" : "text-destructive"}
             >
               {platform.weeklyGrowth >= 0 ? "+" : ""}
               {platform.weeklyGrowth}%
@@ -158,11 +171,11 @@ export function PlatformCard({ platform, isSelected, onSelect, getPlatformColor 
             </p>
             <div className="flex gap-3 text-xs">
               <span className="flex items-center gap-1 text-muted-foreground">
-                <Heart className="h-3 w-3 text-red-400" />
+                <Heart className="h-3 w-3 text-destructive" />
                 {platform.topPost.likes.toLocaleString()}
               </span>
               <span className="flex items-center gap-1 text-muted-foreground">
-                <MessageCircle className="h-3 w-3 text-blue-400" />
+                <MessageCircle className="h-3 w-3 text-primary" />
                 {platform.topPost.comments.toLocaleString()}
               </span>
             </div>
@@ -190,20 +203,57 @@ export function PlatformCard({ platform, isSelected, onSelect, getPlatformColor 
             <Clock className="h-3 w-3" />
             Synced {platform.lastSync}
           </div>
-          <Switch checked={platform.status === "active"} />
+          <div onClick={stopPropagation}>
+            <Switch
+              checked={platform.status === "active"}
+              onCheckedChange={(checked) => {
+                toast({
+                  title: checked ? "Platform activated" : "Platform paused",
+                  description: `${platform.name} has been ${checked ? "activated" : "paused"}.`,
+                });
+              }}
+            />
+          </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs">
+        <div className="flex gap-2" onClick={stopPropagation}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 gap-1 text-xs"
+            onClick={() => onOpenDetail(platform)}
+          >
             <Settings className="h-3 w-3" />
             Configure
           </Button>
-          <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 gap-1 text-xs"
+            onClick={() => navigate("/analytics")}
+          >
             <BarChart3 className="h-3 w-3" />
             Analytics
           </Button>
-          <Button variant="outline" size="sm" className="gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1"
+            onClick={() => {
+              const urls: Record<string, string> = {
+                youtube: "https://youtube.com",
+                twitter: "https://x.com",
+                instagram: "https://instagram.com",
+                facebook: "https://facebook.com",
+                linkedin: "https://linkedin.com",
+                tiktok: "https://tiktok.com",
+                website: "https://example.com",
+                podcast: "https://podcasters.spotify.com",
+              };
+              window.open(urls[platform.id] || "#", "_blank");
+            }}
+          >
             <ExternalLink className="h-3 w-3" />
           </Button>
         </div>

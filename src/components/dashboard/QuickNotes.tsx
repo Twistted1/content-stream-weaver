@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const notes = [
   {
@@ -20,11 +21,13 @@ const notes = [
 ];
 
 export function QuickNotes() {
+  const navigate = useNavigate();
+
   return (
     <div className="bg-card rounded-xl p-6 border border-border">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-foreground">Quick Notes</h3>
-        <Button variant="link" className="text-primary p-0 h-auto">
+        <Button variant="link" className="text-primary p-0 h-auto" onClick={() => navigate("/notes")}>
           View All
         </Button>
       </div>

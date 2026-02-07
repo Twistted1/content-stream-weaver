@@ -1,5 +1,6 @@
 import { Youtube, Instagram, Facebook, Linkedin, Twitter } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const posts = [
   {
@@ -37,11 +38,13 @@ const posts = [
 ];
 
 export function RecentPosts() {
+  const navigate = useNavigate();
+
   return (
     <div className="bg-card rounded-xl p-6 border border-border">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-foreground">Recent Posts</h3>
-        <Button variant="link" className="text-primary p-0 h-auto">
+        <Button variant="link" className="text-primary p-0 h-auto" onClick={() => navigate("/platforms")}>
           View All
         </Button>
       </div>

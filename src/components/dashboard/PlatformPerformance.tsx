@@ -1,7 +1,20 @@
-import { Globe, Podcast, Mail, TrendingUp, TrendingDown } from "lucide-react";
+import { useState } from "react";
+import { Globe, Podcast, Mail, TrendingUp, TrendingDown, Instagram, Youtube, Twitter } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const platforms = [
+type PlatformCategory = "social" | "web";
+
+interface PlatformItem {
+  name: string;
+  sessions: string;
+  change: number;
+  positive: boolean;
+  icon: React.ElementType;
+  color: string;
+  category: PlatformCategory;
+}
+
+const platforms: PlatformItem[] = [
   {
     name: "Website",
     sessions: "39,730",
@@ -9,6 +22,7 @@ const platforms = [
     positive: true,
     icon: Globe,
     color: "bg-primary/20 text-primary",
+    category: "web",
   },
   {
     name: "Podcast",
@@ -17,6 +31,7 @@ const platforms = [
     positive: false,
     icon: Podcast,
     color: "bg-[hsl(var(--chart-2))]/20 text-[hsl(var(--chart-2))]",
+    category: "web",
   },
   {
     name: "Newsletter",
@@ -25,26 +40,66 @@ const platforms = [
     positive: true,
     icon: Mail,
     color: "bg-[hsl(var(--warning))]/20 text-[hsl(var(--warning))]",
+    category: "web",
+  },
+  {
+    name: "Instagram",
+    sessions: "24,512",
+    change: 12.3,
+    positive: true,
+    icon: Instagram,
+    color: "bg-[hsl(var(--chart-5))]/20 text-[hsl(var(--chart-5))]",
+    category: "social",
+  },
+  {
+    name: "YouTube",
+    sessions: "18,901",
+    change: 5.7,
+    positive: true,
+    icon: Youtube,
+    color: "bg-destructive/20 text-destructive",
+    category: "social",
+  },
+  {
+    name: "X (Twitter)",
+    sessions: "8,432",
+    change: 2.1,
+    positive: false,
+    icon: Twitter,
+    color: "bg-[hsl(var(--chart-1))]/20 text-[hsl(var(--chart-1))]",
+    category: "social",
   },
 ];
 
 export function PlatformPerformance() {
+  const [activeCategory, setActiveCategory] = useState<PlatformCategory>("social");
+
+  const filtered = platforms.filter((p) => p.category === activeCategory);
+
   return (
     <div className="bg-card rounded-xl p-6 border border-border">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-foreground">Platform Performance</h3>
         <div className="flex gap-1 bg-secondary rounded-lg p-1">
-          <button className="px-3 py-1 text-xs font-medium rounded bg-card text-foreground">
-            Social
-          </button>
-          <button className="px-3 py-1 text-xs font-medium rounded text-muted-foreground hover:text-foreground">
-            Web
-          </button>
+          {(["social", "web"] as const).map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={cn(
+                "px-3 py-1 text-xs font-medium rounded transition-colors",
+                activeCategory === cat
+                  ? "bg-card text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {cat === "social" ? "Social" : "Web"}
+            </button>
+          ))}
         </div>
       </div>
 
       <div className="space-y-4">
-        {platforms.map((platform) => (
+        {filtered.map((platform) => (
           <div key={platform.name} className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center", platform.color)}>

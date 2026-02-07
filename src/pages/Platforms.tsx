@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { AreaChart, Area, XAxis, YAxis } from "recharts";
 import { toast } from "@/hooks/use-toast";
 import { useAppStore, ScheduledPost, PostType } from "@/stores/useAppStore";
 import { PlatformCard } from "@/components/platforms/PlatformCard";
+import { PlatformDetailSheet } from "@/components/platforms/PlatformDetailSheet";
 import { PostDialog } from "@/components/platforms/PostDialog";
 import { PostCard } from "@/components/platforms/PostCard";
 import { platforms, totalStats, recentActivity, availablePlatforms, overallPerformance, platformColors } from "@/components/platforms/platformsData";
@@ -44,6 +45,9 @@ import {
 export default function Platforms() {
   const { scheduledPosts, addPost, updatePost, deletePost, publishPost } = useAppStore();
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
+  const [detailPlatform, setDetailPlatform] = useState<any>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("connected");
   const [syncing, setSyncing] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<ScheduledPost | null>(null);
@@ -171,7 +175,7 @@ export default function Platforms() {
                 <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
                 {syncing ? "Syncing..." : "Sync All"}
               </Button>
-              <Button className="gap-2 bg-primary hover:bg-primary/90">
+              <Button className="gap-2 bg-primary hover:bg-primary/90" onClick={() => setActiveTab("available")}>
                 <Plus className="h-4 w-4" />
                 Add Platform
               </Button>
@@ -259,7 +263,7 @@ export default function Platforms() {
             </CardContent>
           </Card>
 
-          <Tabs defaultValue="connected" className="space-y-4">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
             <TabsList className="bg-muted/50 flex-wrap">
               <TabsTrigger value="connected" className="gap-2">
                 <CheckCircle2 className="h-4 w-4" />
@@ -293,6 +297,10 @@ export default function Platforms() {
                     isSelected={selectedPlatform === platform.id}
                     onSelect={(id) => setSelectedPlatform(selectedPlatform === id ? null : id)}
                     getPlatformColor={getPlatformColor}
+                    onOpenDetail={(p) => {
+                      setDetailPlatform(p);
+                      setDetailOpen(true);
+                    }}
                   />
                 ))}
               </div>
@@ -457,7 +465,15 @@ export default function Platforms() {
                       <p className="text-sm text-muted-foreground mb-4">
                         Connect your {platform.name} account to track performance
                       </p>
-                      <Button className="w-full bg-primary hover:bg-primary/90">
+                      <Button
+                        className="w-full bg-primary hover:bg-primary/90"
+                        onClick={() => {
+                          toast({
+                            title: `Connecting ${platform.name}...`,
+                            description: "You'll be redirected to authenticate with your account.",
+                          });
+                        }}
+                      >
                         <Plus className="h-4 w-4 mr-2" />
                         Connect {platform.name}
                       </Button>
@@ -475,7 +491,15 @@ export default function Platforms() {
                       <h3 className="font-semibold text-lg mb-1 text-foreground">{platform.name}</h3>
                       <p className="text-sm text-muted-foreground mb-2">{platform.description}</p>
                       <p className="text-xs text-primary mb-4">{platform.users} active users</p>
-                      <Button className="w-full bg-primary hover:bg-primary/90">
+                      <Button
+                        className="w-full bg-primary hover:bg-primary/90"
+                        onClick={() => {
+                          toast({
+                            title: `Connecting ${platform.name}...`,
+                            description: "You'll be redirected to authenticate with your account.",
+                          });
+                        }}
+                      >
                         <Plus className="h-4 w-4 mr-2" />
                         Connect {platform.name}
                       </Button>
@@ -492,7 +516,16 @@ export default function Platforms() {
                     <p className="text-sm text-muted-foreground mb-4">
                       Don't see your platform? Let us know!
                     </p>
-                    <Button variant="outline" className="w-full">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        toast({
+                          title: "Request submitted",
+                          description: "We'll review your integration request and get back to you soon.",
+                        });
+                      }}
+                    >
                       Request Integration
                     </Button>
                   </CardContent>
@@ -509,7 +542,9 @@ export default function Platforms() {
                       <Zap className="h-5 w-5 text-primary" />
                       <CardTitle>Recent Activity</CardTitle>
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => {
+                      toast({ title: "Activity log", description: "Full activity history coming soon." });
+                    }}>
                       View All
                     </Button>
                   </div>
@@ -558,9 +593,9 @@ export default function Platforms() {
                         <div className="text-right">
                           <p className="text-xs text-muted-foreground">{activity.time}</p>
                           {activity.positive ? (
-                            <ArrowUpRight className="h-4 w-4 text-emerald-500 ml-auto mt-1" />
+                            <ArrowUpRight className="h-4 w-4 text-[hsl(var(--success))] ml-auto mt-1" />
                           ) : (
-                            <ArrowDownRight className="h-4 w-4 text-red-500 ml-auto mt-1" />
+                            <ArrowDownRight className="h-4 w-4 text-destructive ml-auto mt-1" />
                           )}
                         </div>
                       </div>
@@ -668,7 +703,17 @@ export default function Platforms() {
                             </div>
                             <p className="text-sm text-muted-foreground">{rec.desc}</p>
                           </div>
-                          <Button variant="ghost" size="sm" className="text-primary">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-primary"
+                            onClick={() => {
+                              toast({
+                                title: `Applying: ${rec.title}`,
+                                description: "This recommendation has been added to your strategy.",
+                              });
+                            }}
+                          >
                             Apply
                           </Button>
                         </div>
@@ -679,6 +724,12 @@ export default function Platforms() {
               </div>
             </TabsContent>
           </Tabs>
+          <PlatformDetailSheet
+            platform={detailPlatform}
+            open={detailOpen}
+            onOpenChange={setDetailOpen}
+            getPlatformColor={getPlatformColor}
+          />
         </div>
       </TooltipProvider>
     </DashboardLayout>

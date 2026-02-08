@@ -18,6 +18,9 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 const mainNavItems = [
   { icon: LayoutDashboard, labelKey: "nav.overview", href: "/dashboard" },
@@ -78,7 +81,19 @@ const NavSection = ({ title, items }: { title: string; items: NavItemProps[] }) 
 
 export function Sidebar() {
   const { t } = useTranslation();
-  
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
+
+  const handleLogout = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast.error("Failed to log out");
+    } else {
+      toast.success("Logged out successfully");
+      navigate("/auth");
+    }
+  };
+
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
       {/* Logo */}
@@ -101,7 +116,10 @@ export function Sidebar() {
 
       {/* Logout */}
       <div className="p-3 border-t border-sidebar-border">
-        <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 w-full transition-colors">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 w-full transition-colors"
+        >
           <LogOut className="h-5 w-5" />
           <span>{t("common.logout")}</span>
         </button>

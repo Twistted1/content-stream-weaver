@@ -188,7 +188,8 @@ export default function Projects() {
   const [newProject, setNewProject] = useState(emptyProject);
   const [newTag, setNewTag] = useState("");
   const [newAssignee, setNewAssignee] = useState("");
-
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const handleDragStart = (projectId: string) => {
     setDraggedProject(projectId);
   };
@@ -207,10 +208,14 @@ export default function Projects() {
     });
   };
 
-  const filteredProjects = projects.filter((project) =>
-    project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    project.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProjects = projects.filter((project) => {
+    const matchesSearch =
+      project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesPriority = priorityFilter === "all" || project.priority === priorityFilter;
+    const matchesStatus = statusFilter === "all" || project.status === statusFilter;
+    return matchesSearch && matchesPriority && matchesStatus;
+  });
 
   const getProjectsByStatus = (status: ProjectStatus) =>
     filteredProjects.filter((project) => project.status === status);
@@ -476,10 +481,29 @@ export default function Projects() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="gap-2">
-              <Filter className="h-4 w-4" />
-              Filter
-            </Button>
+            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+              <SelectTrigger className="w-[130px]">
+                <SelectValue placeholder="Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Priority</SelectItem>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="backlog">Backlog</SelectItem>
+                <SelectItem value="in-progress">In Progress</SelectItem>
+                <SelectItem value="review">In Review</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
             <div className="flex items-center border border-border rounded-lg">
               <Button
                 variant={viewMode === "board" ? "secondary" : "ghost"}

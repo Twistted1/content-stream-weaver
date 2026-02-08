@@ -30,8 +30,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface Note {
   id: string;
@@ -111,7 +113,8 @@ const Notes = () => {
   const [notes, setNotes] = useState<Note[]>(initialNotes);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [newNote, setNewNote] = useState({ title: "", content: "", tags: "" });
 
   const filteredNotes = notes.filter(
@@ -132,11 +135,13 @@ const Notes = () => {
 
   const deleteNote = (id: string) => {
     setNotes(notes.filter((note) => note.id !== id));
+    toast.success("Note deleted");
   };
 
   const handleCreateNote = () => {
     if (!newNote.title.trim()) return;
     
+    const now = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     const note: Note = {
       id: Date.now().toString(),
       title: newNote.title,
@@ -144,13 +149,28 @@ const Notes = () => {
       tags: newNote.tags.split(",").map((t) => t.trim()).filter(Boolean),
       isPinned: false,
       color: "bg-muted",
-      createdAt: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      updatedAt: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      createdAt: now,
+      updatedAt: now,
     };
     
     setNotes([note, ...notes]);
     setNewNote({ title: "", content: "", tags: "" });
-    setIsDialogOpen(false);
+    setIsCreateDialogOpen(false);
+    toast.success("Note created");
+  };
+
+  const handleEditNote = (note: Note) => {
+    setEditingNote(note);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingNote) return;
+    const now = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    setNotes(notes.map((n) =>
+      n.id === editingNote.id ? { ...editingNote, updatedAt: now } : n
+    ));
+    setEditingNote(null);
+    toast.success("Note updated");
   };
 
   const NoteCard = ({ note }: { note: Note }) => (
@@ -176,7 +196,7 @@ const Notes = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleEditNote(note)}>
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
                 </DropdownMenuItem>
@@ -223,7 +243,7 @@ const Notes = () => {
               Capture ideas, research, and quick thoughts
             </p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
@@ -377,6 +397,46 @@ const Notes = () => {
             </p>
           </div>
         )}
+
+        {/* Edit Note Dialog */}
+        <Dialog open={!!editingNote} onOpenChange={(open) => !open && setEditingNote(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Note</DialogTitle>
+            </DialogHeader>
+            {editingNote && (
+              <div className="space-y-4 pt-4">
+                <Input
+                  placeholder="Note title"
+                  value={editingNote.title}
+                  onChange={(e) => setEditingNote({ ...editingNote, title: e.target.value })}
+                />
+                <Textarea
+                  placeholder="Write your note..."
+                  rows={5}
+                  value={editingNote.content}
+                  onChange={(e) => setEditingNote({ ...editingNote, content: e.target.value })}
+                />
+                <Input
+                  placeholder="Tags (comma separated)"
+                  value={editingNote.tags.join(", ")}
+                  onChange={(e) =>
+                    setEditingNote({
+                      ...editingNote,
+                      tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean),
+                    })
+                  }
+                />
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditingNote(null)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveEdit}>Save Changes</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

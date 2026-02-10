@@ -3,8 +3,30 @@ import { Button } from "@/components/ui/button";
 import { NotificationsDropdown } from "@/components/header/NotificationsDropdown";
 import { UserDropdown } from "@/components/header/UserDropdown";
 import { SearchCommand } from "@/components/header/SearchCommand";
+import { useLocation } from "react-router-dom";
+
+const routeTitles: Record<string, string> = {
+  "/dashboard": "Overview",
+  "/automation": "Automation",
+  "/platforms": "Platforms",
+  "/calendar": "Content Calendar",
+  "/projects": "Projects",
+  "/strategies": "Strategies",
+  "/notes": "Notes",
+  "/analytics": "Analytics",
+  "/reports": "Reports",
+  "/gantt": "Gantt Chart",
+  "/templates": "Templates",
+  "/ai": "AI Assistant",
+  "/users": "Users",
+  "/import": "Import Data",
+  "/settings": "Settings",
+};
 
 export function Header() {
+  const location = useLocation();
+  const title = routeTitles[location.pathname] || "Overview";
+
   return (
     <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6">
       {/* Workspace Selector */}
@@ -15,7 +37,7 @@ export function Header() {
           <ChevronDown className="h-4 w-4" />
         </Button>
         <span className="text-muted-foreground">|</span>
-        <h2 className="text-lg font-semibold text-foreground">Overview</h2>
+        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
       </div>
 
       {/* Search & Actions */}

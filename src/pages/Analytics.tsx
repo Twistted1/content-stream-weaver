@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,15 +39,72 @@ import {
 } from "recharts";
 import { toast } from "sonner";
 
-const trafficData = [
-  { name: "Jan", visitors: 4000, pageViews: 6400 },
-  { name: "Feb", visitors: 3000, pageViews: 4398 },
-  { name: "Mar", visitors: 5000, pageViews: 7800 },
-  { name: "Apr", visitors: 4780, pageViews: 6908 },
-  { name: "May", visitors: 5890, pageViews: 8800 },
-  { name: "Jun", visitors: 6390, pageViews: 9800 },
-  { name: "Jul", visitors: 7490, pageViews: 10300 },
-];
+const trafficByPeriod: Record<string, { name: string; visitors: number; pageViews: number }[]> = {
+  "7d": [
+    { name: "Mon", visitors: 1200, pageViews: 1900 },
+    { name: "Tue", visitors: 980, pageViews: 1500 },
+    { name: "Wed", visitors: 1400, pageViews: 2100 },
+    { name: "Thu", visitors: 1100, pageViews: 1700 },
+    { name: "Fri", visitors: 1350, pageViews: 2000 },
+    { name: "Sat", visitors: 800, pageViews: 1200 },
+    { name: "Sun", visitors: 650, pageViews: 950 },
+  ],
+  "30d": [
+    { name: "Week 1", visitors: 5200, pageViews: 8100 },
+    { name: "Week 2", visitors: 6100, pageViews: 9400 },
+    { name: "Week 3", visitors: 5800, pageViews: 8900 },
+    { name: "Week 4", visitors: 7100, pageViews: 10800 },
+  ],
+  "90d": [
+    { name: "Jan", visitors: 4000, pageViews: 6400 },
+    { name: "Feb", visitors: 3000, pageViews: 4398 },
+    { name: "Mar", visitors: 5000, pageViews: 7800 },
+    { name: "Apr", visitors: 4780, pageViews: 6908 },
+    { name: "May", visitors: 5890, pageViews: 8800 },
+    { name: "Jun", visitors: 6390, pageViews: 9800 },
+  ],
+  "1y": [
+    { name: "Jan", visitors: 4000, pageViews: 6400 },
+    { name: "Feb", visitors: 3000, pageViews: 4398 },
+    { name: "Mar", visitors: 5000, pageViews: 7800 },
+    { name: "Apr", visitors: 4780, pageViews: 6908 },
+    { name: "May", visitors: 5890, pageViews: 8800 },
+    { name: "Jun", visitors: 6390, pageViews: 9800 },
+    { name: "Jul", visitors: 7490, pageViews: 10300 },
+    { name: "Aug", visitors: 6800, pageViews: 9500 },
+    { name: "Sep", visitors: 7200, pageViews: 10100 },
+    { name: "Oct", visitors: 7800, pageViews: 11200 },
+    { name: "Nov", visitors: 8100, pageViews: 11900 },
+    { name: "Dec", visitors: 8900, pageViews: 12800 },
+  ],
+};
+
+const statsByPeriod: Record<string, { title: string; value: string; change: string; trend: "up" | "down"; icon: typeof Users }[]> = {
+  "7d": [
+    { title: "Total Visitors", value: "7,480", change: "+5.2%", trend: "up", icon: Users },
+    { title: "Page Views", value: "11,350", change: "+3.1%", trend: "up", icon: Eye },
+    { title: "Avg. Session Duration", value: "2m 58s", change: "-1.4%", trend: "down", icon: Clock },
+    { title: "Conversion Rate", value: "2.91%", change: "+0.3%", trend: "up", icon: MousePointerClick },
+  ],
+  "30d": [
+    { title: "Total Visitors", value: "24,200", change: "+9.8%", trend: "up", icon: Users },
+    { title: "Page Views", value: "37,200", change: "+6.5%", trend: "up", icon: Eye },
+    { title: "Avg. Session Duration", value: "3m 15s", change: "+0.5%", trend: "up", icon: Clock },
+    { title: "Conversion Rate", value: "3.10%", change: "+0.6%", trend: "up", icon: MousePointerClick },
+  ],
+  "90d": [
+    { title: "Total Visitors", value: "45,231", change: "+12.5%", trend: "up", icon: Users },
+    { title: "Page Views", value: "128,459", change: "+8.2%", trend: "up", icon: Eye },
+    { title: "Avg. Session Duration", value: "3m 42s", change: "-2.1%", trend: "down", icon: Clock },
+    { title: "Conversion Rate", value: "3.24%", change: "+0.8%", trend: "up", icon: MousePointerClick },
+  ],
+  "1y": [
+    { title: "Total Visitors", value: "182,400", change: "+22.1%", trend: "up", icon: Users },
+    { title: "Page Views", value: "498,100", change: "+18.4%", trend: "up", icon: Eye },
+    { title: "Avg. Session Duration", value: "3m 28s", change: "+4.2%", trend: "up", icon: Clock },
+    { title: "Conversion Rate", value: "3.45%", change: "+1.2%", trend: "up", icon: MousePointerClick },
+  ],
+};
 
 const deviceData = [
   { name: "Desktop", value: 55, color: "hsl(var(--primary))" },
@@ -81,41 +138,31 @@ const topPages = [
   { page: "/contact", views: 2100, avgTime: "1:22", bounceRate: "38%" },
 ];
 
-const stats = [
-  {
-    title: "Total Visitors",
-    value: "45,231",
-    change: "+12.5%",
-    trend: "up",
-    icon: Users,
-  },
-  {
-    title: "Page Views",
-    value: "128,459",
-    change: "+8.2%",
-    trend: "up",
-    icon: Eye,
-  },
-  {
-    title: "Avg. Session Duration",
-    value: "3m 42s",
-    change: "-2.1%",
-    trend: "down",
-    icon: Clock,
-  },
-  {
-    title: "Conversion Rate",
-    value: "3.24%",
-    change: "+0.8%",
-    trend: "up",
-    icon: MousePointerClick,
-  },
-];
+function exportAnalyticsCSV(period: string, stats: typeof statsByPeriod["7d"], trafficData: typeof trafficByPeriod["7d"]) {
+  let csv = "Analytics Report\nPeriod," + period + "\n\n";
+  csv += "Metric,Value,Change\n";
+  stats.forEach(s => { csv += `${s.title},${s.value},${s.change}\n`; });
+  csv += "\nTraffic Data\nPeriod,Visitors,Page Views\n";
+  trafficData.forEach(t => { csv += `${t.name},${t.visitors},${t.pageViews}\n`; });
+  csv += "\nTop Pages\nPage,Views,Avg Time,Bounce Rate\n";
+  topPages.forEach(p => { csv += `${p.page},${p.views},${p.avgTime},${p.bounceRate}\n`; });
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `analytics-${period}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function Analytics() {
   const [isLoading, setIsLoading] = useState(false);
   const [period, setPeriod] = useState("30d");
-  const [hasData] = useState(true); // Toggle for demo purposes
+  const [hasData] = useState(true);
+
+  const trafficData = useMemo(() => trafficByPeriod[period] || trafficByPeriod["30d"], [period]);
+  const stats = useMemo(() => statsByPeriod[period] || statsByPeriod["30d"], [period]);
 
   const handleRefresh = () => {
     setIsLoading(true);
@@ -126,7 +173,8 @@ export default function Analytics() {
   };
 
   const handleExport = () => {
-    toast.success("Exporting analytics report...");
+    exportAnalyticsCSV(period, stats, trafficData);
+    toast.success("Analytics report exported as CSV");
   };
 
   if (isLoading) {
@@ -196,11 +244,11 @@ export default function Analytics() {
                     <div className="text-2xl font-bold">{stat.value}</div>
                     <div className="flex items-center text-xs">
                       {stat.trend === "up" ? (
-                        <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
+                        <TrendingUp className="mr-1 h-3 w-3 text-chart-2" />
                       ) : (
-                        <TrendingDown className="mr-1 h-3 w-3 text-red-500" />
+                        <TrendingDown className="mr-1 h-3 w-3 text-destructive" />
                       )}
-                      <span className={stat.trend === "up" ? "text-green-500" : "text-red-500"}>
+                      <span className={stat.trend === "up" ? "text-chart-2" : "text-destructive"}>
                         {stat.change}
                       </span>
                       <span className="ml-1 text-muted-foreground">vs last period</span>

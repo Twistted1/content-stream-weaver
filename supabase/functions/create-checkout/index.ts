@@ -61,7 +61,7 @@ serve(async (req) => {
       logStep("Found existing customer", { customerId });
     }
 
-    const origin = req.headers.get("origin") || "https://id-preview--31c64459-d7d6-45e8-9eeb-bedede902146.lovable.app";
+    const origin = req.headers.get("origin") || Deno.env.get("SITE_URL") || "https://localhost:8080";
 
     // Create checkout session
     const session = await stripe.checkout.sessions.create({

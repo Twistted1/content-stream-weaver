@@ -23,8 +23,8 @@ import { toast } from "sonner";
 import { AutomationCard } from "@/components/automation/AutomationCard";
 import { AutomationDialog } from "@/components/automation/AutomationDialog";
 import { AutomationHistoryDialog } from "@/components/automation/AutomationHistoryDialog";
-import { useAppStore, Automation, TriggerType, AutomationStatus } from "@/stores/useAppStore";
-import { triggerOptions, platformOptions, getQuickStats } from "@/components/automation/automationData";
+import { useAutomations, Automation, TriggerType, AutomationStatus } from "@/hooks/useAutomations";
+import { triggerOptions, getQuickStats } from "@/components/automation/automationData";
 
 export default function AutomationPage() {
   const {
@@ -39,7 +39,7 @@ export default function AutomationPage() {
     duplicateAutomation,
     runAutomation,
     completeAutomationRun,
-  } = useAppStore();
+  } = useAutomations();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);

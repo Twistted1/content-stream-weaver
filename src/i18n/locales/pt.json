@@ -35,7 +35,9 @@
     "reports": "Relatórios",
     "ganttChart": "Gráfico Gantt",
     "users": "Usuários",
-    "importData": "Importar Dados"
+    "importData": "Importar Dados",
+    "articles": "Artigos",
+    "importTemplates": "Importar Modelos"
   },
   "dashboard": {
     "welcome": "Bem-vindo de volta",

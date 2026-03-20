@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +24,10 @@ import {
   Shield,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { usePlatforms } from "@/hooks/usePlatforms";
+import { PlatformType } from "@/types";
 
 interface PlatformData {
   id: string;
@@ -44,6 +48,13 @@ interface PlatformData {
   weeklyData: { day: string; followers: number; views: number }[];
   schedule?: { pending: number; published: number };
   subPlatforms?: string[];
+  dbId?: string;
+  settings?: {
+    autoPublish: boolean;
+    notifications: boolean;
+    analytics: boolean;
+    contentBackup: boolean;
+  };
 }
 
 interface PlatformDetailSheetProps {
@@ -54,6 +65,23 @@ interface PlatformDetailSheetProps {
 }
 
 export function PlatformDetailSheet({ platform, open, onOpenChange, getPlatformColor }: PlatformDetailSheetProps) {
+  const { updatePlatformSettings, disconnectPlatform } = usePlatforms();
+  
+  const [localSettings, setLocalSettings] = useState(
+    platform?.settings || {
+      autoPublish: true,
+      notifications: true,
+      analytics: true,
+      contentBackup: true,
+    }
+  );
+
+  useEffect(() => {
+    if (platform?.settings) {
+      setLocalSettings(platform.settings);
+    }
+  }, [platform]);
+
   if (!platform) return null;
 
   const color = getPlatformColor(platform.id);
@@ -64,10 +92,11 @@ export function PlatformDetailSheet({ platform, open, onOpenChange, getPlatformC
         <SheetHeader className="pb-4">
           <div className="flex items-center gap-3">
             <div
-              className="p-3 rounded-xl"
-              style={{ background: `${color}20` }}
+              className={cn("p-2.5 rounded-xl", `bg-${platform.id}`, "bg-opacity-20")}
             >
-              <platform.icon className="h-6 w-6" style={{ color }} />
+              <platform.icon
+                className={cn("h-6 w-6", `text-${platform.id}`)}
+              />
             </div>
             <div>
               <SheetTitle className="flex items-center gap-2">
@@ -199,23 +228,32 @@ export function PlatformDetailSheet({ platform, open, onOpenChange, getPlatformC
             </h4>
             <div className="space-y-3">
               {[
-                { label: "Auto-publish posts", description: "Automatically publish scheduled posts", defaultChecked: true },
-                { label: "Push notifications", description: "Get notified about engagement spikes", defaultChecked: true },
-                { label: "Analytics tracking", description: "Track detailed performance metrics", defaultChecked: true },
-                { label: "Content backup", description: "Backup all published content", defaultChecked: false },
+                { id: "autoPublish", label: "Auto-publish posts", description: "Automatically publish scheduled posts" },
+                { id: "notifications", label: "Push notifications", description: "Get notified about engagement spikes" },
+                { id: "analytics", label: "Analytics tracking", description: "Track detailed performance metrics" },
+                { id: "contentBackup", label: "Content backup", description: "Backup all published content" },
               ].map((setting) => (
-                <div key={setting.label} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                <div key={setting.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
                   <div>
                     <p className="text-sm font-medium text-foreground">{setting.label}</p>
                     <p className="text-xs text-muted-foreground">{setting.description}</p>
                   </div>
                   <Switch
-                    defaultChecked={setting.defaultChecked}
+                    checked={localSettings[setting.id as keyof typeof localSettings] ?? true}
                     onCheckedChange={(checked) => {
-                      toast({
-                        title: `${setting.label} ${checked ? "enabled" : "disabled"}`,
-                        description: `Setting updated for ${platform.name}.`,
-                      });
+                      // Update local state immediately for visual responsiveness
+                      const newSettings = { ...localSettings, [setting.id]: checked };
+                      setLocalSettings(newSettings);
+                      
+                      // Also push to DB if connected
+                      if (platform.dbId) {
+                        updatePlatformSettings.mutate({
+                          id: platform.dbId,
+                          settings: newSettings,
+                        });
+                      } else {
+                        toast.success(`${setting.label} updated locally (Mock Mode)`);
+                      }
                     }}
                   />
                 </div>
@@ -229,7 +267,13 @@ export function PlatformDetailSheet({ platform, open, onOpenChange, getPlatformC
               variant="outline"
               className="flex-1 gap-2"
               onClick={() => {
-                window.open(`https://${platform.id === "twitter" ? "x" : platform.id}.com`, "_blank");
+                // @ts-ignore - url property might not be in type definition yet
+                if (platform.url) {
+                   // @ts-ignore
+                   window.open(platform.url, "_blank");
+                } else {
+                   window.open(`https://${platform.id === "twitter" ? "x" : platform.id}.com`, "_blank");
+                }
               }}
             >
               <ExternalLink className="h-4 w-4" />
@@ -239,11 +283,10 @@ export function PlatformDetailSheet({ platform, open, onOpenChange, getPlatformC
               variant="destructive"
               className="gap-2"
               onClick={() => {
-                toast({
-                  title: "Platform disconnected",
-                  description: `${platform.name} has been disconnected. You can reconnect anytime.`,
+                if (!platform.dbId) return;
+                disconnectPlatform.mutate(platform.dbId, {
+                  onSuccess: () => onOpenChange(false)
                 });
-                onOpenChange(false);
               }}
             >
               Disconnect

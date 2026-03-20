@@ -3,52 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
+import { Post, PostInsert, PostUpdate, PostStatus, PostType, PlatformType, Media, MediaInsert, PostPlatform } from "@/types";
 
 type PostRow = Database["public"]["Tables"]["posts"]["Row"];
-type PostInsert = Database["public"]["Tables"]["posts"]["Insert"];
-type PostUpdate = Database["public"]["Tables"]["posts"]["Update"];
+type PostInsertType = Database["public"]["Tables"]["posts"]["Insert"];
+type PostUpdateType = Database["public"]["Tables"]["posts"]["Update"];
 type MediaRow = Database["public"]["Tables"]["media"]["Row"];
-type MediaInsert = Database["public"]["Tables"]["media"]["Insert"];
-
-export type PostStatus = Database["public"]["Enums"]["post_status"];
-export type PostType = Database["public"]["Enums"]["post_type"];
-export type PlatformType = Database["public"]["Enums"]["platform_type"];
-
-export interface Post {
-  id: string;
-  userId: string;
-  title: string;
-  content: string | null;
-  status: PostStatus;
-  type: PostType;
-  scheduledAt: string | null;
-  publishedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-  platforms?: PostPlatform[];
-  media?: Media[];
-}
-
-export interface PostPlatform {
-  id: string;
-  postId: string;
-  platform: PlatformType;
-  status: PostStatus;
-  platformPostId: string | null;
-  publishedAt: string | null;
-  errorMessage: string | null;
-}
-
-export interface Media {
-  id: string;
-  userId: string;
-  postId: string | null;
-  filename: string;
-  url: string;
-  mimeType: string | null;
-  sizeBytes: number | null;
-  createdAt: string;
-}
 
 const mapPost = (row: PostRow): Post => ({
   id: row.id,
@@ -94,7 +54,7 @@ export function usePosts() {
       if (error) throw error;
       return data.map((row) => ({
         ...mapPost(row),
-        platforms: row.post_platforms?.map((p: Database["public"]["Tables"]["post_platforms"]["Row"]) => ({
+        platforms: row.post_platforms?.map((p: any) => ({
           id: p.id,
           postId: p.post_id,
           platform: p.platform,
@@ -114,7 +74,7 @@ export function usePosts() {
       post,
       platforms,
     }: {
-      post: Omit<PostInsert, "user_id">;
+      post: Omit<PostInsertType, "user_id">;
       platforms?: PlatformType[];
     }) => {
       if (!user) throw new Error("Not authenticated");
@@ -153,7 +113,7 @@ export function usePosts() {
   });
 
   const updatePost = useMutation({
-    mutationFn: async ({ id, ...updates }: PostUpdate & { id: string }) => {
+    mutationFn: async ({ id, ...updates }: PostUpdateType & { id: string }) => {
       const { data, error } = await supabase
         .from("posts")
         .update(updates)
@@ -289,7 +249,7 @@ export function useMedia() {
         .from("media")
         .getPublicUrl(filePath);
 
-      const mediaInsert: MediaInsert = {
+      const mediaInsert: any = {
         user_id: user.id,
         post_id: postId,
         filename: file.name,

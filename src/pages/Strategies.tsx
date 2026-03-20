@@ -49,6 +49,8 @@ import { useStrategies, Strategy, StrategyStatus } from "@/hooks/useStrategies";
 import { statusConfig } from "@/components/strategies/strategiesData";
 import { StrategyDialog } from "@/components/strategies/StrategyDialog";
 import { StrategyDetailDialog } from "@/components/strategies/StrategyDetailDialog";
+import { DragDropImport } from "@/components/common/DragDropImport";
+import { useUJT } from "@/hooks/useUJT";
 import { toast } from "sonner";
 
 const Strategies = () => {
@@ -62,6 +64,7 @@ const Strategies = () => {
     duplicateStrategy,
     changeStrategiesStatus,
   } = useStrategies();
+  const { processUJT } = useUJT();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -163,6 +166,30 @@ const Strategies = () => {
     };
   };
 
+  const handleImport = (data: any) => {
+    if (data.version === "1.0" && Array.isArray(data.items)) {
+      processUJT(data);
+      return;
+    }
+
+    const items = Array.isArray(data) ? data : [data];
+    items.forEach((item: any) => {
+      if (item.name) {
+        addStrategy({
+          name: item.name,
+          description: item.description || "",
+          status: (item.status || "planning") as any,
+          progress: item.progress || 0,
+          start_date: item.startDate || item.start_date || null,
+          end_date: item.endDate || item.end_date || null,
+          assignees: item.assignees || [],
+          platforms: item.platforms || [],
+          goalItems: item.goalItems || [],
+        });
+      }
+    });
+  };
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -174,8 +201,9 @@ const Strategies = () => {
   }
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <DragDropImport onImport={handleImport} entityName="Strategy">
+      <DashboardLayout>
+        <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -465,6 +493,7 @@ const Strategies = () => {
         strategy={viewingStrategy}
       />
     </DashboardLayout>
+  </DragDropImport>
   );
 };
 

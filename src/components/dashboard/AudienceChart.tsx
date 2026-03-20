@@ -105,7 +105,17 @@ export function AudienceChart() {
                 backgroundColor: "hsl(var(--popover))",
                 border: "1px solid hsl(var(--border))",
                 borderRadius: "8px",
+              }}
+              itemStyle={{
                 color: "hsl(var(--foreground))",
+              }}
+              labelStyle={{
+                color: "hsl(var(--muted-foreground))",
+                marginBottom: "0.25rem",
+              }}
+              cursor={{
+                fill: "hsl(var(--muted))",
+                opacity: 0.2,
               }}
             />
             <Bar

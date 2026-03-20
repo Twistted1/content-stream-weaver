@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,22 +35,26 @@ import {
   Calendar,
   MessageSquare,
   Paperclip,
-  Filter,
-  Search,
   LayoutGrid,
   List,
   Edit,
   Trash2,
   Copy,
+  Search,
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-import { useAppStore, Project, ProjectStatus } from "@/stores/useAppStore";
+import { toast } from "sonner";
+import { DragDropImport } from "@/components/common/DragDropImport";
+import { useProjects } from "@/hooks/useProjects";
+import { useUJT } from "@/hooks/useUJT";
+import { Project, ProjectStatus } from "@/types";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
 const columns: { id: ProjectStatus; title: string; color: string }[] = [
-  { id: "backlog", title: "Backlog", color: "bg-muted" },
+  { id: "planning", title: "Planning", color: "bg-muted" },
   { id: "in-progress", title: "In Progress", color: "bg-primary/20" },
   { id: "review", title: "In Review", color: "bg-warning/20" },
   { id: "completed", title: "Completed", color: "bg-success/20" },
+  { id: "on-hold", title: "On Hold", color: "bg-destructive/10" },
 ];
 
 const priorityColors = {
@@ -61,127 +65,136 @@ const priorityColors = {
 
 interface ProjectCardProps {
   project: Project;
-  onDragStart: (id: string) => void;
+  index: number;
   onEdit: (project: Project) => void;
   onDelete: (id: string) => void;
   onDuplicate: (project: Project) => void;
 }
 
-function ProjectCard({ project, onDragStart, onEdit, onDelete, onDuplicate }: ProjectCardProps) {
+function ProjectCard({ project, index, onEdit, onDelete, onDuplicate }: ProjectCardProps) {
   return (
-    <Card
-      draggable
-      onDragStart={() => onDragStart(project.id)}
-      className="cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
-    >
-      <CardContent className="p-4 space-y-3">
-        <div className="flex items-start justify-between">
-          <div className="flex flex-wrap gap-1">
-            {project.tags.map((tag) => (
-              <Badge key={tag} variant="secondary" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-6 w-6">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit(project)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onDuplicate(project)}>
-                <Copy className="h-4 w-4 mr-2" />
-                Duplicate
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive" onClick={() => onDelete(project.id)}>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        <div>
-          <h4 className="font-medium text-sm">{project.title}</h4>
-          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-            {project.description}
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Progress</span>
-            <span className="font-medium">{project.progress}%</span>
-          </div>
-          <Progress value={project.progress} className="h-1.5" />
-        </div>
-
-        <div className="flex items-center justify-between pt-2 border-t border-border">
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              {project.dueDate}
-            </span>
-            <Badge className={priorityColors[project.priority]} variant="secondary">
-              {project.priority}
-            </Badge>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex -space-x-2">
-            {project.assignees.slice(0, 3).map((assignee, i) => (
-              <Avatar key={i} className="h-6 w-6 border-2 border-background">
-                <AvatarImage src={assignee.avatar} />
-                <AvatarFallback className="text-xs">
-                  {assignee.name.split(" ").map((n) => n[0]).join("")}
-                </AvatarFallback>
-              </Avatar>
-            ))}
-            {project.assignees.length > 3 && (
-              <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs">
-                +{project.assignees.length - 3}
+    <Draggable draggableId={project.id} index={index}>
+      {(provided) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          className="mb-3"
+        >
+          <Card className="hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing">
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-start justify-between">
+                <div className="flex flex-wrap gap-1">
+                  {project.tags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onEdit(project)}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onDuplicate(project)}>
+                      <Copy className="h-4 w-4 mr-2" />
+                      Duplicate
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="text-destructive" onClick={() => onDelete(project.id)}>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-            )}
-          </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <MessageSquare className="h-3 w-3" />
-              {project.comments}
-            </span>
-            <span className="flex items-center gap-1">
-              <Paperclip className="h-3 w-3" />
-              {project.attachments}
-            </span>
-          </div>
+
+              <div>
+                <h4 className="font-medium text-sm">{project.title}</h4>
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                  {project.description}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Progress</span>
+                  <span className="font-medium">{project.progress}%</span>
+                </div>
+                <Progress value={project.progress} className="h-1.5" />
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-border">
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {project.dueDate || "No date"}
+                  </span>
+                  <Badge className={priorityColors[project.priority]} variant="secondary">
+                    {project.priority}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex -space-x-2">
+                  {project.assignees.slice(0, 3).map((assignee, i) => (
+                    <Avatar key={i} className="h-6 w-6 border-2 border-background">
+                      <AvatarImage src={assignee.avatar} />
+                      <AvatarFallback className="text-xs">
+                        {assignee.name.split(" ").map((n) => n[0]).join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+                  {project.assignees.length > 3 && (
+                    <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs">
+                      +{project.assignees.length - 3}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <MessageSquare className="h-3 w-3" />
+                    {project.comments}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Paperclip className="h-3 w-3" />
+                    {project.attachments}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </Draggable>
   );
 }
 
-const emptyProject = {
+const emptyProject: Project = {
+  id: "",
+  createdAt: "",
   title: "",
   description: "",
-  status: "backlog" as ProjectStatus,
-  priority: "medium" as "low" | "medium" | "high",
+  status: "planning",
+  priority: "medium",
   dueDate: "",
   progress: 0,
   comments: 0,
   attachments: 0,
-  assignees: [] as { name: string; avatar?: string }[],
-  tags: [] as string[],
+  assignees: [],
+  tags: [],
 };
 
 export default function Projects() {
-  const { projects, addProject, updateProject, deleteProject, moveProject } = useAppStore();
+  const { projects, addProject, updateProject, deleteProject, moveProject } = useProjects();
+  const { processUJT } = useUJT();
   const [viewMode, setViewMode] = useState<"board" | "list">("board");
-  const [draggedProject, setDraggedProject] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -190,22 +203,21 @@ export default function Projects() {
   const [newAssignee, setNewAssignee] = useState("");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const handleDragStart = (projectId: string) => {
-    setDraggedProject(projectId);
-  };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
+  const onDragEnd = (result: DropResult) => {
+    const { destination, source, draggableId } = result;
 
-  const handleDrop = (status: ProjectStatus) => {
-    if (draggedProject === null) return;
-    moveProject(draggedProject, status);
-    setDraggedProject(null);
-    toast({
-      title: "Project moved",
-      description: `Project moved to ${status.replace("-", " ")}`,
-    });
+    if (!destination) return;
+
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    const newStatus = destination.droppableId as ProjectStatus;
+    moveProject(draggableId, newStatus);
   };
 
   const filteredProjects = projects.filter((project) => {
@@ -222,20 +234,15 @@ export default function Projects() {
 
   const handleCreateProject = () => {
     if (!newProject.title) {
-      toast({
-        title: "Missing title",
-        description: "Please enter a project title.",
-        variant: "destructive",
-      });
+      toast.error("Please enter a project title");
       return;
     }
 
-    addProject(newProject);
-    setNewProject(emptyProject);
-    setIsCreateDialogOpen(false);
-    toast({
-      title: "Project created",
-      description: "Your project has been created successfully.",
+    addProject.mutate(newProject, {
+      onSuccess: () => {
+        setNewProject(emptyProject);
+        setIsCreateDialogOpen(false);
+      }
     });
   };
 
@@ -243,27 +250,15 @@ export default function Projects() {
     if (!editingProject) return;
     updateProject(editingProject.id, editingProject);
     setEditingProject(null);
-    toast({
-      title: "Project updated",
-      description: "Your project has been updated successfully.",
-    });
   };
 
   const handleDeleteProject = (id: string) => {
     deleteProject(id);
-    toast({
-      title: "Project deleted",
-      description: "The project has been removed.",
-    });
   };
 
   const handleDuplicateProject = (project: Project) => {
     const { id, createdAt, ...rest } = project;
-    addProject({ ...rest, title: `${project.title} (Copy)` });
-    toast({
-      title: "Project duplicated",
-      description: "A copy of the project has been created.",
-    });
+    addProject.mutate({ ...rest, title: `${project.title} (Copy)` });
   };
 
   const addTag = (isNew: boolean) => {
@@ -452,9 +447,35 @@ export default function Projects() {
     </div>
   );
 
+  const handleImport = (data: any) => {
+    if (data.version === "1.0" && Array.isArray(data.items)) {
+      processUJT(data);
+      return;
+    }
+
+    const items = Array.isArray(data) ? data : [data];
+    items.forEach((item: any) => {
+      if (item.title) {
+        addProject.mutate({
+          title: item.title,
+          description: item.description || "",
+          status: (item.status === "backlog" ? "planning" : item.status) || "planning",
+          priority: item.priority || "medium",
+          dueDate: item.dueDate || "",
+          progress: item.progress || 0,
+          comments: 0,
+          attachments: 0,
+          assignees: item.assignees || [],
+          tags: item.tags || [],
+        });
+      }
+    });
+  };
+
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <DragDropImport onImport={handleImport} entityName="Project">
+      <DashboardLayout>
+        <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -498,10 +519,11 @@ export default function Projects() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="backlog">Backlog</SelectItem>
+                <SelectItem value="planning">Planning</SelectItem>
                 <SelectItem value="in-progress">In Progress</SelectItem>
                 <SelectItem value="review">In Review</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="on-hold">On Hold</SelectItem>
               </SelectContent>
             </Select>
             <div className="flex items-center border border-border rounded-lg">
@@ -527,37 +549,43 @@ export default function Projects() {
 
         {/* Kanban Board */}
         {viewMode === "board" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            {columns.map((column) => (
-              <div
-                key={column.id}
-                className="space-y-3"
-                onDragOver={handleDragOver}
-                onDrop={() => handleDrop(column.id)}
-              >
-                <div className={`rounded-lg p-3 ${column.color}`}>
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-medium text-sm">{column.title}</h3>
-                    <Badge variant="secondary" className="text-xs">
-                      {getProjectsByStatus(column.id).length}
-                    </Badge>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              {columns.map((column) => (
+                <div key={column.id} className="space-y-3">
+                  <div className={`rounded-lg p-3 ${column.color}`}>
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium text-sm">{column.title}</h3>
+                      <Badge variant="secondary" className="text-xs">
+                        {getProjectsByStatus(column.id).length}
+                      </Badge>
+                    </div>
                   </div>
+                  <Droppable droppableId={column.id}>
+                    {(provided) => (
+                      <div
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                        className="space-y-3 min-h-[200px]"
+                      >
+                        {getProjectsByStatus(column.id).map((project, index) => (
+                          <ProjectCard
+                            key={project.id}
+                            index={index}
+                            project={project}
+                            onEdit={setEditingProject}
+                            onDelete={handleDeleteProject}
+                            onDuplicate={handleDuplicateProject}
+                          />
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
                 </div>
-                <div className="space-y-3 min-h-[200px]">
-                  {getProjectsByStatus(column.id).map((project) => (
-                    <ProjectCard
-                      key={project.id}
-                      project={project}
-                      onDragStart={handleDragStart}
-                      onEdit={setEditingProject}
-                      onDelete={handleDeleteProject}
-                      onDuplicate={handleDuplicateProject}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </DragDropContext>
         )}
 
         {/* List View */}
@@ -666,5 +694,6 @@ export default function Projects() {
         </Dialog>
       </div>
     </DashboardLayout>
+    </DragDropImport>
   );
 }

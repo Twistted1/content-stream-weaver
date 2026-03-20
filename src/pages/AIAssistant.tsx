@@ -26,13 +26,14 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNoveeChat } from "@/hooks/useNoveeChat";
+import { usePosts } from "@/hooks/usePosts";
 
 const quickPrompts = [
   { icon: FileText, label: "Blog Post", prompt: "Write a blog post about" },
   { icon: Hash, label: "Hashtags", prompt: "Generate trending hashtags for" },
   { icon: Image, label: "Image Caption", prompt: "Create an engaging caption for" },
   { icon: MessageSquare, label: "Social Post", prompt: "Write a social media post about" },
-  { icon: Lightbulb, label: "Content Ideas", prompt: "Give me 5 content ideas about" },
+  { icon: FileText, label: "Strategy JSON", prompt: "Generate a Universal JSON Template payload for a new Project Strategy. Include fields for title, strategy_outline, project_phases, and key_notes." },
   { icon: TrendingUp, label: "Trending Topics", prompt: "What are trending topics in" },
 ];
 
@@ -65,6 +66,20 @@ const contentTemplates = [
     category: "Social Proof",
     prompt: "Help me format a customer testimonial for",
   },
+  {
+    title: "Weekly Articles JSON",
+    description: "Generate 3 articles in JSON format for import",
+    icon: FileText,
+    category: "Productivity",
+    prompt: "Generate a JSON array for 3 weekly articles about [TOPIC]. The JSON should have fields: title, content, type='article', status='draft', platforms=['website'], and scheduled_at (ISO dates for next week).",
+  },
+  {
+    title: "Strategy JSON Payload",
+    description: "Generate UJT payload for Projects & Notes",
+    icon: FileText,
+    category: "Productivity",
+    prompt: "Generate a Universal JSON Template (UJT) containing 'Projects, Notes, and Strategies'. The JSON should include an array of objects with fields for title, strategy_outline, project_phases, and key_notes, formatted as a raw code block so I can import it directly into the CMS.",
+  },
 ];
 
 const GREETING = "Hello! I'm Novee, your AI content assistant. 🤖✨ I can help you create engaging social media posts, generate hashtags, write captions, and brainstorm content ideas. How can I help you today?";
@@ -72,8 +87,10 @@ const GREETING = "Hello! I'm Novee, your AI content assistant. 🤖✨ I can hel
 const AIAssistant = () => {
   const { toast } = useToast();
   const { messages, isLoading, sendMessage, resetChat, addGreeting } = useNoveeChat();
+  const { addPost } = usePosts();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState("chat");
 
   // Add greeting on mount
   useEffect(() => {
@@ -103,10 +120,13 @@ const AIAssistant = () => {
   };
 
   const handleTemplateUse = (prompt: string) => {
-    if (inputRef.current) {
-      inputRef.current.value = prompt + " ";
-      inputRef.current.focus();
-    }
+    setActiveTab("chat");
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.value = prompt + " ";
+        inputRef.current.focus();
+      }
+    }, 100);
     toast({
       title: "Template loaded",
       description: "Complete your prompt and send it!",
@@ -118,6 +138,23 @@ const AIAssistant = () => {
     toast({
       title: "Copied!",
       description: "Content copied to clipboard",
+    });
+  };
+
+  const handleCreatePostFromAI = (content: string) => {
+    addPost.mutate({
+      post: {
+        title: "AI Generated Post",
+        content: content,
+        type: "text",
+        status: "draft",
+        scheduled_at: null,
+      },
+      platforms: []
+    });
+    toast({
+      title: "Saved as Draft",
+      description: "AI generation has been pushed to your CMS drafts overview.",
     });
   };
 
@@ -192,7 +229,7 @@ const AIAssistant = () => {
         </div>
 
         {/* Main Content */}
-        <Tabs defaultValue="chat" className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList>
             <TabsTrigger value="chat">Chat</TabsTrigger>
             <TabsTrigger value="templates">Content Templates</TabsTrigger>
@@ -242,14 +279,24 @@ const AIAssistant = () => {
                               })}
                             </span>
                             {message.role === "assistant" && message.content !== GREETING && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="absolute -right-10 top-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => copyToClipboard(message.content)}
-                              >
-                                <Copy className="h-4 w-4" />
-                              </Button>
+                              <div className="absolute -right-20 top-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title="Copy to clipboard"
+                                  onClick={() => copyToClipboard(message.content)}
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title="Save to CMS as Draft"
+                                  onClick={() => handleCreatePostFromAI(message.content)}
+                                >
+                                  <FileText className="h-4 w-4" />
+                                </Button>
+                              </div>
                             )}
                           </div>
                           {message.role === "user" && (
@@ -267,8 +314,8 @@ const AIAssistant = () => {
                           <div className="bg-muted rounded-lg px-4 py-2">
                             <div className="flex gap-1">
                               <span className="animate-bounce">●</span>
-                              <span className="animate-bounce" style={{ animationDelay: "0.1s" }}>●</span>
-                              <span className="animate-bounce" style={{ animationDelay: "0.2s" }}>●</span>
+                              <span className="animate-bounce [animation-delay:0.1s]">●</span>
+                              <span className="animate-bounce [animation-delay:0.2s]">●</span>
                             </div>
                           </div>
                         </div>

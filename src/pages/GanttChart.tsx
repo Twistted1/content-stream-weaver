@@ -16,7 +16,8 @@ import {
   ZoomOut,
   ListTodo
 } from "lucide-react";
-import { useProjects, useTasks, type Task } from "@/hooks/useProjects";
+import { useProjects, useTasks } from "@/hooks/useProjects";
+import { type Task } from "@/types";
 
 const dayWidth = 40;
 

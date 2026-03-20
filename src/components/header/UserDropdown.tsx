@@ -48,7 +48,7 @@ export function UserDropdown() {
       toast.error("Failed to log out");
     } else {
       toast.success("Logged out successfully");
-      navigate("/auth");
+      navigate("/");
     }
   };
 

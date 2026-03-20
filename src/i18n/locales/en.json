@@ -35,7 +35,9 @@
     "reports": "Reports",
     "ganttChart": "Gantt Chart",
     "users": "Users",
-    "importData": "Import Data"
+    "importData": "Import Data",
+    "articles": "Articles",
+    "importTemplates": "Import Templates"
   },
   "dashboard": {
     "welcome": "Welcome back",

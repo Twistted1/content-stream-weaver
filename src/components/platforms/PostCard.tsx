@@ -3,20 +3,20 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Clock, Send, Edit, Trash2, MoreVertical, Image, Video, FileText, Globe } from "lucide-react";
-import { ScheduledPost } from "@/stores/useAppStore";
+import { Post, PlatformType } from "@/types";
 import { LucideIcon } from "lucide-react";
 
 interface Platform {
   id: string;
   name: string;
-  icon: LucideIcon;
+  icon: any;
 }
 
 interface PostCardProps {
-  post: ScheduledPost;
+  post: Post;
   platforms: Platform[];
   getPlatformColor: (id: string) => string;
-  onEdit: (post: ScheduledPost) => void;
+  onEdit: (post: Post) => void;
   onDelete: (id: string) => void;
   onPublish: (id: string) => void;
 }
@@ -32,11 +32,29 @@ export function PostCard({ post, platforms, getPlatformColor, onEdit, onDelete, 
   };
 
   const getPlatformIcon = (id: string) => {
-    const platform = platforms.find(p => p.id === id);
+    const platform = platforms.find(p => p.id.toLowerCase() === id.toLowerCase());
     return platform?.icon || Globe;
   };
 
+  const getTailwindColor = (id: string) => {
+    switch (id.toLowerCase()) {
+      case 'youtube': return 'bg-red-500/20 text-red-500';
+      case 'twitter': return 'bg-zinc-800/20 text-zinc-800 dark:bg-zinc-100/20 dark:text-zinc-100';
+      case 'facebook': return 'bg-blue-600/20 text-blue-600';
+      case 'instagram': return 'bg-pink-600/20 text-pink-600';
+      case 'linkedin': return 'bg-blue-700/20 text-blue-700';
+      case 'tiktok': return 'bg-slate-900/20 text-slate-900 dark:bg-slate-100/20 dark:text-slate-100';
+      case 'website': return 'bg-teal-500/20 text-teal-500';
+      case 'podcast': return 'bg-purple-500/20 text-purple-500';
+      case 'rumble': return 'bg-green-500/20 text-green-500';
+      default: return 'bg-primary/20 text-primary';
+    }
+  };
+
   const PostTypeIcon = getPostTypeIcon(post.type);
+
+  // Parse scheduledAt
+  const scheduledDate = post.scheduledAt ? new Date(post.scheduledAt) : null;
 
   return (
     <Card className="bg-card border-border hover:border-primary/30 transition-all">
@@ -50,18 +68,14 @@ export function PostCard({ post, platforms, getPlatformColor, onEdit, onDelete, 
               <h4 className="font-medium text-foreground truncate">{post.title}</h4>
               <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{post.content}</p>
               <div className="flex items-center gap-2 mt-2 flex-wrap">
-                {post.platforms.map((platformId) => {
-                  const PlatformIcon = getPlatformIcon(platformId);
+                {post.platforms && post.platforms.map((postPlatform) => {
+                  const PlatformIcon = getPlatformIcon(postPlatform.platform);
                   return (
                     <div
-                      key={platformId}
-                      className="p-1.5 rounded-md"
-                      style={{ background: `${getPlatformColor(platformId)}20` }}
+                      key={postPlatform.id}
+                      className={`p-1.5 rounded-md ${getTailwindColor(postPlatform.platform)}`}
                     >
-                      <PlatformIcon
-                        className="h-3 w-3"
-                        style={{ color: getPlatformColor(platformId) }}
-                      />
+                      <PlatformIcon className="h-3 w-3" />
                     </div>
                   );
                 })}
@@ -71,10 +85,10 @@ export function PostCard({ post, platforms, getPlatformColor, onEdit, onDelete, 
                 >
                   {post.status}
                 </Badge>
-                {post.scheduledDate && post.scheduledTime && (
+                {scheduledDate && (
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    {new Date(`${post.scheduledDate}T${post.scheduledTime}`).toLocaleString(undefined, {
+                    {scheduledDate.toLocaleString(undefined, {
                       month: "short",
                       day: "numeric",
                       hour: "2-digit",

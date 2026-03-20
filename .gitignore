@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Environment variables - never commit real credentials
+.env
+.env.production
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -22,3 +26,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Test / scratch data files
+article_1.json
+article_2.json
+article_3.json
+test_import_project.json

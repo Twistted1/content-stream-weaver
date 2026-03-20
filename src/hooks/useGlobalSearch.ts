@@ -1,5 +1,9 @@
 import { useMemo } from "react";
-import { useAppStore } from "@/stores/useAppStore";
+import { useProjects } from "@/hooks/useProjects";
+import { usePosts } from "@/hooks/usePosts";
+import { useAutomations } from "@/hooks/useAutomations";
+import { useUsers } from "@/hooks/useUsers";
+import { useStrategies } from "@/hooks/useStrategies";
 
 export interface SearchResult {
   id: string;
@@ -11,7 +15,11 @@ export interface SearchResult {
 }
 
 export function useGlobalSearch(query: string): SearchResult[] {
-  const { projects, scheduledPosts, automations, users, strategies } = useAppStore();
+  const { projects } = useProjects();
+  const { posts } = usePosts();
+  const { automations } = useAutomations();
+  const { users } = useUsers();
+  const { strategies } = useStrategies();
 
   return useMemo(() => {
     if (!query || query.length < 2) return [];
@@ -37,16 +45,16 @@ export function useGlobalSearch(query: string): SearchResult[] {
     });
 
     // Search posts
-    scheduledPosts.forEach((post) => {
+    posts.forEach((post) => {
       if (
         post.title.toLowerCase().includes(lowerQuery) ||
-        post.content.toLowerCase().includes(lowerQuery)
+        (post.content && post.content.toLowerCase().includes(lowerQuery))
       ) {
         results.push({
           id: post.id,
           type: "post",
           title: post.title,
-          description: `${post.platforms.join(", ")} - ${post.status}`,
+          description: post.content || "",
           link: "/platforms",
           icon: "FileText",
         });
@@ -91,19 +99,19 @@ export function useGlobalSearch(query: string): SearchResult[] {
     strategies.forEach((strategy) => {
       if (
         strategy.name.toLowerCase().includes(lowerQuery) ||
-        strategy.description.toLowerCase().includes(lowerQuery)
+        (strategy.description && strategy.description.toLowerCase().includes(lowerQuery))
       ) {
         results.push({
           id: strategy.id,
           type: "strategy",
           title: strategy.name,
-          description: strategy.description,
+          description: strategy.description || "",
           link: "/strategies",
           icon: "Target",
         });
       }
     });
 
-    return results.slice(0, 10); // Limit to 10 results
-  }, [query, projects, scheduledPosts, automations, users, strategies]);
+    return results.slice(0, 10);
+  }, [query, projects, posts, automations, users, strategies]);
 }

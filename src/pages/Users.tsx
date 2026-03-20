@@ -29,15 +29,15 @@ import {
   XCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAppStore } from "@/stores/useAppStore";
+import { useUsers, type User } from "@/hooks/useUsers";
 import { UserCard } from "@/components/users/UserCard";
 import { UserDialog } from "@/components/users/UserDialog";
 import { RoleConfigDialog } from "@/components/users/RoleConfigDialog";
-import { User, roles, permissions, rolePermissions } from "@/components/users/usersData";
+import { roles, permissions, rolePermissions } from "@/components/users/usersData";
 
 const UsersPage = () => {
   const { toast } = useToast();
-  const { users, addUser, updateUser, deleteUser, deleteUsers, toggleUserStatus, changeUserRole, resendInvite } = useAppStore();
+  const { users, addUser, updateUser, deleteUser, resendInvite } = useUsers();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -367,7 +367,7 @@ const UsersPage = () => {
                         onSelect={(checked) => handleSelectUser(user.id, checked)}
                         onEdit={() => handleEditUser(user)}
                         onChangeRole={() => handleChangeRole(user)}
-                        onToggleStatus={() => toggleUserStatus(user.id)}
+                        onToggleStatus={() => updateUser(user.id, { status: user.status === 'active' ? 'inactive' : 'active' })}
                         onDelete={() => handleDeleteUser(user.id)}
                       />
                     ))

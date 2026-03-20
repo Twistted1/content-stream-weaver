@@ -1,5 +1,5 @@
 import { LucideIcon, Zap, Clock, Share2, RefreshCw } from "lucide-react";
-import { TriggerType, Automation } from "@/stores/useAppStore";
+import { TriggerType, Automation } from "@/hooks/useAutomations";
 
 export interface QuickStat {
   label: string;

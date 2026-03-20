@@ -1,73 +1,98 @@
-# Welcome to your Lovable project
+# Content Stream
 
-## Project info
+A B2B headless CMS and content operations platform built with Vite + React + TypeScript + Supabase.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Tech Stack
 
-## How can I edit this code?
+- **Frontend:** Vite 7, React 18, TypeScript 5.8, Tailwind CSS 3.4
+- **UI Components:** shadcn/ui
+- **State:** Zustand 5, TanStack Query 5
+- **Backend:** Supabase (Auth, Database, Edge Functions)
+- **Payments:** Stripe (subscriptions, billing portal)
+- **Monitoring:** Sentry (error tracking, session replay)
+- **i18n:** i18next — English and Portuguese
 
-There are several ways of editing your application.
+## Getting Started
 
-**Use Lovable**
+### 1. Clone and install
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+```bash
+git clone <repo-url>
+cd content-stream
+npm install
+```
 
-Changes made via Lovable will be committed automatically to this repo.
+### 2. Configure environment
 
-**Use your preferred IDE**
+```bash
+cp .env.example .env
+```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Fill in `.env` with your values (see `.env.example` for all required keys).
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### 3. Run locally
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+App runs at **http://localhost:8080**
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Supabase Setup
 
-**Use GitHub Codespaces**
+### Edge Function Secrets
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Set these in **Supabase Dashboard → Edge Functions → Secrets:**
 
-## What technologies are used for this project?
+| Secret | Description |
+|---|---|
+| `STRIPE_SECRET_KEY` | Stripe secret key (`sk_live_...`) |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret (`whsec_...`) |
+| `OPENAI_API_KEY` | OpenAI key for Novee AI assistant |
+| `SITE_URL` | Production URL for Stripe redirect callbacks |
 
-This project is built with:
+### Stripe Webhook
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Point Stripe webhooks to:
+```
+https://<your-project-id>.supabase.co/functions/v1/stripe-webhook
+```
 
-## How can I deploy this project?
+Required events: `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed`
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+### Regenerate Types (after schema changes)
 
-## Can I connect a custom domain to my Lovable project?
+```bash
+npx supabase gen types typescript --project-id <your-project-id> > src/integrations/supabase/types.ts
+```
 
-Yes, you can!
+Requires a [Supabase personal access token](https://supabase.com/dashboard/account/tokens) set as `SUPABASE_ACCESS_TOKEN`.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Project Structure
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```
+src/
+├── components/       # Shared UI components
+│   ├── layout/      # Sidebar, Header
+│   └── settings/    # Settings page sections
+├── hooks/           # Custom React hooks (auth, subscription, roles, etc.)
+├── i18n/            # Translations (en, pt)
+├── pages/           # Route-level page components
+├── stores/          # Zustand stores (app state, user preferences)
+└── types/           # TypeScript interfaces
+
+supabase/
+├── functions/       # Edge Functions (billing, AI chat, webhooks)
+└── migrations/      # SQL migration files
+```
+
+## User Roles
+
+Roles are stored in the `user_roles` table. Available roles: `admin`, `moderator`, `user`.
+
+- **Admin** — access to Users and Import Data pages
+- **User/Moderator** — standard dashboard access
+
+## Environment Variables
+
+See `.env.example` for the full list. The `VITE_` prefix means the variable is exposed to the browser bundle — never put secret keys here. All secret keys go in Supabase Edge Function secrets.

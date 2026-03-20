@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Play, Pause, Clock, Zap, RefreshCw, MoreHorizontal, Pencil, Trash2, History } from "lucide-react";
 import { triggerOptions } from "./automationData";
-import { Automation } from "@/stores/useAppStore";
+import { Automation } from "@/hooks/useAutomations";
 import { Copy } from "lucide-react";
 
 interface AutomationCardProps {

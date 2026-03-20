@@ -8,7 +8,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
-import { Automation, AutomationRun } from "@/stores/useAppStore";
+import { Automation, AutomationRun } from "@/hooks/useAutomations";
 
 
 interface AutomationHistoryDialogProps {

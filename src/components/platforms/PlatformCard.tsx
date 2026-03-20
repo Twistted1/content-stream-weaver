@@ -18,17 +18,21 @@ import {
   Calendar,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import React from "react";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { usePlatforms } from "@/hooks/usePlatforms";
 import { useNavigate } from "react-router-dom";
 
 interface PlatformData {
   id: string;
   name: string;
-  icon: LucideIcon;
+  icon: any;
   colorClass: string;
   bgGradient: string;
   connected: boolean;
   username: string;
+  url?: string;
   followers: number;
   followersDisplay: string;
   posts: number;
@@ -40,6 +44,13 @@ interface PlatformData {
   weeklyData: { day: string; followers: number; views: number }[];
   schedule?: { pending: number; published: number };
   subPlatforms?: string[];
+  dbId?: string;
+  settings?: {
+    autoPublish: boolean;
+    notifications: boolean;
+    analytics: boolean;
+    contentBackup: boolean;
+  };
 }
 
 interface PlatformCardProps {
@@ -52,6 +63,15 @@ interface PlatformCardProps {
 
 export function PlatformCard({ platform, isSelected, onSelect, getPlatformColor, onOpenDetail }: PlatformCardProps) {
   const navigate = useNavigate();
+  const { togglePlatformStatus } = usePlatforms();
+  
+  // Local state for immediate UI feedback on mock data
+  const [localStatus, setLocalStatus] = React.useState(platform.status);
+
+  // Sync if prop changes
+  React.useEffect(() => {
+    setLocalStatus(platform.status);
+  }, [platform.status]);
 
   const handleCardClick = () => {
     onOpenDetail(platform);
@@ -69,19 +89,16 @@ export function PlatformCard({ platform, isSelected, onSelect, getPlatformColor,
       onClick={handleCardClick}
     >
       <div
-        className="h-1.5"
-        style={{ background: getPlatformColor(platform.id) }}
+        className={cn("h-1.5", `bg-${platform.id}`)}
       />
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
-              className="p-2.5 rounded-xl"
-              style={{ background: `${getPlatformColor(platform.id)}20` }}
+              className={cn("p-2.5 rounded-xl", `bg-${platform.id}`, "bg-opacity-20")}
             >
               <platform.icon
-                className="h-5 w-5"
-                style={{ color: getPlatformColor(platform.id) }}
+                className={cn("h-5 w-5", `text-${platform.id}`)}
               />
             </div>
             <div>
@@ -99,15 +116,27 @@ export function PlatformCard({ platform, isSelected, onSelect, getPlatformColor,
                   </Tooltip>
                 )}
               </CardTitle>
-              <CardDescription className="text-xs">{platform.username}</CardDescription>
+              <CardDescription className="text-xs">
+                {platform.url ? (
+                  <a href={platform.url} target="_blank" rel="noopener noreferrer" className="hover:text-primary hover:underline transition-colors block mt-0.5" onClick={(e) => e.stopPropagation()}>
+                    {platform.username}
+                  </a>
+                ) : (
+                  platform.username
+                )}
+              </CardDescription>
             </div>
           </div>
           <Badge
             variant="default"
-            className="bg-[hsl(var(--success))]/20 text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/30 border-0"
+            className={`border-0 ${
+              localStatus === "active"
+                ? "bg-[hsl(var(--success))]/20 text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/30"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
+            }`}
           >
             <CheckCircle2 className="h-3 w-3 mr-1" />
-            Active
+            {localStatus === "active" ? "Active" : "Paused"}
           </Badge>
         </div>
       </CardHeader>
@@ -205,12 +234,19 @@ export function PlatformCard({ platform, isSelected, onSelect, getPlatformColor,
           </div>
           <div onClick={stopPropagation}>
             <Switch
-              checked={platform.status === "active"}
+              checked={localStatus === "active"}
               onCheckedChange={(checked) => {
-                toast({
-                  title: checked ? "Platform activated" : "Platform paused",
-                  description: `${platform.name} has been ${checked ? "activated" : "paused"}.`,
-                });
+                const newStatus = checked ? "active" : "paused";
+                setLocalStatus(newStatus);
+                
+                if (platform.dbId) {
+                  togglePlatformStatus.mutate({
+                    id: platform.dbId,
+                    status: newStatus,
+                  });
+                } else {
+                  toast.success(`Platform ${newStatus === "active" ? "activated" : "paused"}`);
+                }
               }}
             />
           </div>

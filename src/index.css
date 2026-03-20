@@ -92,3 +92,36 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .platform-text {
+    color: var(--platform-color, hsl(var(--primary)));
+  }
+  .platform-bg {
+    background-color: var(--platform-color, hsl(var(--primary)));
+  }
+  .platform-border {
+    border-color: var(--platform-color, hsl(var(--primary)));
+  }
+  .platform-bg-light {
+    background-color: hsla(var(--platform-color-raw, var(--primary)), 0.1);
+  }
+
+  /* Specific platform classes for cleaner usage if needed */
+  .text-youtube { color: hsl(var(--youtube)); }
+  .bg-youtube { background-color: hsl(var(--youtube)); }
+  .text-tiktok { color: hsl(var(--tiktok)); }
+  .bg-tiktok { background-color: hsl(var(--tiktok)); }
+  .text-twitter { color: hsl(var(--twitter)); }
+  .bg-twitter { background-color: hsl(var(--twitter)); }
+  .text-instagram { color: hsl(var(--instagram)); }
+  .bg-instagram { background-color: hsl(var(--instagram)); }
+  .text-facebook { color: hsl(var(--facebook)); }
+  .bg-facebook { background-color: hsl(var(--facebook)); }
+  .text-linkedin { color: hsl(var(--linkedin)); }
+  .bg-linkedin { background-color: hsl(var(--linkedin)); }
+  .text-website { color: hsl(var(--website)); }
+  .bg-website { background-color: hsl(var(--website)); }
+  .text-podcast { color: hsl(var(--podcast)); }
+  .bg-podcast { background-color: hsl(var(--podcast)); }
+}

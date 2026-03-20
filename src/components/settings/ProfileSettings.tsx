@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Camera, Save } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Camera, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { useUserPreferencesStore } from "@/stores/useUserPreferencesStore";
 import { toast } from "sonner";
 
@@ -27,25 +29,109 @@ const timezones = [
   { value: "Australia/Sydney", label: "Australian Eastern Time (AET)" },
 ];
 
+interface ProfileForm {
+  displayName: string;
+  bio: string;
+  avatarUrl: string;
+  companyName: string;
+  // Extended fields stored locally until DB schema is extended
+  phone: string;
+  location: string;
+  timezone: string;
+}
+
 export function ProfileSettings() {
-  const { profile, updateProfile } = useUserPreferencesStore();
-  const [formData, setFormData] = useState(profile);
+  const { user } = useAuth();
+  const { profile: localProfile, updateProfile: updateLocalProfile } = useUserPreferencesStore();
+
+  const [formData, setFormData] = useState<ProfileForm>({
+    displayName: "",
+    bio: "",
+    avatarUrl: "",
+    companyName: "",
+    phone: localProfile.phone,
+    location: localProfile.location,
+    timezone: localProfile.timezone,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
 
-  const handleChange = (field: string, value: string) => {
+  // Load profile from Supabase on mount
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      if (error) {
+        toast.error("Failed to load profile");
+      } else if (data) {
+        setFormData((prev) => ({
+          ...prev,
+          displayName: data.display_name ?? "",
+          bio: data.bio ?? "",
+          avatarUrl: data.avatar_url ?? "",
+          companyName: data.company_name ?? "",
+        }));
+      }
+      setIsLoading(false);
+    })();
+  }, [user]);
+
+  const handleChange = (field: keyof ProfileForm, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setIsDirty(true);
   };
 
-  const handleSave = () => {
-    updateProfile(formData);
-    setIsDirty(false);
-    toast.success("Profile updated successfully");
+  const handleSave = async () => {
+    if (!user) return;
+    setIsSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        display_name: formData.displayName,
+        bio: formData.bio,
+        avatar_url: formData.avatarUrl || null,
+        company_name: formData.companyName || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id);
+
+    if (error) {
+      toast.error("Failed to save profile");
+    } else {
+      // Also persist local-only fields to the Zustand store
+      updateLocalProfile({
+        name: formData.displayName,
+        phone: formData.phone,
+        location: formData.location,
+        timezone: formData.timezone,
+        company: formData.companyName,
+        bio: formData.bio,
+      });
+      setIsDirty(false);
+      toast.success("Profile updated successfully");
+    }
+    setIsSaving(false);
   };
 
-  const handleAvatarUpload = () => {
-    toast.info("Avatar upload coming soon");
+  const getInitials = () => {
+    const name = formData.displayName || user?.email || "?";
+    return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -59,21 +145,21 @@ export function ProfileSettings() {
         <CardContent className="flex items-center gap-6">
           <div className="relative">
             <Avatar className="h-24 w-24 border-4 border-primary/20">
-              <AvatarImage src={formData.avatar} />
+              <AvatarImage src={formData.avatarUrl} />
               <AvatarFallback className="text-2xl bg-primary/20 text-primary">
-                {formData.initials}
+                {getInitials()}
               </AvatarFallback>
             </Avatar>
             <Button
               size="icon"
               className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full"
-              onClick={handleAvatarUpload}
+              onClick={() => toast.info("Avatar upload coming soon")}
             >
               <Camera className="h-4 w-4" />
             </Button>
           </div>
           <div className="space-y-2">
-            <Button variant="outline" onClick={handleAvatarUpload}>
+            <Button variant="outline" onClick={() => toast.info("Avatar upload coming soon")}>
               Upload new picture
             </Button>
             <p className="text-xs text-muted-foreground">
@@ -93,11 +179,11 @@ export function ProfileSettings() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="displayName">Full Name</Label>
               <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => handleChange("name", e.target.value)}
+                id="displayName"
+                value={formData.displayName}
+                onChange={(e) => handleChange("displayName", e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -105,8 +191,9 @@ export function ProfileSettings() {
               <Input
                 id="email"
                 type="email"
-                value={formData.email}
-                onChange={(e) => handleChange("email", e.target.value)}
+                value={user?.email ?? ""}
+                disabled
+                className="opacity-60"
               />
             </div>
           </div>
@@ -121,11 +208,11 @@ export function ProfileSettings() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="company">Company</Label>
+              <Label htmlFor="companyName">Company</Label>
               <Input
-                id="company"
-                value={formData.company}
-                onChange={(e) => handleChange("company", e.target.value)}
+                id="companyName"
+                value={formData.companyName}
+                onChange={(e) => handleChange("companyName", e.target.value)}
               />
             </div>
           </div>
@@ -175,16 +262,36 @@ export function ProfileSettings() {
       <div className="flex justify-end gap-3">
         <Button
           variant="outline"
-          onClick={() => {
-            setFormData(profile);
+          onClick={async () => {
+            if (!user) return;
+            setIsLoading(true);
+            const { data } = await supabase
+              .from("profiles")
+              .select("*")
+              .eq("user_id", user.id)
+              .single();
+            if (data) {
+              setFormData((prev) => ({
+                ...prev,
+                displayName: data.display_name ?? "",
+                bio: data.bio ?? "",
+                avatarUrl: data.avatar_url ?? "",
+                companyName: data.company_name ?? "",
+              }));
+            }
             setIsDirty(false);
+            setIsLoading(false);
           }}
-          disabled={!isDirty}
+          disabled={!isDirty || isSaving}
         >
           Cancel
         </Button>
-        <Button onClick={handleSave} disabled={!isDirty}>
-          <Save className="h-4 w-4 mr-2" />
+        <Button onClick={handleSave} disabled={!isDirty || isSaving}>
+          {isSaving ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4 mr-2" />
+          )}
           Save Changes
         </Button>
       </div>

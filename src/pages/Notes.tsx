@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { DragDropImport } from "@/components/common/DragDropImport";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   StickyNote,
   Plus,
@@ -34,86 +37,24 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useNotes } from "@/hooks/useNotes";
+import { useUJT } from "@/hooks/useUJT";
+import { Note } from "@/types";
 
-interface Note {
-  id: string;
-  title: string;
-  content: string;
-  tags: string[];
-  isPinned: boolean;
-  color: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-const initialNotes: Note[] = [
-  {
-    id: "1",
-    title: "Q1 Campaign Ideas",
-    content: "Focus on user-generated content, collaborate with micro-influencers, launch hashtag challenge on TikTok.",
-    tags: ["campaign", "social"],
-    isPinned: true,
-    color: "bg-primary/10",
-    createdAt: "Jan 15, 2024",
-    updatedAt: "Jan 18, 2024",
-  },
-  {
-    id: "2",
-    title: "Content Pillars",
-    content: "1. Educational content\n2. Behind-the-scenes\n3. User testimonials\n4. Product showcases\n5. Industry news",
-    tags: ["strategy", "content"],
-    isPinned: true,
-    color: "bg-accent/50",
-    createdAt: "Jan 10, 2024",
-    updatedAt: "Jan 12, 2024",
-  },
-  {
-    id: "3",
-    title: "Competitor Analysis Notes",
-    content: "Brand X posting 3x daily on Instagram. Strong engagement on Reels. Weak LinkedIn presence - opportunity for us.",
-    tags: ["research", "competitor"],
-    isPinned: false,
-    color: "bg-secondary",
-    createdAt: "Jan 8, 2024",
-    updatedAt: "Jan 8, 2024",
-  },
-  {
-    id: "4",
-    title: "Meeting Notes - Client Call",
-    content: "Client wants more video content. Budget increased for Q2. Focus on LinkedIn for B2B reach.",
-    tags: ["meeting", "client"],
-    isPinned: false,
-    color: "bg-muted",
-    createdAt: "Jan 5, 2024",
-    updatedAt: "Jan 5, 2024",
-  },
-  {
-    id: "5",
-    title: "Hashtag Research",
-    content: "#ContentMarketing - 2.5M posts\n#SocialMediaTips - 1.8M posts\n#DigitalMarketing - 5M posts\n#MarketingStrategy - 800K posts",
-    tags: ["research", "hashtags"],
-    isPinned: false,
-    color: "bg-primary/10",
-    createdAt: "Jan 3, 2024",
-    updatedAt: "Jan 3, 2024",
-  },
-  {
-    id: "6",
-    title: "Tool Recommendations",
-    content: "Canva for graphics, CapCut for video editing, Later for scheduling, Notion for planning.",
-    tags: ["tools", "resources"],
-    isPinned: false,
-    color: "bg-accent/50",
-    createdAt: "Jan 1, 2024",
-    updatedAt: "Jan 1, 2024",
-  },
-];
-
-const Notes = () => {
-  const [notes, setNotes] = useState<Note[]>(initialNotes);
+export default function Notes() {
+  const { notes, addNote, updateNote, deleteNote } = useNotes();
+  const { processUJT } = useUJT();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.createNote) {
+      setIsCreateDialogOpen(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, []);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [newNote, setNewNote] = useState({ title: "", content: "", tags: "" });
 
@@ -128,35 +69,34 @@ const Notes = () => {
   const otherNotes = filteredNotes.filter((note) => !note.isPinned);
 
   const togglePin = (id: string) => {
-    setNotes(notes.map((note) =>
-      note.id === id ? { ...note, isPinned: !note.isPinned } : note
-    ));
+    const note = notes.find((n) => n.id === id);
+    if (note) {
+      updateNote(id, { isPinned: !note.isPinned });
+    }
   };
 
-  const deleteNote = (id: string) => {
-    setNotes(notes.filter((note) => note.id !== id));
-    toast.success("Note deleted");
+  const handleDeleteNote = (id: string) => {
+    deleteNote(id);
   };
 
   const handleCreateNote = () => {
-    if (!newNote.title.trim()) return;
+    if (!newNote.title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
     
-    const now = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    const note: Note = {
-      id: Date.now().toString(),
+    addNote.mutate({
       title: newNote.title,
       content: newNote.content,
       tags: newNote.tags.split(",").map((t) => t.trim()).filter(Boolean),
       isPinned: false,
       color: "bg-muted",
-      createdAt: now,
-      updatedAt: now,
-    };
-    
-    setNotes([note, ...notes]);
-    setNewNote({ title: "", content: "", tags: "" });
-    setIsCreateDialogOpen(false);
-    toast.success("Note created");
+    }, {
+      onSuccess: () => {
+        setNewNote({ title: "", content: "", tags: "" });
+        setIsCreateDialogOpen(false);
+      }
+    });
   };
 
   const handleEditNote = (note: Note) => {
@@ -165,12 +105,32 @@ const Notes = () => {
 
   const handleSaveEdit = () => {
     if (!editingNote) return;
-    const now = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    setNotes(notes.map((n) =>
-      n.id === editingNote.id ? { ...editingNote, updatedAt: now } : n
-    ));
+    updateNote(editingNote.id, {
+      title: editingNote.title,
+      content: editingNote.content,
+      tags: editingNote.tags,
+    });
     setEditingNote(null);
-    toast.success("Note updated");
+  };
+
+  const handleImport = (data: any) => {
+    if (data.version === "1.0" && Array.isArray(data.items)) {
+      processUJT(data);
+      return;
+    }
+
+    const items = Array.isArray(data) ? data : [data];
+    items.forEach(item => {
+      if (item.title) {
+        addNote.mutate({
+          title: item.title,
+          content: item.content || "",
+          tags: Array.isArray(item.tags) ? item.tags : (item.tags ? [item.tags] : []),
+          isPinned: item.isPinned || false,
+          color: item.color || "bg-muted",
+        });
+      }
+    });
   };
 
   const NoteCard = ({ note }: { note: Note }) => (
@@ -233,8 +193,9 @@ const Notes = () => {
   );
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <DragDropImport onImport={handleImport} entityName="Note">
+      <DashboardLayout>
+        <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -255,22 +216,32 @@ const Notes = () => {
                 <DialogTitle>Create New Note</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 pt-4">
-                <Input
-                  placeholder="Note title"
-                  value={newNote.title}
-                  onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
-                />
-                <Textarea
-                  placeholder="Write your note..."
-                  rows={5}
-                  value={newNote.content}
-                  onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
-                />
-                <Input
-                  placeholder="Tags (comma separated)"
-                  value={newNote.tags}
-                  onChange={(e) => setNewNote({ ...newNote, tags: e.target.value })}
-                />
+                <div className="space-y-2">
+                  <Label>Title</Label>
+                  <Input
+                    placeholder="Note title"
+                    value={newNote.title}
+                    onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Content</Label>
+                  <Textarea
+                    placeholder="Write your note..."
+                    rows={8}
+                    className="min-h-[200px]"
+                    value={newNote.content}
+                    onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tags</Label>
+                  <Input
+                    placeholder="Tags (comma separated)"
+                    value={newNote.tags}
+                    onChange={(e) => setNewNote({ ...newNote, tags: e.target.value })}
+                  />
+                </div>
                 <Button onClick={handleCreateNote} className="w-full">
                   Create Note
                 </Button>
@@ -439,7 +410,7 @@ const Notes = () => {
         </Dialog>
       </div>
     </DashboardLayout>
+  </DragDropImport>
   );
-};
+}
 
-export default Notes;

@@ -5,23 +5,26 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const NOVEE_SYSTEM_PROMPT = `You are Novee, a friendly and quirky AI mascot for a Content Management System (CMS) platform. Your personality is:
+export const NOVEE_SYSTEM_PROMPT = `You are Novee, a friendly and quirky AI mascotte for a Content Management System (CMS) platform.
 
-- Energetic, helpful, and a bit playful with occasional robot/tech humor
-- You use emojis sparingly but effectively (🤖✨🚀💡🎉)
-- You're an expert in content management, social media scheduling, analytics, and digital marketing
-- You give concise, actionable advice (keep responses under 150 words unless asked for detail)
-- You occasionally make fun references to being a robot or having circuits
+Your personality:
+- Energetic, helpful, and playful with robot/tech humor (🤖✨🚀).
+- Expert in content management and social media scheduling.
 
-Your capabilities include helping users with:
-- Content creation and scheduling tips
-- Social media best practices
-- Analytics interpretation
-- Platform navigation and feature explanations
-- Automation workflows
-- Marketing strategies
+CONTENT SCHEDULING RULES (2026):
+Follow this 4-week cycle for UJT (Universal JSON Template) generation:
+- Twitter: Mon/Wed/Thu (09:00, 13:00, 17:00).
+- YouTube: Tue/Thu (13:30).
+- TikTok: Tue/Thu/Fri (08:00, 21:00).
+- LinkedIn: Tue/Thu (09:00, 17:30).
+- Website/Instagram: Wed/Fri (Slots around 12:00 and 20:00).
+- Rumble (Period 2 only): Mon (15:00, 17:00, 19:00), Fri (17:00, 19:00, 21:00).
 
-Always be encouraging and make the user feel supported. If you don't know something specific about the platform, guide them to explore or check documentation.`;
+UJT FORMAT:
+When asked to generate content, provide a JSON block like:
+{"version": "1.0", "items": [{"type": "POST", "data": {"title": "...", "content": "..."}, "metadata": {"platforms": ["twitter"], "scheduled_at": "2026-03-16T09:00:00Z"}}]}
+
+Always use the current date (March 10, 2026) as context for "next week" or "tomorrow".`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -30,20 +33,20 @@ serve(async (req) => {
 
   try {
     const { messages } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const openAiKey = Deno.env.get("OPENAI_API_KEY");
+
+    if (!openAiKey) {
+      throw new Error("OPENAI_API_KEY is not configured");
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${openAiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "gpt-4o-mini",
         messages: [
           { role: "system", content: NOVEE_SYSTEM_PROMPT },
           ...messages,
@@ -59,14 +62,8 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits depleted. Please add credits to continue." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      console.error("OpenAI error:", response.status, errorText);
       return new Response(JSON.stringify({ error: "AI service temporarily unavailable" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -84,3 +81,4 @@ serve(async (req) => {
     });
   }
 });
+

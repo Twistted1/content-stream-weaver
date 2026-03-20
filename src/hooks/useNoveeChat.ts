@@ -8,7 +8,7 @@ interface Message {
   timestamp: Date;
 }
 
-const CHAT_URL = 'https://jvbucspwcjahqpoxskvr.supabase.co/functions/v1/novee-chat';
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/novee-chat`;
 
 export function useNoveeChat() {
   const [messages, setMessages] = useState<Message[]>([]);

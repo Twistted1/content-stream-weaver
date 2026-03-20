@@ -1,5 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { usePosts } from "@/hooks/usePosts";
+import { getNextOptimalDate } from "@/utils/scheduling";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +28,9 @@ import {
   Users,
   Edit,
   Trash2,
+  Upload,
 } from "lucide-react";
+import { DragDropImport } from "@/components/common/DragDropImport";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -244,6 +248,7 @@ function TemplateCard({
 }
 
 export default function Templates() {
+  const { addPost } = usePosts();
   const [templates, setTemplates] = useState<Template[]>(initialTemplates);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All Templates");
@@ -405,9 +410,59 @@ export default function Templates() {
     );
   };
 
+  const handleImport = (data: any) => {
+    // Detect Universal JSON Template (UJT)
+    if (data.version === "1.0" && Array.isArray(data.items)) {
+      let scheduledCount = 0;
+      data.items.forEach((item: any) => {
+        if (item.type === "POST" || item.type === "ARTICLE") {
+          const platforms = item.metadata?.platforms || [];
+          let scheduledAt = item.metadata?.scheduled_at;
+          
+          if (!scheduledAt && platforms.length > 0) {
+            // AI distributes payload to the optimal calendar slot automatically
+            scheduledAt = getNextOptimalDate(platforms[0]).toISOString();
+          }
+
+          addPost.mutate({
+            post: {
+              title: item.data?.title || "AI Generated Content",
+              content: item.data?.content || "",
+              type: item.type.toLowerCase() as any,
+              status: scheduledAt ? "scheduled" : "draft",
+              scheduled_at: scheduledAt || null,
+            },
+            platforms: platforms
+          });
+          scheduledCount++;
+        }
+      });
+      toast.success(`Processed UJT: Automatically scheduled ${scheduledCount} intelligent posts.`);
+      return;
+    }
+
+    const items = Array.isArray(data) ? data : [data];
+    const newTemplates = items.map((item: any) => ({
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      name: item.name || item.title || "Untitled Template",
+      description: item.description || "",
+      category: item.category || "General",
+      content: item.content || "",
+      platforms: item.platforms || [],
+      isFavorite: false,
+      uses: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }));
+    
+    setTemplates(prev => [...newTemplates, ...prev]);
+    toast.success(`Imported ${newTemplates.length} templates`);
+  };
+
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <DragDropImport onImport={handleImport} entityName="Template">
+      <DashboardLayout>
+        <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -493,12 +548,30 @@ export default function Templates() {
                   <TabsTrigger value="all">All</TabsTrigger>
                   <TabsTrigger value="favorites">Favorites</TabsTrigger>
                   <TabsTrigger value="recent">Recent</TabsTrigger>
+                  <TabsTrigger value="import" className="hidden">Import</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
 
+            {activeTab === "import" && (
+              <Card className="border-dashed border-2 bg-muted/30">
+                <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <Upload className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">Import Templates</h3>
+                  <p className="text-muted-foreground max-w-sm mb-6">
+                    Drag and drop a JSON file here to import templates from another workspace or backup.
+                  </p>
+                  <Button variant="outline" className="cursor-default">
+                    Drop JSON File Here
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Templates Grid */}
-            {filteredTemplates.length > 0 ? (
+            {activeTab !== "import" && (filteredTemplates.length > 0 ? (
               <div className="grid gap-4 md:grid-cols-2">
                 {filteredTemplates.map((template) => (
                   <TemplateCard 
@@ -523,15 +596,10 @@ export default function Templates() {
                         ? "Try adjusting your search or filters"
                         : "Create your first template to get started"
                     }
-                    action={{
-                      label: "Create Template",
-                      onClick: openCreateDialog,
-                      icon: Plus,
-                    }}
                   />
                 </CardContent>
               </Card>
-            )}
+            ))}
           </div>
         </div>
       </div>
@@ -570,6 +638,7 @@ export default function Templates() {
               <Label htmlFor="category">Category</Label>
               <select
                 id="category"
+                title="Category"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
                 value={formCategory}
                 onChange={(e) => setFormCategory(e.target.value)}
@@ -640,5 +709,6 @@ export default function Templates() {
         </AlertDialogContent>
       </AlertDialog>
     </DashboardLayout>
+    </DragDropImport>
   );
 }

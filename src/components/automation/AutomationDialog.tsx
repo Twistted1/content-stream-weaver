@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { triggerOptions, scheduleOptions, platformOptions } from "./automationData";
-import { Automation, TriggerType } from "@/stores/useAppStore";
+import { Automation, TriggerType } from "@/hooks/useAutomations";
 
 interface AutomationDialogProps {
   open: boolean;

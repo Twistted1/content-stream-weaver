@@ -164,10 +164,10 @@ export default function Landing() {
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" asChild>
-              <Link to="/dashboard">Try Demo</Link>
+              <Link to="/auth?tab=signin">Login</Link>
             </Button>
             <Button asChild>
-              <Link to="/auth">Sign Up</Link>
+              <Link to="/auth?tab=signup">Sign Up</Link>
             </Button>
           </div>
         </div>
@@ -190,15 +190,15 @@ export default function Landing() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button size="lg" asChild className="w-full sm:w-auto">
-              <Link to="/auth">
+              <Link to="/auth?tab=signup">
                 Start Free Trial
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
             <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
-              <Link to="/dashboard">
+              <Link to="/auth?tab=signin">
                 <Play className="mr-2 h-4 w-4" />
-                Try Demo
+                Login
               </Link>
             </Button>
           </div>
@@ -300,7 +300,7 @@ export default function Landing() {
                     variant={plan.popular ? "default" : "outline"}
                     asChild
                   >
-                    <Link to="/auth">{plan.cta}</Link>
+                    <Link to="/auth?tab=signup">{plan.cta}</Link>
                   </Button>
                 </CardFooter>
               </Card>
@@ -363,13 +363,13 @@ export default function Landing() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button size="lg" asChild>
-              <Link to="/auth">
+              <Link to="/auth?tab=signup">
                 Get Started for Free
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link to="/dashboard">Try the Demo</Link>
+              <Link to="/auth?tab=signin">Login</Link>
             </Button>
           </div>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">

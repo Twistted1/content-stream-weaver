@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NotificationsDropdown } from "@/components/header/NotificationsDropdown";
@@ -10,6 +11,7 @@ const routeTitles: Record<string, string> = {
   "/automation": "Automation",
   "/platforms": "Platforms",
   "/calendar": "Content Calendar",
+  "/articles": "Articles",
   "/projects": "Projects",
   "/strategies": "Strategies",
   "/notes": "Notes",
@@ -23,9 +25,18 @@ const routeTitles: Record<string, string> = {
   "/settings": "Settings",
 };
 
+const formatTime = () =>
+  new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
 export function Header() {
   const location = useLocation();
   const title = routeTitles[location.pathname] || "Overview";
+  const [time, setTime] = useState(formatTime);
+
+  useEffect(() => {
+    const id = setInterval(() => setTime(formatTime()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6">
@@ -45,7 +56,7 @@ export function Header() {
         <SearchCommand />
 
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          <span>{time}</span>
           <span className="text-xs uppercase">Local</span>
         </div>
 

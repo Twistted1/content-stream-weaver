@@ -6,19 +6,21 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
-import { PostType } from "@/stores/useAppStore";
+import { PostType, PlatformType } from "@/types";
 import { LucideIcon } from "lucide-react";
+
+import React from "react";
 
 interface Platform {
   id: string;
   name: string;
-  icon: LucideIcon;
+  icon: any;
 }
 
-interface NewPost {
+export interface NewPost {
   title: string;
   content: string;
-  platforms: string[];
+  platforms: PlatformType[];
   scheduledDate: string;
   scheduledTime: string;
   type: PostType;
@@ -109,14 +111,14 @@ export function PostDialog({
                 <div
                   key={platform.id}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
-                    newPost.platforms.includes(platform.id)
+                    newPost.platforms.includes(platform.id as PlatformType)
                       ? "border-primary bg-primary/10"
                       : "border-border hover:border-primary/50"
                   }`}
                   onClick={() => togglePlatformSelection(platform.id)}
                 >
                   <Checkbox
-                    checked={newPost.platforms.includes(platform.id)}
+                    checked={newPost.platforms.includes(platform.id as PlatformType)}
                     onCheckedChange={() => togglePlatformSelection(platform.id)}
                   />
                   <platform.icon

@@ -163,7 +163,7 @@ const UsersPage = () => {
     selectedUsers.forEach((id) => {
       const user = users.find((u) => u.id === id);
       if (user && user.status === "active") {
-        toggleUserStatus(id);
+        updateUser(id, { status: "inactive" });
       }
     });
     toast({

@@ -15,6 +15,7 @@ import {
   Users,
   Upload,
   LogOut,
+  Zap,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useTranslation } from "react-i18next";
@@ -33,6 +34,7 @@ const mainNavItems = [
 
 const toolsNavItems = [
   { icon: Sparkles, labelKey: "nav.aiAssistant", href: "/ai" },
+  { icon: Zap, labelKey: "nav.pipeline", href: "/pipeline" },
   { icon: Settings, labelKey: "nav.automation", href: "/automation" },
   { icon: FileText, labelKey: "nav.templates", href: "/templates" },
   { icon: BarChart3, labelKey: "nav.analytics", href: "/analytics" },

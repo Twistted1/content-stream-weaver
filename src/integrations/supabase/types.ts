@@ -153,6 +153,62 @@ export type Database = {
           },
         ]
       }
+      pipeline_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          platforms: string[]
+          post_id: string | null
+          result: Json | null
+          schedule_mode: string
+          scheduled_at: string | null
+          status: string
+          steps: Json
+          topic: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          platforms?: string[]
+          post_id?: string | null
+          result?: Json | null
+          schedule_mode?: string
+          scheduled_at?: string | null
+          status?: string
+          steps?: Json
+          topic: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          platforms?: string[]
+          post_id?: string | null
+          result?: Json | null
+          schedule_mode?: string
+          scheduled_at?: string | null
+          status?: string
+          steps?: Json
+          topic?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_runs_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_platforms: {
         Row: {
           created_at: string
@@ -518,6 +574,42 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      webhook_configs: {
+        Row: {
+          created_at: string
+          headers: Json | null
+          id: string
+          is_active: boolean
+          name: string
+          platforms: string[]
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          headers?: Json | null
+          id?: string
+          is_active?: boolean
+          name: string
+          platforms?: string[]
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          headers?: Json | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          platforms?: string[]
+          updated_at?: string
+          url?: string
           user_id?: string
         }
         Relationships: []

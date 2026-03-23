@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
-import { Post, PostInsert, PostUpdate, PostStatus, PostType, PlatformType, Media, MediaInsert, PostPlatform } from "@/types";
+import { Post, PostStatus, PostType, PlatformType, Media, PostPlatform } from "@/types";
 
 type PostRow = Database["public"]["Tables"]["posts"]["Row"];
 type PostInsertType = Database["public"]["Tables"]["posts"]["Insert"];

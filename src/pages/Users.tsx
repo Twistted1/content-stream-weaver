@@ -99,12 +99,8 @@ const UsersPage = () => {
   const handleUserDialogSave = (data: Partial<User>) => {
     if (userDialogMode === "create") {
       addUser({
-        name: data.name || "",
         email: data.email || "",
-        avatar: "",
         role: data.role || "member",
-        status: "pending",
-        permissions: data.permissions,
       });
       toast({
         title: "Invitation sent",
@@ -112,7 +108,7 @@ const UsersPage = () => {
       });
     } else if (selectedUser) {
       if (userDialogMode === "role") {
-        changeUserRole(selectedUser.id, data.role!);
+        updateUser(selectedUser.id, { role: data.role });
         if (data.permissions) {
           updateUser(selectedUser.id, { permissions: data.permissions });
         }
@@ -141,7 +137,7 @@ const UsersPage = () => {
   };
 
   const handleBulkDelete = () => {
-    deleteUsers(selectedUsers);
+    selectedUsers.forEach(id => deleteUser(id));
     toast({
       title: "Users removed",
       description: `${selectedUsers.length} users have been removed`,
@@ -153,7 +149,7 @@ const UsersPage = () => {
     selectedUsers.forEach((id) => {
       const user = users.find((u) => u.id === id);
       if (user && user.status !== "active") {
-        toggleUserStatus(id);
+        updateUser(id, { status: "active" });
       }
     });
     toast({
@@ -167,7 +163,7 @@ const UsersPage = () => {
     selectedUsers.forEach((id) => {
       const user = users.find((u) => u.id === id);
       if (user && user.status === "active") {
-        toggleUserStatus(id);
+        updateUser(id, { status: "inactive" });
       }
     });
     toast({
@@ -362,7 +358,7 @@ const UsersPage = () => {
                     filteredUsers.map((user) => (
                       <UserCard
                         key={user.id}
-                        user={user}
+                        user={user as any}
                         selected={selectedUsers.includes(user.id)}
                         onSelect={(checked) => handleSelectUser(user.id, checked)}
                         onEdit={() => handleEditUser(user)}
@@ -507,7 +503,7 @@ const UsersPage = () => {
       <UserDialog
         open={userDialogOpen}
         onOpenChange={setUserDialogOpen}
-        user={selectedUser}
+        user={selectedUser as any}
         onSave={handleUserDialogSave}
         mode={userDialogMode}
       />

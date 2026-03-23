@@ -29,6 +29,7 @@ import UsersPage from "./pages/Users";
 import ImportData from "./pages/ImportData";
 import Settings from "./pages/Settings";
 import Articles from "./pages/Articles";
+import ContentPipeline from "./pages/ContentPipeline";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -79,6 +80,7 @@ const App = () => (
               <Route path="/ai" element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
               <Route path="/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
               <Route path="/import" element={<ProtectedRoute><ImportData /></ProtectedRoute>} />
+              <Route path="/pipeline" element={<ProtectedRoute><ContentPipeline /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

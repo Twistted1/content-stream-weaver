@@ -37,7 +37,8 @@
     "users": "Users",
     "importData": "Import Data",
     "articles": "Articles",
-    "importTemplates": "Import Templates"
+    "importTemplates": "Import Templates",
+    "pipeline": "Content Pipeline"
   },
   "dashboard": {
     "welcome": "Welcome back",

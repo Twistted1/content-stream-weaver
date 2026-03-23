@@ -2,13 +2,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { toast } from "sonner";
-import { Database } from "@/integrations/supabase/types";
 import { UserPlatform, PlatformType } from "@/types";
 
-type UserPlatformRow = Database["public"]["Tables"]["user_platforms"]["Row"];
-type UserPlatformUpdate = Database["public"]["Tables"]["user_platforms"]["Update"];
-
-const mapUserPlatform = (row: UserPlatformRow): UserPlatform => {
+const mapUserPlatform = (row: any): UserPlatform => {
   const settings = row.settings as any;
   return {
     id: row.id,
@@ -38,20 +34,20 @@ export function usePlatforms() {
     queryKey: ["user_platforms", user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("user_platforms")
         .select("*")
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      return data.map(mapUserPlatform);
+      return (data || []).map(mapUserPlatform);
     },
     enabled: !!user,
   });
 
   const updatePlatformSettings = useMutation({
     mutationFn: async ({ id, settings }: { id: string; settings: UserPlatform["settings"] }) => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("user_platforms")
         .update({ settings: settings as any })
         .eq("id", id)
@@ -65,14 +61,14 @@ export function usePlatforms() {
       queryClient.invalidateQueries({ queryKey: ["user_platforms"] });
       toast.success("Settings updated");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error("Failed to update settings: " + error.message);
     },
   });
 
   const togglePlatformStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: "active" | "paused" }) => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("user_platforms")
         .update({ status })
         .eq("id", id)
@@ -82,25 +78,25 @@ export function usePlatforms() {
       if (error) throw error;
       return mapUserPlatform(data);
     },
-    onSuccess: (data) => {
+    onSuccess: (data: UserPlatform) => {
       queryClient.invalidateQueries({ queryKey: ["user_platforms"] });
       toast.success(`Platform ${data.status === "active" ? "activated" : "paused"}`);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error("Failed to update status: " + error.message);
     },
   });
 
   const disconnectPlatform = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("user_platforms").delete().eq("id", id);
+      const { error } = await (supabase as any).from("user_platforms").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user_platforms"] });
       toast.success("Platform disconnected");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error("Failed to disconnect platform: " + error.message);
     },
   });

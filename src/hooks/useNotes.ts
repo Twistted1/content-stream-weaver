@@ -9,7 +9,7 @@ export function useNotes() {
   const { data: notes = [], isLoading, error } = useQuery({
     queryKey: ["notes"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("notes")
         .select("*")
         .order("is_pinned", { ascending: false })

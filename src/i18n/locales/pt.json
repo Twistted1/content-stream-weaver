@@ -37,7 +37,8 @@
     "users": "Usuários",
     "importData": "Importar Dados",
     "articles": "Artigos",
-    "importTemplates": "Importar Modelos"
+    "importTemplates": "Importar Modelos",
+    "pipeline": "Pipeline de Conteúdo"
   },
   "dashboard": {
     "welcome": "Bem-vindo de volta",

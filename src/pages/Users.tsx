@@ -99,12 +99,8 @@ const UsersPage = () => {
   const handleUserDialogSave = (data: Partial<User>) => {
     if (userDialogMode === "create") {
       addUser({
-        name: data.name || "",
         email: data.email || "",
-        avatar: "",
         role: data.role || "member",
-        status: "pending",
-        permissions: data.permissions,
       });
       toast({
         title: "Invitation sent",

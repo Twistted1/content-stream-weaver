@@ -503,7 +503,7 @@ const UsersPage = () => {
       <UserDialog
         open={userDialogOpen}
         onOpenChange={setUserDialogOpen}
-        user={selectedUser}
+        user={selectedUser as any}
         onSave={handleUserDialogSave}
         mode={userDialogMode}
       />

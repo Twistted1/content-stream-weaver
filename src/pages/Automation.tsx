@@ -100,29 +100,33 @@ export default function AutomationPage() {
     toast.success(`${automation?.name} duplicated`);
   };
 
-  const handleRun = (id: string) => {
+  const handleRun = async (id: string) => {
     const automation = automations.find((a) => a.id === id);
     if (!automation) return;
 
-    const runId = runAutomation(id);
-    toast.info(`Running ${automation.name}...`);
+    try {
+      const runId = await runAutomation(id);
+      toast.info(`Running ${automation.name}...`);
 
-    setTimeout(() => {
-      const success = Math.random() > 0.2;
-      completeAutomationRun(
-        runId,
-        success,
-        success
-          ? `Successfully executed on ${automation.platforms.join(", ")}`
-          : "Failed to connect to one or more platforms",
-        id
-      );
-      if (success) {
-        toast.success(`${automation.name} completed successfully`);
-      } else {
-        toast.error(`${automation.name} failed`);
-      }
-    }, 2000);
+      setTimeout(() => {
+        const success = Math.random() > 0.2;
+        completeAutomationRun(
+          runId,
+          success,
+          success
+            ? `Successfully executed on ${automation.platforms.join(", ")}`
+            : "Failed to connect to one or more platforms",
+          id
+        );
+        if (success) {
+          toast.success(`${automation.name} completed successfully`);
+        } else {
+          toast.error(`${automation.name} failed`);
+        }
+      }, 2000);
+    } catch (e) {
+      toast.error("Failed to start automation");
+    }
   };
 
   const handleViewHistory = (automation: Automation) => {

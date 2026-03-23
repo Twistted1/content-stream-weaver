@@ -80,6 +80,7 @@ const App = () => (
               <Route path="/ai" element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
               <Route path="/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
               <Route path="/import" element={<ProtectedRoute><ImportData /></ProtectedRoute>} />
+              <Route path="/pipeline" element={<ProtectedRoute><ContentPipeline /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

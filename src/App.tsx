@@ -29,6 +29,7 @@ import UsersPage from "./pages/Users";
 import ImportData from "./pages/ImportData";
 import Settings from "./pages/Settings";
 import Articles from "./pages/Articles";
+import ContentPipeline from "./pages/ContentPipeline";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

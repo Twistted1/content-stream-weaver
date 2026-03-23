@@ -68,7 +68,7 @@ export default function GanttChart() {
 
   const projectMap = useMemo(() => {
     const map: Record<string, string> = {};
-    projects.forEach(p => { map[p.id] = p.name; });
+    projects.forEach(p => { map[p.id] = (p as any).name || p.title; });
     return map;
   }, [projects]);
 

@@ -137,7 +137,7 @@ const UsersPage = () => {
   };
 
   const handleBulkDelete = () => {
-    deleteUsers(selectedUsers);
+    selectedUsers.forEach(id => deleteUser(id));
     toast({
       title: "Users removed",
       description: `${selectedUsers.length} users have been removed`,

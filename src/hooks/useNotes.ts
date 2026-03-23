@@ -35,7 +35,7 @@ export function useNotes() {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error("Not authenticated");
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("notes")
         .insert({
           title: newNote.title,

@@ -15,6 +15,7 @@ import {
   Users,
   Upload,
   LogOut,
+  Zap,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useTranslation } from "react-i18next";

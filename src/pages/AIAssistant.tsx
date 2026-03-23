@@ -80,6 +80,13 @@ const contentTemplates = [
     category: "Productivity",
     prompt: "Generate a Universal JSON Template (UJT) containing 'Projects, Notes, and Strategies'. The JSON should include an array of objects with fields for title, strategy_outline, project_phases, and key_notes, formatted as a raw code block so I can import it directly into the CMS.",
   },
+  {
+    title: "Weekly Social Strategy",
+    description: "Generate full JSON workflow (21 Tweets, 7 IG posts)",
+    icon: Sparkles,
+    category: "Workflow Automation",
+    prompt: "Please research the internet for this week's economic news. Format all 21 tweets and 7 Instagram posts for the coming week. NOVUS EXCHANGE brand voice maintained throughout - professional, data-driven, analytical, balanced. No WAR topics unless it directly impacts other countries economically/politically. Output strictly as a structured JSON payload that can be directly imported into our Workflow UI. Ensure each IG post is 800-2,600 chars with 8-10 hashtags, and tweets are under 280 chars.",
+  },
 ];
 
 const GREETING = "Hello! I'm Novee, your AI content assistant. 🤖✨ I can help you create engaging social media posts, generate hashtags, write captions, and brainstorm content ideas. How can I help you today?";

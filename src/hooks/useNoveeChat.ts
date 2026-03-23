@@ -8,6 +8,10 @@ interface Message {
   timestamp: Date;
 }
 
+import { CONTENT_SCHEDULE } from '@/utils/scheduling';
+
+// ... other imports ...
+
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/novee-chat`;
 
 export function useNoveeChat() {
@@ -48,16 +52,33 @@ export function useNoveeChat() {
     try {
       const chatHistory = messages.map(m => ({ role: m.role, content: m.content }));
       
-      const resp = await fetch(CHAT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [...chatHistory, { role: 'user', content: userContent }],
-        }),
-      });
+      const systemContext = `You are Novee, an expert AI content assistant for Novus Exchange. 
+Here is the current content scheduling strategy for the platforms:
+${JSON.stringify(CONTENT_SCHEDULE, null, 2)}
+Use this schedule to advise the user on when and where to post. Always adapt recommendations to fit these slots.`;
 
-      if (!resp.ok || !resp.body) {
-        const errorData = await resp.json().catch(() => ({}));
+      let resp;
+      let retries = 2;
+      
+      while (retries >= 0) {
+        try {
+          resp = await fetch(CHAT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              messages: [{ role: 'system', content: systemContext }, ...chatHistory, { role: 'user', content: userContent }],
+            }),
+          });
+          if (resp.ok) break;
+        } catch (e) {
+          if (retries === 0) throw e;
+        }
+        retries--;
+        await new Promise(res => setTimeout(res, 1000)); // wait 1s before retry
+      }
+
+      if (!resp || !resp.ok || !resp.body) {
+        const errorData = resp ? await resp.json().catch(() => ({})) : {};
         throw new Error(errorData.error || 'Failed to connect to Novee');
       }
 

@@ -1,715 +1,365 @@
-import { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Calendar } from "@/components/ui/calendar";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Plus,
-  ChevronLeft,
-  ChevronRight,
-  Youtube,
-  Instagram,
-  Facebook,
-  Twitter,
-  Linkedin,
-  Clock,
-  MoreHorizontal,
-  Eye,
-  Edit,
-  Trash2,
-  Send,
-  Globe,
-  Mic,
-  Music2,
-  FileText,
-  Image,
-  Video,
-} from "lucide-react";
-import { format, addDays, startOfWeek, isSameDay, parseISO } from "date-fns";
-import { toast } from "sonner";
-import { DragDropImport } from "@/components/common/DragDropImport";
 import { usePosts } from "@/hooks/usePosts";
 import { useUJT } from "@/hooks/useUJT";
-import { Post, PostType, PlatformType } from "@/types";
-import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import { DragDropImport } from "@/components/common/DragDropImport";
+import { parseISO, format } from "date-fns";
 
-const platformIcons: Record<string, React.ElementType> = {
-  youtube: Youtube,
-  instagram: Instagram,
-  facebook: Facebook,
-  twitter: Twitter,
-  linkedin: Linkedin,
-  website: Globe,
-  podcast: Mic,
-  tiktok: () => (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
-    </svg>
-  ),
+function getDaysInMonth(year: any, month: any) {
+  const days = []; const firstDay = new Date(year, month, 1); const lastDay = new Date(year, month + 1, 0);
+  for (let i = 0; i < firstDay.getDay(); i++) days.push(new Date(year, month, -firstDay.getDay() + i + 1));
+  for (let i = 1; i <= lastDay.getDate(); i++) days.push(new Date(year, month, i));
+  const remaining = 42 - days.length;
+  for (let i = 1; i <= remaining; i++) days.push(new Date(year, month + 1, i));
+  return days;
+}
+
+function getWeekDays(date: any) {
+  const days = []; const start = new Date(date); start.setDate(date.getDate() - date.getDay());
+  for (let i = 0; i < 7; i++) { const d = new Date(start); d.setDate(start.getDate() + i); days.push(d); }
+  return days;
+}
+
+function formatDateKey(date: any) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; }
+function isSameDay(a: any, b: any) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+function isToday(date: any) { return isSameDay(date, new Date()); }
+function formatTime12(time: any) { const [h, m] = time.split(":").map(Number); return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`; }
+
+function getEventsForDay(events: any[], date: any) {
+  return events.filter(e => e.date === formatDateKey(date)).sort((a, b) => {
+    if (a.allDay && !b.allDay) return -1; if (!a.allDay && b.allDay) return 1;
+    return (a.startTime || "").localeCompare(b.startTime || "");
+  });
+}
+
+const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const DAY_NAMES = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+const CATEGORY_STYLES: any = {
+  content:  { bg: "bg-violet-500/20", text: "text-violet-300", border: "border-violet-500/40", dot: "bg-violet-400", label: "Content",  icon: "🎬" },
+  personal: { bg: "bg-emerald-500/20", text: "text-emerald-300", border: "border-emerald-500/40", dot: "bg-emerald-400", label: "Personal", icon: "🌿" },
+  meeting:  { bg: "bg-blue-500/20", text: "text-blue-300", border: "border-blue-500/40", dot: "bg-blue-400", label: "Meeting",  icon: "👥" },
+  deadline: { bg: "bg-red-500/20", text: "text-red-300", border: "border-red-500/40", dot: "bg-red-400", label: "Deadline", icon: "🚨" },
+  publish:  { bg: "bg-amber-500/20", text: "text-amber-300", border: "border-amber-500/40", dot: "bg-amber-400", label: "Publish",  icon: "📤" },
 };
 
-const platformNames: Record<string, string> = {
-  youtube: "YouTube",
-  instagram: "Instagram",
-  facebook: "Facebook",
-  twitter: "X",
-  linkedin: "LinkedIn",
-  website: "Novus Exchange",
-  podcast: "Podcast",
-  tiktok: "TikTok",
+const PLATFORM_STYLES: any = {
+  youtube:   { bg: "bg-red-500/20", text: "text-red-400", border: "border-red-500/40", dot: "bg-red-400", badgeBg: "bg-red-600", badgeText: "text-white", label: "YouTube", icon: "▶" },
+  tiktok:    { bg: "bg-zinc-500/20", text: "text-zinc-300", border: "border-zinc-500/40", dot: "bg-zinc-400", badgeBg: "bg-black", badgeText: "text-white", label: "TikTok", icon: "♪" },
+  instagram: { bg: "bg-pink-500/20", text: "text-pink-400", border: "border-pink-500/40", dot: "bg-pink-400", badgeBg: "bg-gradient-to-br from-purple-600 to-pink-500", badgeText: "text-white", label: "Instagram", icon: "◈" },
+  twitter:   { bg: "bg-sky-500/20", text: "text-sky-400", border: "border-sky-500/40", dot: "bg-sky-400", badgeBg: "bg-sky-500", badgeText: "text-white", label: "Twitter/X", icon: "𝕏" },
+  facebook:  { bg: "bg-blue-600/20", text: "text-blue-400", border: "border-blue-600/40", dot: "bg-blue-500", badgeBg: "bg-blue-600", badgeText: "text-white", label: "Facebook", icon: "f" },
+  linkedin:  { bg: "bg-blue-500/20", text: "text-blue-400", border: "border-blue-500/40", dot: "bg-blue-400", badgeBg: "bg-blue-700", badgeText: "text-white", label: "LinkedIn", icon: "in" },
+  website:   { bg: "bg-emerald-500/20", text: "text-emerald-400", border: "border-emerald-500/40", dot: "bg-emerald-400", badgeBg: "bg-emerald-600", badgeText: "text-white", label: "Website", icon: "🌐" },
+  rumble:    { bg: "bg-green-500/20", text: "text-green-400", border: "border-green-500/40", dot: "bg-green-400", badgeBg: "bg-green-500", badgeText: "text-white", label: "Rumble", icon: "R" },
+  none:      { bg: "bg-gray-500/20", text: "text-gray-300", border: "border-gray-500/40", dot: "bg-gray-400", badgeBg: "bg-gray-600", badgeText: "text-white", label: "", icon: "" },
 };
 
-const platformColors: Record<string, string> = {
-  youtube: "bg-red-500/20 text-red-500",
-  instagram: "bg-pink-500/20 text-pink-500",
-  facebook: "bg-blue-600/20 text-blue-600",
-  twitter: "bg-foreground/20 text-foreground",
-  linkedin: "bg-blue-500/20 text-blue-500",
-  website: "bg-teal-500/20 text-teal-500",
-  podcast: "bg-purple-500/20 text-purple-500",
-  tiktok: "bg-foreground/20 text-foreground",
+const getStyle = (evt: any) => {
+  if (evt.platform && evt.platform !== 'none' && PLATFORM_STYLES[evt.platform]) return PLATFORM_STYLES[evt.platform];
+  return CATEGORY_STYLES[evt.category] || CATEGORY_STYLES['content'];
 };
 
-const availablePlatforms = ["youtube", "instagram", "facebook", "twitter", "linkedin", "website", "podcast", "tiktok"];
+function StatPill({ icon, label, color }: any) {
+  const colors: any = { violet: "bg-violet-500/10 text-violet-300 border-violet-500/20", amber: "bg-amber-500/10 text-amber-300 border-amber-500/20", red: "bg-red-500/10 text-red-300 border-red-500/20" };
+  return <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium ${colors[color]}`}><span>{icon}</span>{label}</div>;
+}
 
-const postTypes: { value: PostType; label: string; icon: React.ElementType }[] = [
-  { value: "text", label: "Text", icon: FileText },
-  { value: "image", label: "Image", icon: Image },
-  { value: "video", label: "Video", icon: Video },
-  { value: "reel", label: "Reel", icon: Video },
-  { value: "carousel", label: "Carousel", icon: Image },
-  { value: "thread", label: "Thread", icon: FileText },
-  { value: "article", label: "Article", icon: FileText },
-];
-
-const emptyPost = {
-  title: "",
-  content: "",
-  platforms: [] as PlatformType[],
-  scheduledDate: "",
-  scheduledTime: "",
-  status: "draft" as const,
-  type: "text" as PostType,
-};
-
-export default function ContentCalendar() {
-  const { posts, addPost, updatePost, deletePost, schedulePost, publishPost } = usePosts();
-  const { processUJT } = useUJT();
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [view, setView] = useState<"week" | "month">("week");
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [editingPost, setEditingPost] = useState<Post | null>(null);
-  const [newPost, setNewPost] = useState(emptyPost);
-
-  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-
-  const getPostsForDate = (date: Date) => {
-    return posts.filter((post) => {
-      if (!post.scheduledAt) return false;
-      const postDate = parseISO(post.scheduledAt);
-      return isSameDay(postDate, date);
-    });
-  };
-
-  const onDragEnd = (result: DropResult) => {
-    const { destination, draggableId } = result;
-
-    if (!destination) return;
-
-    // The droppableId is the ISO date string of the target day
-    const targetDate = parseISO(destination.droppableId);
-    
-    // Find the post
-    const post = posts.find(p => p.id === draggableId);
-    if (!post) return;
-
-    // Calculate new scheduled time (keep existing time or default to 9am)
-    let newTime = "09:00";
-    if (post.scheduledAt) {
-      const currentDate = parseISO(post.scheduledAt);
-      newTime = format(currentDate, "HH:mm");
-    }
-
-    const newScheduledAt = `${format(targetDate, "yyyy-MM-dd")}T${newTime}:00`;
-    
-    schedulePost.mutate({ id: draggableId, scheduledAt: newScheduledAt });
-  };
-
-  const todayPosts = getPostsForDate(selectedDate);
-
-  const togglePlatform = (platformId: string, isNew: boolean) => {
-    const platform = platformId as PlatformType;
-    if (isNew) {
-      setNewPost((prev) => ({
-        ...prev,
-        platforms: prev.platforms.includes(platform)
-          ? prev.platforms.filter((p) => p !== platform)
-          : [...prev.platforms, platform],
-      }));
-    } else if (editingPost) {
-      // For editing, we just handle the local state update logic conceptually,
-      // but editingPost structure is different (Post object).
-      // Since Post object has platforms array of objects, we need a different approach if we want to toggle.
-      // However, for simplicity in this refactor, we'll focus on creating new posts correctly first.
-      // Editing existing posts' platforms would require mapping between PostPlatform[] and string[].
-      // For now, let's assume editing platforms is limited or handled differently.
-    }
-  };
-
-  const handleCreatePost = () => {
-    if (!newPost.title || newPost.platforms.length === 0) {
-      toast.error("Please enter a title and select at least one platform.");
-      return;
-    }
-
-    let scheduledAt = null;
-    if (newPost.scheduledDate && newPost.scheduledTime) {
-      scheduledAt = `${newPost.scheduledDate}T${newPost.scheduledTime}:00`;
-    }
-
-    addPost.mutate({
-      post: {
-        title: newPost.title,
-        content: newPost.content,
-        type: newPost.type,
-        status: scheduledAt ? "scheduled" : "draft",
-        scheduled_at: scheduledAt,
-      },
-      platforms: newPost.platforms,
-    }, {
-      onSuccess: () => {
-        setNewPost(emptyPost);
-        setIsCreateDialogOpen(false);
-      }
-    });
-  };
-
-  const handleUpdatePost = () => {
-    if (!editingPost) return;
-    
-    // Extract scheduled time if needed
-    // This is a simplified update. Real app would handle complex platform updates.
-    updatePost.mutate({
-      id: editingPost.id,
-      title: editingPost.title,
-      content: editingPost.content,
-      type: editingPost.type,
-    });
-    setEditingPost(null);
-  };
-
-  const handleDeletePost = (id: string) => {
-    deletePost.mutate(id);
-  };
-
-  const handlePublishPost = (id: string) => {
-    publishPost.mutate(id);
-  };
-
-  const openCreateWithDate = (date: Date) => {
-    setNewPost({
-      ...emptyPost,
-      scheduledDate: format(date, "yyyy-MM-dd"),
-    });
-    setIsCreateDialogOpen(true);
-  };
-
-  const PostForm = ({ data, onChange, isNew }: { data: typeof emptyPost | Post; onChange: (data: any) => void; isNew: boolean }) => (
-    <div className="space-y-4 py-4">
-      <div className="space-y-2">
-        <Label htmlFor="title">Title</Label>
-        <Input
-          id="title"
-          value={data.title}
-          onChange={(e) => onChange({ ...data, title: e.target.value })}
-          placeholder="Post title"
-        />
+function MiniCalendar({ current, selected, events, onSelectDate, onChangeMonth }: any) {
+  const days = getDaysInMonth(current.getFullYear(), current.getMonth());
+  return (
+    <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+      <div className="flex items-center justify-between mb-3">
+        <button onClick={() => onChangeMonth(-1)} className="w-7 h-7 rounded-lg text-gray-400 hover:text-white hover:bg-white/10">‹</button>
+        <span className="text-sm font-semibold text-white">{MONTH_NAMES[current.getMonth()]} {current.getFullYear()}</span>
+        <button onClick={() => onChangeMonth(1)} className="w-7 h-7 rounded-lg text-gray-400 hover:text-white hover:bg-white/10">›</button>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="content">Content</Label>
-        <Textarea
-          id="content"
-          value={data.content || ""}
-          onChange={(e) => onChange({ ...data, content: e.target.value })}
-          placeholder="Write your post content..."
-          rows={4}
-        />
+      <div className="grid grid-cols-7 mb-1">{DAY_NAMES.map(d => <div key={d} className="text-center text-[10px] text-gray-500 py-1">{d[0]}</div>)}</div>
+      <div className="grid grid-cols-7 gap-0.5">
+        {days.map((day, i) => {
+          const isSelected = isSameDay(day, selected); const today = isToday(day); const hasEvt = events.some((e:any)=>e.date===formatDateKey(day));
+          return (
+            <button key={i} onClick={() => onSelectDate(new Date(day))} className={`relative flex items-center justify-center w-7 h-7 mx-auto rounded-lg text-xs font-medium transition-all ${today ? "bg-violet-600 text-white font-bold" : isSelected ? "bg-white/15 text-white" : day.getMonth()===current.getMonth() ? "text-gray-300 hover:bg-white/10" : "text-gray-600 hover:bg-white/5"}`}>
+              {day.getDate()}
+              {hasEvt && !today && <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-violet-400" />}
+            </button>
+          );
+        })}
       </div>
-      {isNew && (
-        <div className="space-y-2">
-          <Label>Platforms</Label>
-          <div className="flex flex-wrap gap-2">
-            {availablePlatforms.map((platform) => {
-              const Icon = platformIcons[platform];
-              // Safe cast since we know availablePlatforms contains valid keys
-              const isSelected = (data as typeof emptyPost).platforms.includes(platform as PlatformType);
+    </div>
+  );
+}
 
+const FILTERS = [ { value: "all", label: "All", icon: "◈" }, { value: "content", label: "Content", icon: "🎬" }, { value: "publish", label: "Publish", icon: "📤" }, { value: "meeting", label: "Meetings", icon: "👥" }, { value: "deadline", label: "Deadlines", icon: "🚨" }, { value: "personal", label: "Personal", icon: "🌿" } ];
+
+function Sidebar({ events, miniMonth, selectedDate, onSelectDate, onChangeMiniMonth, onAddEvent, onClickEvent, categoryFilter, onFilterChange, onClose }: any) {
+  const todayEvents = getEventsForDay(events, new Date());
+  const completedToday = todayEvents.filter((e: any) => e.completed).length;
+  const progress = todayEvents.length > 0 ? (completedToday / todayEvents.length) * 100 : 0;
+  const upcoming = events.filter((e: any) => { const eDate = new Date(e.date + "T12:00:00"); const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(0, 0, 0, 0); const nextWeek = new Date(); nextWeek.setDate(nextWeek.getDate() + 8); return eDate >= tomorrow && eDate <= nextWeek; }).sort((a: any, b: any) => a.date.localeCompare(b.date)).slice(0, 5);
+
+  return (
+    <aside className="flex flex-col gap-3 overflow-y-auto pb-4 custom-scrollbar">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2"><span className="text-violet-400 text-sm">◧</span><h2 className="text-xs font-semibold text-gray-400 uppercase">Panel</h2></div>
+        <button onClick={onClose} className="w-6 h-6 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-500">×</button>
+      </div>
+      <button onClick={onAddEvent} className="w-full flex justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold text-sm hover:scale-[1.02] transition-all">+ New Event</button>
+      <MiniCalendar current={miniMonth} selected={selectedDate} events={events} onSelectDate={onSelectDate} onChangeMonth={onChangeMiniMonth} />
+      <div className="bg-white/5 border border-white/10 rounded-xl p-3">
+        <h3 className="text-xs font-semibold text-gray-400 uppercase mb-2">Filter</h3>
+        <div className="space-y-0.5">
+          {FILTERS.map(f => {
+            const active = categoryFilter === f.value; const style = f.value !== "all" ? CATEGORY_STYLES[f.value] : null; const count = f.value === "all" ? events.length : events.filter((e: any) => e.category === f.value).length;
+            return <button key={f.value} onClick={() => onFilterChange(f.value)} className={`w-full flex justify-between px-2.5 py-1.5 rounded-lg text-xs ${active ? (style ? `${style.bg} ${style.text}` : "bg-white/10 text-white") : "text-gray-400 hover:bg-white/5 hover:text-gray-200"}`}><span className="flex gap-2"><span>{f.icon}</span>{f.label}</span><span className={`text-[10px] px-1.5 py-0.5 rounded-md ${active ? "bg-black/20" : "bg-white/5 text-gray-500"}`}>{count}</span></button>;
+          })}
+        </div>
+      </div>
+      <div className="bg-white/5 border border-white/10 rounded-xl p-3">
+        <h3 className="text-xs font-semibold text-gray-400 uppercase mb-2">Today's Agenda</h3>
+        {todayEvents.length > 0 && <div className="h-1 bg-white/10 rounded-full overflow-hidden mb-2"><div className="h-full bg-gradient-to-r from-violet-500 to-emerald-500 transition-all" style={{ width: `${progress}%` }} /></div>}
+        {todayEvents.length === 0 ? <p className="text-xs text-center py-2 text-gray-600">No events today 🎉</p> : (
+          <div className="space-y-1.5">
+            {todayEvents.map((evt: any) => {
+              const s = getStyle(evt); const p = PLATFORM_STYLES[evt.platform] || PLATFORM_STYLES['none'];
               return (
-                <div
-                  key={platform}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
-                    isSelected ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"
-                  }`}
-                  onClick={() => togglePlatform(platform, isNew)}
-                >
-                  <Checkbox checked={isSelected} />
-                  <Icon className="h-4 w-4" />
-                  <span className="text-sm">{platformNames[platform]}</span>
+                <div key={evt.id} className={`flex gap-2.5 p-2 rounded-lg border cursor-pointer hover:border-white/20 ${evt.completed ? "opacity-50" : ""} ${s.bg} ${s.border}`} onClick={() => onClickEvent(evt)}>
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-xs font-medium truncate ${evt.completed ? "line-through" : s.text}`}>{evt.title}</p>
+                    {evt.startTime && <p className="text-[10px] text-gray-500 mt-0.5">{formatTime12(evt.startTime)}</p>}
+                    {evt.platform && evt.platform !== 'none' && <span className={`inline-block text-[9px] px-1.5 py-0.5 rounded mt-1 font-medium ${p.badgeBg} ${p.badgeText}`}>{p.label}</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      {upcoming.length > 0 && (
+        <div className="bg-white/5 border border-white/10 rounded-xl p-3">
+          <h3 className="text-xs font-semibold text-gray-400 uppercase mb-2">Coming Up</h3>
+          <div className="space-y-1.5">
+            {upcoming.map((evt: any) => {
+              const s = getStyle(evt); const evtDate = new Date(evt.date + "T12:00:00");
+              return (
+                <div key={evt.id} className="flex items-center gap-2 cursor-pointer group" onClick={() => onClickEvent(evt)}>
+                  <div className={`w-8 h-8 flex-shrink-0 flex flex-col items-center justify-center rounded-lg ${s.bg} border ${s.border}`}><span className="text-[8px] font-medium text-gray-400 leading-tight">{evtDate.toLocaleDateString("en-US", { weekday: "short" })}</span><span className={`text-xs font-bold ${s.text} leading-tight`}>{evtDate.getDate()}</span></div>
+                  <div className="min-w-0 flex-1"><p className="text-xs font-medium text-gray-300 truncate group-hover:text-white transition-colors">{evt.title}</p><p className="text-[9px] text-gray-500">{evt.startTime ? formatTime12(evt.startTime) : "All day"} · {s.label}</p></div>
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${s.dot}`} />
                 </div>
               );
             })}
           </div>
         </div>
       )}
-      <div className="space-y-2">
-        <Label>Content Type</Label>
-        <Select value={data.type} onValueChange={(value: PostType) => onChange({ ...data, type: value })}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {postTypes.map((type) => (
-              <SelectItem key={type.value} value={type.value}>
-                <div className="flex items-center gap-2">
-                  <type.icon className="h-4 w-4" />
-                  {type.label}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="bg-gradient-to-br from-violet-500/10 to-indigo-500/10 border border-violet-500/20 rounded-xl p-3">
+        <div className="flex items-start gap-2"><span className="text-xl">✨</span><div><p className="text-[11px] font-semibold text-violet-300 mb-0.5">Smart Tip</p><p className="text-[10px] text-gray-400 leading-relaxed">You have {todayEvents.filter((e: any) => e.category === "content").length} content tasks today. Batch your filming sessions to save up to 40% more time.</p></div></div>
       </div>
-      {isNew && (
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="date">Schedule Date</Label>
-            <Input
-              id="date"
-              type="date"
-              value={(data as typeof emptyPost).scheduledDate}
-              onChange={(e) => onChange({ ...data, scheduledDate: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="time">Schedule Time</Label>
-            <Input
-              id="time"
-              type="time"
-              value={(data as typeof emptyPost).scheduledTime}
-              onChange={(e) => onChange({ ...data, scheduledTime: e.target.value })}
-            />
-          </div>
-        </div>
-      )}
+    </aside>
+  );
+}
+
+function MonthView({ current, events, categoryFilter, onClickDay, onClickEvent }: any) {
+  const days = getDaysInMonth(current.getFullYear(), current.getMonth());
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="grid grid-cols-7 border-b border-white/10 text-center text-xs font-semibold text-gray-400 uppercase py-3">{DAY_NAMES.map(d => <div key={d}>{d}</div>)}</div>
+      <div className="flex-1 grid grid-cols-7 grid-rows-6">
+        {days.map((day, i) => {
+          const dayEvents = getEventsForDay(events, day).filter((e: any) => categoryFilter === 'all' || e.category === categoryFilter);
+          return (
+            <div key={i} onClick={() => onClickDay(new Date(day))} className={`min-h-0 p-1.5 border-r border-b border-white/[0.06] cursor-pointer hover:bg-white/[0.03] ${day.getMonth() !== current.getMonth() ? "bg-white/[0.01]" : ""} ${isToday(day) ? "bg-violet-500/5" : ""}`}>
+              <div className="mb-1"><span className={`w-7 h-7 flex items-center justify-center rounded-full text-sm ${isToday(day) ? "bg-violet-600 text-white" : day.getMonth() === current.getMonth() ? "text-gray-300" : "text-gray-600"}`}>{day.getDate()}</span></div>
+              <div className="space-y-0.5 max-h-[100px] overflow-y-auto custom-scrollbar">
+                {dayEvents.map((evt: any) => {
+                  const s = getStyle(evt);
+                  return <div key={evt.id} onClick={(e) => { e.stopPropagation(); onClickEvent(evt); }} className={`px-1 py-0.5 rounded text-[10px] truncate ${s.bg} ${s.text} ${s.border}`}>{evt.title}</div>;
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
+}
 
-  const handleImport = (data: any) => {
-    if (data.version === "1.0" && Array.isArray(data.items)) {
-      processUJT(data);
-      return;
+function WeekView({ current }: any) { return <div className="flex-1 flex flex-col overflow-hidden p-4 items-center justify-center border-t border-white/10"><p className="text-gray-400">Week View Loaded</p></div>; }
+function DayView({ current }: any) { return <div className="flex-1 flex flex-col items-center justify-center p-4 border-t border-white/10"><p className="text-gray-400">Day View Loaded</p></div>; }
+function AgendaView({ current }: any) { return <div className="flex-1 overflow-y-auto px-6 py-4 border-t border-white/10 text-gray-400">Agenda View Loaded</div>; }
+
+function EventModal({ event, defaultDate, onSave, onDelete, onClose }: any) {
+  const [title, setTitle] = useState(event?.title || ""); const [date, setDate] = useState(event?.date || (defaultDate ? formatDateKey(defaultDate) : formatDateKey(new Date()))); const [startTime, setStartTime] = useState(event?.startTime || "09:00"); const [endTime, setEndTime] = useState(event?.endTime || "10:00"); const [category, setCategory] = useState(event?.category || "content"); const [platform, setPlatform] = useState(event?.platform || "none"); const [description, setDescription] = useState(event?.description || "");
+  const [imageUrl, setImageUrl] = useState(event?.imageUrl || "");
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setImageUrl(url); // In a full prod app this uploads to Supabase Storage and returns true URL
     }
-
-    const items = Array.isArray(data) ? data : [data];
-    items.forEach((item: any) => {
-      if (item.title) {
-        addPost.mutate({
-          post: {
-            title: item.title,
-            content: item.content || "",
-            type: item.type || "text",
-            status: item.status || "draft",
-            scheduled_at: item.scheduledAt || item.scheduled_at || null,
-          },
-          platforms: item.platforms || [],
-        });
-      }
-    });
   };
+  
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-lg bg-[#1a1d2e] border border-white/10 rounded-2xl shadow-2xl p-6">
+        <h2 className="text-lg font-semibold text-white mb-4">{event ? "Edit Event" : "New Event"}</h2>
+        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white mb-4" />
+        <div className="flex gap-4 mb-4">
+          <input type="date" title="Event Date" aria-label="Event Date" value={date} onChange={e => setDate(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white" />
+          <input type="time" title="Start Time" aria-label="Start Time" value={startTime} onChange={e => setStartTime(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white" />
+        </div>
+        <select title="Event Category" aria-label="Event Category" value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white mb-4">
+          <option value="content">Content</option><option value="meeting">Meeting</option><option value="publish">Publish</option><option value="reel">Reel</option><option value="post">Post</option><option value="blog">Blog</option><option value="articles">Articles</option>
+        </select>
+        
+        {/* Visual Render of a Proper Post */}
+        <div className="mb-4">
+           {imageUrl ? (
+             <div className="relative w-full h-40 rounded-xl overflow-hidden border border-white/10 group mb-2">
+                <img src={imageUrl} alt="Post preview" className="w-full h-full object-cover" />
+                <button onClick={() => setImageUrl("")} className="absolute top-2 right-2 bg-black/60 hover:bg-red-500/80 p-1.5 rounded-lg text-white opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+             </div>
+           ) : (
+             <label className="flex flex-col items-center justify-center w-full h-24 bg-white/5 border-2 border-dashed border-white/10 rounded-xl cursor-pointer hover:bg-white/10 mb-2 transition-colors">
+               <span className="text-xs text-gray-400">📷 Attach Media (Turn this into a visual post)</span>
+               <input type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+             </label>
+           )}
+        </div>
+
+        <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} placeholder="Notes" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white mb-4" />
+        <div className="flex justify-end gap-2">
+          {event && onDelete && <button onClick={() => { onDelete(event.originalId || event.id); onClose(); }} className="px-4 py-2 text-red-400">Delete</button>}
+          <button onClick={onClose} className="px-4 py-2 text-gray-400">Cancel</button>
+          <button onClick={() => { onSave({ id: event?.id || `evt-${Date.now()}`, title, date, startTime, endTime, category, platform, description, imageUrl }); onClose(); }} className="px-4 py-2 bg-violet-600 text-white rounded">Save</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function ContentCalendar() {
+  const { posts, addPost, updatePost, deletePost, schedulePost } = usePosts();
+  const { processUJT } = useUJT();
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try { const json = JSON.parse(event.target?.result as string); if (json.version === "1.0") processUJT(json); } catch (err) { console.error("Failed to parse JSON", err); }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+  
+  const events = posts.map((post: any) => {
+    let date = formatDateKey(new Date()); let startTime = "";
+    if (post.scheduledAt) { const d = parseISO(post.scheduledAt); date = formatDateKey(d); startTime = format(d, "HH:mm"); }
+    return { id: post.id, originalId: post.id, title: post.title, description: post.content, date, startTime, category: post.status === "published" ? "publish" : "content", platform: post.platforms && post.platforms[0] ? post.platforms[0].platform.toLowerCase() : "none", completed: post.status === "published", allDay: !post.scheduledAt };
+  });
+
+  const [current, setCurrent] = useState(new Date()); const [miniMonth, setMiniMonth] = useState(new Date()); const [selectedDate, setSelectedDate] = useState(new Date()); const [viewMode, setViewMode] = useState("month"); const [categoryFilter, setCategoryFilter] = useState("all"); const [searchQuery, setSearchQuery] = useState(""); const [sidebarOpen, setSidebarOpen] = useState(true); const [modalOpen, setModalOpen] = useState(false); const [editingEvent, setEditingEvent] = useState<any>(null); const [defaultDate, setDefaultDate] = useState<any>(undefined);
+
+  const navigate = useCallback((dir: number) => { const next = new Date(current); if (viewMode === "month") next.setMonth(current.getMonth() + dir); else if (viewMode === "week") next.setDate(current.getDate() + dir * 7); else if (viewMode === "day") next.setDate(current.getDate() + dir); setCurrent(next); }, [current, viewMode]);
+
+  const handleSaveEvent = (event: any) => {
+    const scheduledAt = event.startTime ? `${event.date}T${event.startTime}:00` : `${event.date}T09:00:00`; const isUpdating = !event.id.startsWith("evt-");
+    if (isUpdating) { updatePost.mutate({ id: event.id, title: event.title, content: event.description, status: "scheduled", type: "text" }); schedulePost.mutate({ id: event.id, scheduledAt }); } else { addPost.mutate({ post: { title: event.title, content: event.description || "", type: "text", status: "scheduled", scheduled_at: scheduledAt }, platforms: [] }); }
+  };
+  const handleDeleteEvent = (id: string) => deletePost.mutate(id);
+
+  const filteredEvents = searchQuery.trim() ? events.filter((e: any) => e.title.toLowerCase().includes(searchQuery.toLowerCase()) || (e.description || "").toLowerCase().includes(searchQuery.toLowerCase())) : events;
+  const todayCount = events.filter((e: any) => e.date === formatDateKey(new Date())).length;
+  const publishCount = events.filter((e: any) => e.category === "publish").length;
+  const deadlineCount = events.filter((e: any) => e.category === "deadline").length;
+
+  const headerLabel = (() => {
+    if (viewMode === "month") return `${MONTH_NAMES[current.getMonth()]} ${current.getFullYear()}`;
+    if (viewMode === "week") {
+      const start = new Date(current); start.setDate(current.getDate() - current.getDay());
+      const end = new Date(start); end.setDate(start.getDate() + 6);
+      if (start.getMonth() === end.getMonth()) return `${MONTH_NAMES[start.getMonth()]} ${start.getDate()} – ${end.getDate()}, ${start.getFullYear()}`;
+      return `${MONTH_NAMES[start.getMonth()]} ${start.getDate()} – ${MONTH_NAMES[end.getMonth()]} ${end.getDate()}, ${start.getFullYear()}`;
+    }
+    if (viewMode === "day") return current.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+    return `Agenda · ${MONTH_NAMES[current.getMonth()]} ${current.getFullYear()}`;
+  })();
 
   return (
-    <DragDropImport onImport={handleImport} entityName="Post">
-      <DashboardLayout>
-        <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Content Calendar</h1>
-            <p className="text-muted-foreground">Schedule and manage your posts across all platforms</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex border border-border rounded-lg overflow-hidden">
-              <Button
-                variant={view === "week" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setView("week")}
-                className="rounded-none"
-              >
-                Week
-              </Button>
-              <Button
-                variant={view === "month" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setView("month")}
-                className="rounded-none"
-              >
-                Month
-              </Button>
+    <DashboardLayout>
+      <DragDropImport onImport={(data) => { if (data.version === "1.0") processUJT(data); }} entityName="UJT">
+        <div className="-m-6 h-[calc(100vh-64px)] w-[calc(100%+3rem)] bg-transparent text-white flex flex-col font-sans overflow-hidden">
+          
+          {/* Top Master Class Header */}
+          <header className="flex-shrink-0 flex items-center justify-between px-5 py-3 border-b border-white/10 bg-black/20 backdrop-blur-xl z-30">
+            <div className="flex items-center gap-3">
+              <button onClick={() => setSidebarOpen(p => !p)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-violet-600/20 border border-violet-500/40 text-violet-400">☰</button>
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">📅</div>
+              <div>
+                <h1 className="text-base font-bold bg-gradient-to-r from-violet-300 to-indigo-300 bg-clip-text text-transparent leading-none">MyFlow</h1>
+                <p className="text-[10px] text-gray-500 leading-none mt-0.5">Smart Calendar</p>
+              </div>
             </div>
-            <Button className="gap-2" onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4" />
-              Schedule Post
-            </Button>
-          </div>
-        </div>
+            
+            <div className="flex-1 max-w-md mx-6 relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">🔍</span>
+              <input aria-label="Search" title="Search events" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search events, tasks, content..." className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-violet-500/50" />
+              {searchQuery && <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">✕</button>}
+            </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Calendar Sidebar */}
-          <div className="space-y-4">
-            <Card className="bg-card border-border">
-              <CardContent className="p-3">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => date && setSelectedDate(date)}
-                  className="pointer-events-auto"
-                />
-              </CardContent>
-            </Card>
+            <div className="flex items-center gap-3">
+              <label className="cursor-pointer bg-white/5 hover:bg-white/10 border border-violet-500/30 text-violet-300 text-[11px] font-bold py-1.5 px-3 rounded-xl transition-all shadow-lg hover:shadow-violet-500/20 flex items-center gap-2">
+                <span>📥 Import UJT</span>
+                <input type="file" accept=".json" className="hidden" onChange={handleFileUpload} />
+              </label>
+              <div className="hidden md:flex flex-wrap items-center gap-2">
+                 <StatPill icon="📅" label={`${todayCount} today`} color="violet" />
+                 <StatPill icon="📤" label={`${publishCount} posts`} color="amber" />
+                 <StatPill icon="🚨" label={`${deadlineCount} deadlines`} color="red" />
+              </div>
+              <button aria-label="Notifications" className="relative w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 border border-white/10">🔔{deadlineCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold flex items-center justify-center">{deadlineCount}</span>}</button>
+              <div className="flex items-center gap-2 pl-2 border-l border-white/10">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-sm font-bold">C</div>
+                <span className="text-sm text-gray-300 hidden md:block">Creator</span>
+              </div>
+            </div>
+          </header>
 
-            {/* Quick Stats */}
-            <Card className="bg-card border-border">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">This Week</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Scheduled</span>
-                  <span className="font-medium text-foreground">
-                    {posts.filter((p) => p.status === "scheduled").length}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Published</span>
-                  <span className="font-medium text-foreground">
-                    {posts.filter((p) => p.status === "published").length}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Drafts</span>
-                  <span className="font-medium text-foreground">
-                    {posts.filter((p) => p.status === "draft").length}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Main Calendar View */}
-          <div className="lg:col-span-3 space-y-4">
-            {view === "week" ? (
-              <Card className="bg-card border-border">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{format(weekStart, "MMMM yyyy")}</CardTitle>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setSelectedDate(addDays(selectedDate, -7))}
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => setSelectedDate(new Date())}>
-                        Today
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setSelectedDate(addDays(selectedDate, 7))}
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <DragDropContext onDragEnd={onDragEnd}>
-                    <div className="grid grid-cols-7 gap-2">
-                      {weekDays.map((day) => {
-                        const dayPosts = getPostsForDate(day);
-                        const isToday = isSameDay(day, new Date());
-                        const isSelected = isSameDay(day, selectedDate);
-                        const dayId = day.toISOString();
-
-                        return (
-                          <Droppable key={dayId} droppableId={dayId}>
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.droppableProps}
-                                className={`min-h-[160px] p-3 rounded-xl border cursor-pointer transition-all ${
-                                  isSelected
-                                    ? "border-primary bg-primary/5 shadow-sm"
-                                    : isToday
-                                    ? "border-primary/50 bg-muted/50"
-                                    : "border-border hover:bg-muted/30 hover:shadow-sm"
-                                } ${snapshot.isDraggingOver ? "ring-2 ring-primary/30 bg-primary/10" : ""}`}
-                                onClick={() => setSelectedDate(day)}
-                                onDoubleClick={() => openCreateWithDate(day)}
-                              >
-                                <div className="flex items-center justify-between mb-3">
-                                  <p className="text-xs font-medium text-muted-foreground uppercase">{format(day, "EEE")}</p>
-                                  <div className={`h-7 w-7 rounded-full flex items-center justify-center text-sm font-semibold ${
-                                    isToday ? "bg-primary text-primary-foreground shadow-sm" : "text-foreground"
-                                  }`}>
-                                    {format(day, "d")}
-                                  </div>
-                                </div>
-                                <div className="space-y-1.5">
-                                  {dayPosts.map((post, index) => (
-                                    <Draggable key={post.id} draggableId={post.id} index={index}>
-                                      {(provided) => (
-                                        <div
-                                          ref={provided.innerRef}
-                                          {...provided.draggableProps}
-                                          {...provided.dragHandleProps}
-                                          className={`text-xs px-2 py-1.5 rounded-md truncate cursor-grab active:cursor-grabbing border shadow-sm transition-all hover:scale-[1.02] ${
-                                            post.status === "draft"
-                                              ? "bg-muted text-muted-foreground border-transparent"
-                                              : post.status === "published"
-                                              ? "bg-success/10 text-success-foreground border-success/20"
-                                              : "bg-background border-border"
-                                          }`}
-                                        >
-                                          <div className="flex items-center gap-1.5">
-                                            {post.type === "video" && <Video className="h-3 w-3 shrink-0 opacity-70" />}
-                                            {post.type === "image" && <Image className="h-3 w-3 shrink-0 opacity-70" />}
-                                            {post.type === "text" && <FileText className="h-3 w-3 shrink-0 opacity-70" />}
-                                            <span className="truncate font-medium">{post.title}</span>
-                                          </div>
-                                        </div>
-                                      )}
-                                    </Draggable>
-                                  ))}
-                                  {provided.placeholder}
-                                </div>
-                              </div>
-                            )}
-                          </Droppable>
-                        );
-                      })}
-                    </div>
-                  </DragDropContext>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="bg-card border-border">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>{format(selectedDate, "MMMM yyyy")}</CardTitle>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() =>
-                          setSelectedDate(new Date(selectedDate.setMonth(selectedDate.getMonth() - 1)))
-                        }
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => setSelectedDate(new Date())}>
-                        Today
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() =>
-                          setSelectedDate(new Date(selectedDate.setMonth(selectedDate.getMonth() + 1)))
-                        }
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => date && setSelectedDate(date)}
-                    className="w-full pointer-events-auto"
-                  />
-                </CardContent>
-              </Card>
+          <div className="flex-1 flex overflow-hidden">
+            {sidebarOpen && (
+              <div className="w-[300px] bg-[#0f1117] border-r border-white/10 overflow-y-auto p-4 shrink-0 transition-all duration-300">
+                <Sidebar events={filteredEvents} miniMonth={miniMonth} selectedDate={selectedDate} onSelectDate={(d: any) => { setSelectedDate(d); setCurrent(d); }} onChangeMiniMonth={(dir: any) => { const next = new Date(miniMonth); next.setMonth(miniMonth.getMonth() + dir); setMiniMonth(next); }} onAddEvent={() => { setEditingEvent(null); setDefaultDate(undefined); setModalOpen(true); }} onClickEvent={(evt: any) => { setEditingEvent(evt); setModalOpen(true); }} categoryFilter={categoryFilter} onFilterChange={setCategoryFilter} onClose={() => setSidebarOpen(false)} />
+              </div>
             )}
-
-            {/* Selected Day Posts */}
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Clock className="h-5 w-5" />
-                      {format(selectedDate, "EEEE, MMMM d")}
-                    </CardTitle>
-                    <CardDescription>
-                      {todayPosts.length} post{todayPosts.length !== 1 ? "s" : ""} scheduled
-                    </CardDescription>
-                  </div>
-                  <Button size="sm" variant="outline" onClick={() => openCreateWithDate(selectedDate)}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Post
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {todayPosts.length > 0 ? (
-                  todayPosts.map((post) => (
-                    <div
-                      key={post.id}
-                      className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/30 hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="text-center min-w-[60px]">
-                          <p className="text-sm font-medium text-foreground">
-                            {post.scheduledAt ? format(parseISO(post.scheduledAt), "HH:mm") : "No time"}
-                          </p>
-                          <Badge
-                            variant={post.status === "scheduled" ? "default" : post.status === "published" ? "outline" : "secondary"}
-                            className={`text-xs ${post.status === "published" ? "border-success text-success" : ""}`}
-                          >
-                            {post.status}
-                          </Badge>
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-foreground">{post.title}</h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            {post.platforms?.map((p) => {
-                              const Icon = platformIcons[p.platform];
-                              if (!Icon) return null;
-                              return (
-                                <div key={p.id} className={`p-1 rounded ${platformColors[p.platform] || ""}`}>
-                                  <Icon className="h-3 w-3" />
-                                </div>
-                              );
-                            })}
-                            <Badge variant="outline" className="text-xs">
-                              {post.type}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {post.status !== "published" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePublishPost(post.id)}
-                          >
-                            <Send className="h-3 w-3 mr-1" />
-                            Publish
-                          </Button>
-                        )}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setEditingPost(post)}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => handleDeletePost(post.id)}>
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>No posts scheduled for this day</p>
-                    <Button variant="outline" className="mt-4 gap-2" onClick={() => openCreateWithDate(selectedDate)}>
-                      <Plus className="h-4 w-4" />
-                      Schedule a Post
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            
+            <div className="flex-1 flex flex-col overflow-hidden">
+               {/* Calendar Grid Toolbar */}
+               <div className="flex-shrink-0 flex items-center justify-between px-5 py-3 border-b border-white/10 bg-[#0f1117]">
+                 <div className="flex items-center gap-2">
+                    <button onClick={() => navigate(-1)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 hover:bg-white/10">‹</button>
+                    <button onClick={() => { setCurrent(new Date()); setSelectedDate(new Date()); }} className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${isToday(current) ? 'bg-violet-600/30 text-violet-300 border-violet-500/40' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>Today</button>
+                    <button onClick={() => navigate(1)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 hover:bg-white/10">›</button>
+                    <h2 className="text-base font-semibold text-white ml-2">{headerLabel}</h2>
+                 </div>
+                 <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
+                    {['month', 'week', 'day', 'agenda'].map(m => (
+                      <button key={m} onClick={() => setViewMode(m)} className={`px-3 py-1.5 rounded-lg text-xs capitalize ${viewMode === m ? "bg-violet-600 shadow-md" : "text-gray-400 hover:text-gray-200"}`}>{m}</button>
+                    ))}
+                 </div>
+               </div>
+               
+               {viewMode === "month" && <MonthView current={current} events={filteredEvents} categoryFilter={categoryFilter} onClickDay={(date: any) => { setSelectedDate(date); setDefaultDate(date); setEditingEvent(null); setModalOpen(true); }} onClickEvent={(evt: any) => { setEditingEvent(evt); setModalOpen(true); }} />}
+               {viewMode === "week" && <WeekView current={current} />}
+               {viewMode === "day" && <DayView current={current} />}
+               {viewMode === "agenda" && <AgendaView current={current} />}
+            </div>
           </div>
+          {modalOpen && <EventModal event={editingEvent} defaultDate={defaultDate} onSave={handleSaveEvent} onDelete={handleDeleteEvent} onClose={() => { setModalOpen(false); setEditingEvent(null); }} />}
         </div>
-
-        {/* Create Dialog */}
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Schedule New Post</DialogTitle>
-              <DialogDescription>Create a new post to publish across your platforms.</DialogDescription>
-            </DialogHeader>
-            <PostForm data={newPost} onChange={setNewPost} isNew={true} />
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreatePost}>
-                {newPost.scheduledDate && newPost.scheduledTime ? "Schedule Post" : "Save as Draft"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Edit Dialog */}
-        <Dialog open={!!editingPost} onOpenChange={(open) => !open && setEditingPost(null)}>
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Edit Post</DialogTitle>
-              <DialogDescription>Update your scheduled post.</DialogDescription>
-            </DialogHeader>
-            {editingPost && <PostForm data={editingPost} onChange={setEditingPost} isNew={false} />}
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditingPost(null)}>
-                Cancel
-              </Button>
-              <Button onClick={handleUpdatePost}>Save Changes</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+      </DragDropImport>
     </DashboardLayout>
-  </DragDropImport>
   );
 }

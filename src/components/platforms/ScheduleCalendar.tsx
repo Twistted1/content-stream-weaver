@@ -20,42 +20,59 @@ export function ScheduleCalendar({ platforms }: ScheduleCalendarProps) {
   const displayDays = [...DAYS.slice(1), DAYS[0]];
 
   return (
-    <Card className="bg-card border-border overflow-hidden mb-6">
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Clock className="w-5 h-5 text-primary" />
-          Automated Weekly Schedule (Period {period})
-        </CardTitle>
-        <CardDescription>
-          Your daily posting layout. AI content templates will be mapped to these specific slots during distribution.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div className="relative rounded-3xl bg-card/20 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden mb-8 ring-1 ring-white/5">
+      <div className="absolute top-[-50%] right-[-10%] w-[400px] h-[400px] bg-blue-500/10 rounded-full filter blur-[80px] pointer-events-none"></div>
+      
+      <div className="flex flex-col md:flex-row md:items-center justify-between p-6 border-b border-white/10 bg-black/20 relative z-10">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-gradient-to-br from-primary/20 to-blue-500/20 rounded-2xl border border-white/10 shadow-inner">
+            <Clock className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-xl font-outfit font-bold text-white flex items-center gap-2">
+              Automated Operations <Badge variant="secondary" className="bg-primary/20 text-primary border-none ml-2">Period {period}</Badge>
+            </h2>
+            <p className="text-sm text-muted-foreground/80 mt-1">AI content templates are mapped directly to these distribution slots.</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-6 relative z-10 bg-gradient-to-b from-transparent to-black/20">
         <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
           {displayDays.map((day) => {
             const slots = schedule[day] || [];
             
             return (
-              <div key={day} className="flex flex-col border border-border rounded-lg overflow-hidden bg-background">
-                <div className="bg-muted px-3 py-2 border-b border-border text-center font-medium text-sm">
-                  {day}
+              <div key={day} className="flex flex-col border border-white/10 rounded-2xl overflow-hidden bg-white/5 backdrop-blur-md transition-all duration-300 hover:border-primary/40 hover:bg-white/10 hover:shadow-[0_8px_30px_rgba(45,212,191,0.15)] group">
+                <div className="bg-gradient-to-b from-black/40 to-transparent px-4 py-3 border-b border-white/10 text-center flex items-center justify-center">
+                  <span className="font-outfit font-bold tracking-widest text-sm text-white/90 uppercase">{day}</span>
                 </div>
-                <div className="p-3 flex-grow flex flex-col gap-2 min-h-[120px]">
+                <div className="p-3 flex-grow flex flex-col gap-2.5 min-h-[140px]">
                   {slots.length === 0 ? (
-                    <div className="text-xs text-muted-foreground text-center my-auto italic">No posts</div>
+                    <div className="flex flex-col items-center justify-center h-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="w-8 h-8 rounded-full border border-dashed border-white/20 flex items-center justify-center mb-2">
+                        <span className="text-white/30 text-xs">-</span>
+                      </div>
+                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground/50">Rest</span>
+                    </div>
                   ) : (
                     slots.map((slot, idx) => {
                       const platformInfo = getPlatformDisplay(slot.platform);
                       return (
-                        <div key={idx} className="flex flex-col gap-1.5 bg-card/50 hover:bg-muted/50 transition-colors text-xs p-2.5 rounded-md border border-border shadow-sm">
+                        <div key={idx} className="flex flex-col gap-2 bg-black/40 hover:bg-gradient-to-br hover:from-primary/20 hover:to-transparent transition-all duration-300 hover:-translate-y-1 p-3 rounded-xl border border-white/5 shadow-sm hover:shadow-lg hover:border-primary/30 group/slot">
                           <div className="flex items-center justify-between w-full">
-                            <div className="flex items-center gap-1.5 overflow-hidden">
-                              {platformInfo && platformInfo.icon ? (
-                                <platformInfo.icon className="w-3.5 h-3.5 flex-shrink-0" />
-                              ) : null}
-                              <span className="font-medium truncate">{platformInfo ? platformInfo.name : slot.platform}</span>
+                            <div className="flex items-center gap-2 overflow-hidden">
+                              <div className="p-1.5 rounded-lg bg-card border border-white/10 shadow-inner group-hover/slot:border-primary/30 transition-colors">
+                                {platformInfo && platformInfo.icon ? (
+                                  <platformInfo.icon className="w-3.5 h-3.5 flex-shrink-0 text-white group-hover/slot:text-primary transition-colors" />
+                                ) : null}
+                              </div>
+                              <span className="font-semibold text-xs tracking-wide text-white/80 group-hover/slot:text-white transition-colors truncate">{platformInfo ? platformInfo.name : slot.platform}</span>
                             </div>
-                            <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-background">
+                          </div>
+                          <div className="flex items-center justify-between mt-0.5">
+                            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">Time</span>
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/20 font-mono">
                               {slot.time}
                             </Badge>
                           </div>
@@ -68,7 +85,7 @@ export function ScheduleCalendar({ platforms }: ScheduleCalendarProps) {
             );
           })}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

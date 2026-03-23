@@ -49,6 +49,7 @@ export function useUJT() {
                 type: item.type === "ARTICLE" ? "article" : (item.data.type || "text"),
                 status: (scheduledAt ? "scheduled" : "draft") as any,
                 scheduled_at: scheduledAt,
+                imageUrl: item.data.img || item.data.image || item.imageUrl || ""
               },
               platforms: item.metadata?.platforms || [platform],
             });

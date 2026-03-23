@@ -7,50 +7,60 @@ export interface ScheduledSlot {
   time: string; // HH:mm
 }
 
-export const CONTENT_SCHEDULE: Record<number, Record<DayName, ScheduledSlot[]>> = {
-  1: {
-    Monday: [
-      { platform: "Twitter", time: "09:00" }, { platform: "Twitter", time: "13:00" }, { platform: "Twitter", time: "17:00" },
-      { platform: "Instagram", time: "08:00" }, { platform: "Instagram", time: "12:00" }, { platform: "Instagram", time: "20:00" },
-      { platform: "YouTube", time: "13:30" }
-    ],
-    Tuesday: [
-      { platform: "Twitter", time: "09:00" }, { platform: "Twitter", time: "13:00" }, { platform: "Twitter", time: "17:00" },
-      { platform: "Instagram", time: "08:00" }, { platform: "Instagram", time: "12:00" }, { platform: "Instagram", time: "20:00" },
-      { platform: "TikTok", time: "18:00" }
-    ],
-    Wednesday: [
-      { platform: "Twitter", time: "09:00" }, { platform: "Twitter", time: "13:00" }, { platform: "Twitter", time: "17:00" },
-      { platform: "Instagram", time: "08:00" }, { platform: "Instagram", time: "12:00" }, { platform: "Instagram", time: "20:00" },
-      { platform: "Rumble", time: "17:00" }
-    ],
-    Thursday: [
-      { platform: "Twitter", time: "09:00" }, { platform: "Twitter", time: "13:00" }, { platform: "Twitter", time: "17:00" },
-      { platform: "Instagram", time: "08:00" }, { platform: "Instagram", time: "12:00" }, { platform: "Instagram", time: "20:00" },
-      { platform: "Website", time: "12:00" }
-    ],
-    Friday: [
-      { platform: "Twitter", time: "09:00" }, { platform: "Twitter", time: "13:00" }, { platform: "Twitter", time: "17:00" },
-      { platform: "Instagram", time: "08:00" }, { platform: "Instagram", time: "12:00" }, { platform: "Instagram", time: "20:00" },
-      { platform: "LinkedIn", time: "09:00" }
-    ],
-    Saturday: [
-      { platform: "Twitter", time: "09:00" }, { platform: "Twitter", time: "13:00" }, { platform: "Twitter", time: "17:00" },
-      { platform: "Instagram", time: "08:00" }, { platform: "Instagram", time: "12:00" }, { platform: "Instagram", time: "20:00" }
-    ],
-    Sunday: [
-      { platform: "Twitter", time: "09:00" }, { platform: "Twitter", time: "13:00" }, { platform: "Twitter", time: "17:00" },
-      { platform: "Instagram", time: "08:00" }, { platform: "Instagram", time: "12:00" }, { platform: "Instagram", time: "20:00" }
-    ]
-  }
-};
+import twitterSchedule from '../data/platforms/twitter.json';
+import instagramSchedule from '../data/platforms/instagram.json';
+import youtubeSchedule from '../data/platforms/youtube.json';
+import tiktokSchedule from '../data/platforms/tiktok.json';
+import rumbleSchedule from '../data/platforms/rumble.json';
+import websiteSchedule from '../data/platforms/website.json';
+import linkedinSchedule from '../data/platforms/linkedin.json';
 
-// Period 2, 3 and 4 are identical to Period 1 for consistent daily tracking
+const allPlatformSchedules = [
+  twitterSchedule,
+  instagramSchedule,
+  youtubeSchedule,
+  tiktokSchedule,
+  rumbleSchedule,
+  websiteSchedule,
+  linkedinSchedule
+];
 
-// Period 3 and 4 are identical to Period 1 in the image
-CONTENT_SCHEDULE[2] = CONTENT_SCHEDULE[1];
-CONTENT_SCHEDULE[3] = CONTENT_SCHEDULE[1];
-CONTENT_SCHEDULE[4] = CONTENT_SCHEDULE[1];
+export const CONTENT_SCHEDULE: Record<number, Record<DayName, ScheduledSlot[]>> = {};
+
+// Initialize Periods 1-4
+[1, 2, 3, 4].forEach(period => {
+  CONTENT_SCHEDULE[period] = {
+    Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [], Sunday: []
+  };
+});
+
+// Build the content schedule dynamically
+allPlatformSchedules.forEach((platformData) => {
+  const platformName = platformData.platform;
+  const scheduleData = platformData.schedule as any;
+  
+  [1, 2, 3, 4].forEach(period => {
+    const periodSchedule = scheduleData[period.toString()];
+    if (periodSchedule) {
+      Object.entries(periodSchedule).forEach(([day, times]) => {
+        const dayName = day as DayName;
+        if (Array.isArray(times)) {
+          times.forEach(time => {
+            CONTENT_SCHEDULE[period][dayName].push({ platform: platformName, time: time as string });
+          });
+        }
+      });
+    }
+  });
+});
+
+// Sort times within each day
+[1, 2, 3, 4].forEach(period => {
+  Object.keys(CONTENT_SCHEDULE[period]).forEach(day => {
+    CONTENT_SCHEDULE[period][day as DayName].sort((a, b) => a.time.localeCompare(b.time));
+  });
+});
+
 
 export const DAYS: DayName[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 

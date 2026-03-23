@@ -30,6 +30,7 @@ import ImportData from "./pages/ImportData";
 import Settings from "./pages/Settings";
 import Articles from "./pages/Articles";
 import ContentPipeline from "./pages/ContentPipeline";
+import WorkflowTest from "./pages/WorkflowTest";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -82,6 +83,7 @@ const App = () => (
               <Route path="/import" element={<ProtectedRoute><ImportData /></ProtectedRoute>} />
               <Route path="/pipeline" element={<ProtectedRoute><ContentPipeline /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              <Route path="/workflow" element={<ProtectedRoute><WorkflowTest /></ProtectedRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -17,10 +17,8 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
 
-    if (!lovableApiKey) throw new Error("LOVABLE_API_KEY not configured");
     if (!openaiKey) throw new Error("OPENAI_API_KEY not configured");
 
     // Verify user
@@ -93,21 +91,22 @@ Return a JSON object with:
 
 Return ONLY the JSON, no markdown or explanation.`;
 
-    const contentResponse = await fetch(LOVABLE_AI_URL, {
+    const contentResponse = await fetch(OPENAI_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${lovableApiKey}`,
+        Authorization: `Bearer ${openaiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "gpt-4o",
         messages: [{ role: "user", content: contentPrompt }],
+        response_format: { type: "json_object" }
       }),
     });
 
     if (!contentResponse.ok) {
       const errText = await contentResponse.text();
-      throw new Error(`AI content generation failed [${contentResponse.status}]: ${errText}`);
+      throw new Error(`AI content heightening failed [${contentResponse.status}]: ${errText}`);
     }
 
     const contentData = await contentResponse.json();

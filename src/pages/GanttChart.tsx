@@ -115,7 +115,7 @@ export default function GanttChart() {
               <SelectContent>
                 <SelectItem value="all">All Projects</SelectItem>
                 {projects.map(project => (
-                  <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
+                  <SelectItem key={project.id} value={project.id}>{(project as any).name || project.title}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

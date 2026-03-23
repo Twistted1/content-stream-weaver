@@ -47,11 +47,11 @@ export function useAutomations() {
         id: a.id,
         name: a.name,
         description: a.description || "",
-        trigger: a.trigger_type,
-        triggerConfig: a.trigger_config || {},
+        trigger: a.trigger,
+        triggerConfig: a.conditions || {},
         platforms: a.platforms || [],
-        status: a.status,
-        lastRun: a.last_run_at,
+        status: a.status === "draft" ? "paused" : a.status,
+        lastRun: a.last_run,
         runs: a.run_count || 0,
         createdAt: a.created_at,
       })) as Automation[];
@@ -65,7 +65,7 @@ export function useAutomations() {
         .from("automation_runs")
         .select("*")
         .order("started_at", { ascending: false })
-        .limit(50); // Limit to recent runs
+        .limit(50);
 
       if (error) throw error;
 
@@ -75,23 +75,26 @@ export function useAutomations() {
         status: r.status,
         startedAt: r.started_at,
         completedAt: r.completed_at,
-        message: r.message,
+        message: r.error_message || "",
       })) as AutomationRun[];
     },
   });
 
   const addAutomation = useMutation({
     mutationFn: async (newAutomation: Omit<Automation, "id" | "createdAt" | "lastRun" | "runs">) => {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (!userId) throw new Error("Not authenticated");
+
       const { data, error } = await supabase
         .from("automations")
         .insert({
           name: newAutomation.name,
           description: newAutomation.description,
-          trigger_type: newAutomation.trigger,
-          trigger_config: newAutomation.triggerConfig,
+          trigger: newAutomation.trigger,
+          conditions: newAutomation.triggerConfig as any,
           platforms: newAutomation.platforms,
-          status: newAutomation.status,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          status: newAutomation.status as any,
+          user_id: userId,
         })
         .select()
         .single();
@@ -113,8 +116,8 @@ export function useAutomations() {
       const dbUpdates: any = {};
       if (updates.name) dbUpdates.name = updates.name;
       if (updates.description !== undefined) dbUpdates.description = updates.description;
-      if (updates.trigger) dbUpdates.trigger_type = updates.trigger;
-      if (updates.triggerConfig) dbUpdates.trigger_config = updates.triggerConfig;
+      if (updates.trigger) dbUpdates.trigger = updates.trigger;
+      if (updates.triggerConfig) dbUpdates.conditions = updates.triggerConfig;
       if (updates.platforms) dbUpdates.platforms = updates.platforms;
       if (updates.status) dbUpdates.status = updates.status;
 
@@ -136,11 +139,7 @@ export function useAutomations() {
 
   const deleteAutomation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("automations")
-        .delete()
-        .eq("id", id);
-
+      const { error } = await supabase.from("automations").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -154,11 +153,7 @@ export function useAutomations() {
 
   const deleteAutomations = useMutation({
     mutationFn: async (ids: string[]) => {
-      const { error } = await supabase
-        .from("automations")
-        .delete()
-        .in("id", ids);
-
+      const { error } = await supabase.from("automations").delete().in("id", ids);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -173,11 +168,7 @@ export function useAutomations() {
   const toggleAutomation = useMutation({
     mutationFn: async ({ id, currentStatus }: { id: string; currentStatus: AutomationStatus }) => {
       const newStatus = currentStatus === "active" ? "paused" : "active";
-      const { error } = await supabase
-        .from("automations")
-        .update({ status: newStatus })
-        .eq("id", id);
-
+      const { error } = await supabase.from("automations").update({ status: newStatus }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -191,11 +182,7 @@ export function useAutomations() {
 
   const toggleAutomations = useMutation({
     mutationFn: async ({ ids, status }: { ids: string[]; status: AutomationStatus }) => {
-      const { error } = await supabase
-        .from("automations")
-        .update({ status })
-        .in("id", ids);
-
+      const { error } = await supabase.from("automations").update({ status }).in("id", ids);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -217,16 +204,19 @@ export function useAutomations() {
 
       if (fetchError) throw fetchError;
 
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (!userId) throw new Error("Not authenticated");
+
       const { data, error } = await supabase
         .from("automations")
         .insert({
           name: `${original.name} (Copy)`,
           description: original.description,
-          trigger_type: original.trigger_type,
-          trigger_config: original.trigger_config,
+          trigger: original.trigger,
+          conditions: original.conditions,
           platforms: original.platforms,
-          status: "paused", // Default to paused for duplicates
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          status: "paused" as any,
+          user_id: userId,
         })
         .select()
         .single();
@@ -245,13 +235,15 @@ export function useAutomations() {
 
   const runAutomation = useMutation({
     mutationFn: async (id: string) => {
-      // Create a run entry
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (!userId) throw new Error("Not authenticated");
+
       const { data: run, error: runError } = await supabase
         .from("automation_runs")
         .insert({
           automation_id: id,
           status: "running",
-          message: "Automation started...",
+          user_id: userId,
         })
         .select()
         .single();
@@ -274,25 +266,24 @@ export function useAutomations() {
         .update({
           status: success ? "success" : "failed",
           completed_at: new Date().toISOString(),
-          message,
+          error_message: message,
         })
         .eq("id", runId);
 
       if (runError) throw runError;
 
-      // Update automation stats
       if (success) {
         const { data: current } = await supabase
           .from("automations")
           .select("run_count")
           .eq("id", automationId)
           .single();
-          
+
         await supabase
           .from("automations")
-          .update({ 
+          .update({
             run_count: (current?.run_count || 0) + 1,
-            last_run_at: new Date().toISOString()
+            last_run: new Date().toISOString()
           })
           .eq("id", automationId);
       }
@@ -318,8 +309,8 @@ export function useAutomations() {
     },
     toggleAutomations: (ids: string[], status: AutomationStatus) => toggleAutomations.mutate({ ids, status }),
     duplicateAutomation: duplicateAutomation.mutate,
-    runAutomation: runAutomation.mutateAsync, // Async to get runId
-    completeAutomationRun: (runId: string, success: boolean, message: string, automationId: string) => 
+    runAutomation: runAutomation.mutateAsync,
+    completeAutomationRun: (runId: string, success: boolean, message: string, automationId: string) =>
       completeAutomationRun.mutate({ runId, success, message, automationId }),
   };
 }

@@ -108,7 +108,7 @@ const UsersPage = () => {
       });
     } else if (selectedUser) {
       if (userDialogMode === "role") {
-        changeUserRole(selectedUser.id, data.role!);
+        updateUser(selectedUser.id, { role: data.role });
         if (data.permissions) {
           updateUser(selectedUser.id, { permissions: data.permissions });
         }

@@ -358,7 +358,7 @@ const UsersPage = () => {
                     filteredUsers.map((user) => (
                       <UserCard
                         key={user.id}
-                        user={user}
+                        user={user as any}
                         selected={selectedUsers.includes(user.id)}
                         onSelect={(checked) => handleSelectUser(user.id, checked)}
                         onEdit={() => handleEditUser(user)}

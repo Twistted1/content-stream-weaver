@@ -70,7 +70,7 @@ export function useNotes() {
       if (updates.color) dbUpdates.color = updates.color;
       dbUpdates.updated_at = new Date().toISOString();
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("notes")
         .update(dbUpdates)
         .eq("id", id);

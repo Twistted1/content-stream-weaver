@@ -112,50 +112,6 @@ export type Database = {
         }
         Relationships: []
       }
-      notes: {
-        Row: {
-          id: string
-          user_id: string | null
-          title: string
-          content: string | null
-          is_pinned: boolean
-          color: string
-          tags: string[]
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id?: string | null
-          title: string
-          content?: string | null
-          is_pinned?: boolean
-          color?: string
-          tags?: string[]
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string | null
-          title?: string
-          content?: string | null
-          is_pinned?: boolean
-          color?: string
-          tags?: string[]
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "notes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       media: {
         Row: {
           created_at: string
@@ -193,56 +149,6 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_platforms: {
-        Row: {
-          id: string
-          user_id: string
-          platform_type: Database["public"]["Enums"]["platform_type"]
-          account_name: string
-          username: string | null
-          avatar_url: string | null
-          settings: Json
-          status: string
-          last_sync: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          platform_type: Database["public"]["Enums"]["platform_type"]
-          account_name: string
-          username?: string | null
-          avatar_url?: string | null
-          settings?: Json
-          status?: string
-          last_sync?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          platform_type?: Database["public"]["Enums"]["platform_type"]
-          account_name?: string
-          username?: string | null
-          avatar_url?: string | null
-          settings?: Json
-          status?: string
-          last_sync?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_platforms_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -293,36 +199,51 @@ export type Database = {
       }
       posts: {
         Row: {
+          category: string | null
           content: string | null
+          cover_image_url: string | null
           created_at: string
+          excerpt: string | null
           id: string
           published_at: string | null
+          read_time: number | null
           scheduled_at: string | null
           status: Database["public"]["Enums"]["post_status"]
+          tags: string[] | null
           title: string
           type: Database["public"]["Enums"]["post_type"]
           updated_at: string
           user_id: string
         }
         Insert: {
+          category?: string | null
           content?: string | null
+          cover_image_url?: string | null
           created_at?: string
+          excerpt?: string | null
           id?: string
           published_at?: string | null
+          read_time?: number | null
           scheduled_at?: string | null
           status?: Database["public"]["Enums"]["post_status"]
+          tags?: string[] | null
           title: string
           type?: Database["public"]["Enums"]["post_type"]
           updated_at?: string
           user_id: string
         }
         Update: {
+          category?: string | null
           content?: string | null
+          cover_image_url?: string | null
           created_at?: string
+          excerpt?: string | null
           id?: string
           published_at?: string | null
+          read_time?: number | null
           scheduled_at?: string | null
           status?: Database["public"]["Enums"]["post_status"]
+          tags?: string[] | null
           title?: string
           type?: Database["public"]["Enums"]["post_type"]
           updated_at?: string

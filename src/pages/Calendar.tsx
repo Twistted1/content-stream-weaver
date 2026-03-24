@@ -4,6 +4,8 @@ import { usePosts } from "@/hooks/usePosts";
 import { useUJT } from "@/hooks/useUJT";
 import { DragDropImport } from "@/components/common/DragDropImport";
 import { parseISO, format } from "date-fns";
+import { NotificationsDropdown } from "@/components/header/NotificationsDropdown";
+import { UserDropdown } from "@/components/header/UserDropdown";
 
 function getDaysInMonth(year: any, month: any) {
   const days = []; const firstDay = new Date(year, month, 1); const lastDay = new Date(year, month + 1, 0);
@@ -41,6 +43,7 @@ const CATEGORY_STYLES: any = {
   meeting:  { bg: "bg-blue-500/20", text: "text-blue-300", border: "border-blue-500/40", dot: "bg-blue-400", label: "Meeting",  icon: "👥" },
   deadline: { bg: "bg-red-500/20", text: "text-red-300", border: "border-red-500/40", dot: "bg-red-400", label: "Deadline", icon: "🚨" },
   publish:  { bg: "bg-amber-500/20", text: "text-amber-300", border: "border-amber-500/40", dot: "bg-amber-400", label: "Publish",  icon: "📤" },
+  awaiting_review: { bg: "bg-orange-500/20", text: "text-orange-300", border: "border-orange-500/40", dot: "bg-orange-400", label: "Needs Review", icon: "⚠️", animate: "animate-pulse" },
 };
 
 const PLATFORM_STYLES: any = {
@@ -90,44 +93,82 @@ function MiniCalendar({ current, selected, events, onSelectDate, onChangeMonth }
   );
 }
 
-const FILTERS = [ { value: "all", label: "All", icon: "◈" }, { value: "content", label: "Content", icon: "🎬" }, { value: "publish", label: "Publish", icon: "📤" }, { value: "meeting", label: "Meetings", icon: "👥" }, { value: "deadline", label: "Deadlines", icon: "🚨" }, { value: "personal", label: "Personal", icon: "🌿" } ];
+const FILTERS = [ 
+  { value: "all", label: "All", icon: "◈" }, 
+  { value: "awaiting_review", label: "Review Inbox", icon: "📥" },
+  { value: "content", label: "Content", icon: "🎬" }, 
+  { value: "publish", label: "Publish", icon: "📤" }, 
+  { value: "meeting", label: "Meetings", icon: "👥" }, 
+  { value: "deadline", label: "Deadlines", icon: "🚨" }, 
+  { value: "personal", label: "Personal", icon: "🌿" } 
+];
 
-function Sidebar({ events, miniMonth, selectedDate, onSelectDate, onChangeMiniMonth, onAddEvent, onClickEvent, categoryFilter, onFilterChange, onClose }: any) {
+function Sidebar({ events, miniMonth, selectedDate, onSelectDate, onChangeMonth, onAddEvent, onClickEvent, categoryFilter, onFilterChange, onClose }: any) {
   const todayEvents = getEventsForDay(events, new Date());
   const completedToday = todayEvents.filter((e: any) => e.completed).length;
   const progress = todayEvents.length > 0 ? (completedToday / todayEvents.length) * 100 : 0;
-  const upcoming = events.filter((e: any) => { const eDate = new Date(e.date + "T12:00:00"); const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(0, 0, 0, 0); const nextWeek = new Date(); nextWeek.setDate(nextWeek.getDate() + 8); return eDate >= tomorrow && eDate <= nextWeek; }).sort((a: any, b: any) => a.date.localeCompare(b.date)).slice(0, 5);
+  const upcoming = events.filter((e: any) => { 
+    const eDate = new Date(e.date + "T12:00:00"); 
+    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(0, 0, 0, 0); 
+    const nextWeek = new Date(); nextWeek.setDate(nextWeek.getDate() + 8); 
+    return eDate >= tomorrow && eDate <= nextWeek; 
+  }).sort((a: any, b: any) => a.date.localeCompare(b.date)).slice(0, 5);
 
   return (
-    <aside className="flex flex-col gap-3 overflow-y-auto pb-4 custom-scrollbar">
+    <aside className="flex flex-col gap-4 overflow-y-auto pb-6 custom-scrollbar h-full">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2"><span className="text-violet-400 text-sm">◧</span><h2 className="text-xs font-semibold text-gray-400 uppercase">Panel</h2></div>
-        <button onClick={onClose} className="w-6 h-6 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-500">×</button>
+        <div className="flex items-center gap-2">
+          <span className="text-blue-400 text-sm">◧</span>
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Dashboard</h2>
+        </div>
+        {onClose && (
+          <button onClick={onClose} className="w-6 h-6 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-500">×</button>
+        )}
       </div>
-      <button onClick={onAddEvent} className="w-full flex justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold text-sm hover:scale-[1.02] transition-all">+ New Event</button>
-      <MiniCalendar current={miniMonth} selected={selectedDate} events={events} onSelectDate={onSelectDate} onChangeMonth={onChangeMiniMonth} />
-      <div className="bg-white/5 border border-white/10 rounded-xl p-3">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase mb-2">Filter</h3>
-        <div className="space-y-0.5">
+      
+      <button onClick={onAddEvent} className="w-full flex justify-center gap-2 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-900/20 transition-all active:scale-95">
+        + New Event
+      </button>
+
+      <MiniCalendar current={miniMonth} selected={selectedDate} events={events} onSelectDate={onSelectDate} onChangeMonth={onChangeMonth} />
+
+      <div className="bg-blue-900/10 border border-blue-500/20 rounded-xl p-3">
+        <h3 className="text-[10px] font-bold text-blue-400 uppercase mb-3">Filter</h3>
+        <div className="space-y-1">
           {FILTERS.map(f => {
-            const active = categoryFilter === f.value; const style = f.value !== "all" ? CATEGORY_STYLES[f.value] : null; const count = f.value === "all" ? events.length : events.filter((e: any) => e.category === f.value).length;
-            return <button key={f.value} onClick={() => onFilterChange(f.value)} className={`w-full flex justify-between px-2.5 py-1.5 rounded-lg text-xs ${active ? (style ? `${style.bg} ${style.text}` : "bg-white/10 text-white") : "text-gray-400 hover:bg-white/5 hover:text-gray-200"}`}><span className="flex gap-2"><span>{f.icon}</span>{f.label}</span><span className={`text-[10px] px-1.5 py-0.5 rounded-md ${active ? "bg-black/20" : "bg-white/5 text-gray-500"}`}>{count}</span></button>;
+            const active = categoryFilter === f.value; 
+            const style = f.value !== "all" ? CATEGORY_STYLES[f.value] : null; 
+            const count = f.value === "all" ? events.length : events.filter((e: any) => e.category === f.value).length;
+            return (
+              <button 
+                key={f.value} 
+                onClick={() => onFilterChange(f.value)} 
+                className={`w-full flex justify-between px-3 py-2 rounded-lg text-xs transition-colors ${active ? (style ? `${style.bg} ${style.text}` : "bg-blue-600 text-white") : "text-gray-400 hover:bg-white/5 hover:text-gray-200"}`}
+              >
+                <span className="flex gap-2"><span>{f.icon}</span>{f.label}</span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${active ? "bg-black/20" : "bg-white/5 text-gray-500"}`}>
+                  {f.value === "all" ? events.length : events.filter((e: any) => e.status === f.value || e.category === f.value).length}
+                </span>
+              </button>
+            );
           })}
         </div>
       </div>
-      <div className="bg-white/5 border border-white/10 rounded-xl p-3">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase mb-2">Today's Agenda</h3>
-        {todayEvents.length > 0 && <div className="h-1 bg-white/10 rounded-full overflow-hidden mb-2"><div className="h-full bg-gradient-to-r from-violet-500 to-emerald-500 transition-all" style={{ width: `${progress}%` }} /></div>}
-        {todayEvents.length === 0 ? <p className="text-xs text-center py-2 text-gray-600">No events today 🎉</p> : (
-          <div className="space-y-1.5">
+
+      <div className="bg-blue-900/10 border border-blue-500/20 rounded-xl p-4">
+        <h3 className="text-[10px] font-bold text-blue-400 uppercase mb-3">Today's Agenda</h3>
+        {todayEvents.length > 0 && <div className="h-1 bg-white/10 rounded-full overflow-hidden mb-3"><div className="h-full bg-blue-500 transition-all" style={{ width: `${progress}%` }} /></div>}
+        {todayEvents.length === 0 ? <p className="text-xs text-center py-4 text-gray-500">No events today 🎉</p> : (
+          <div className="space-y-2">
             {todayEvents.map((evt: any) => {
-              const s = getStyle(evt); const p = PLATFORM_STYLES[evt.platform] || PLATFORM_STYLES['none'];
+              const s = getStyle(evt); 
+              const p = PLATFORM_STYLES[evt.platform] || PLATFORM_STYLES['none'];
               return (
-                <div key={evt.id} className={`flex gap-2.5 p-2 rounded-lg border cursor-pointer hover:border-white/20 ${evt.completed ? "opacity-50" : ""} ${s.bg} ${s.border}`} onClick={() => onClickEvent(evt)}>
+                <div key={evt.id} className={`flex gap-3 p-2.5 rounded-xl border cursor-pointer hover:border-white/20 transition-all ${evt.completed ? "opacity-50" : ""} ${s.bg} ${s.border}`} onClick={() => onClickEvent(evt)}>
                   <div className="min-w-0 flex-1">
-                    <p className={`text-xs font-medium truncate ${evt.completed ? "line-through" : s.text}`}>{evt.title}</p>
-                    {evt.startTime && <p className="text-[10px] text-gray-500 mt-0.5">{formatTime12(evt.startTime)}</p>}
-                    {evt.platform && evt.platform !== 'none' && <span className={`inline-block text-[9px] px-1.5 py-0.5 rounded mt-1 font-medium ${p.badgeBg} ${p.badgeText}`}>{p.label}</span>}
+                    <p className={`text-xs font-semibold truncate ${evt.completed ? "line-through" : s.text}`}>{evt.title}</p>
+                    {evt.startTime && <p className="text-[10px] text-gray-500 mt-1">{formatTime12(evt.startTime)}</p>}
+                    {evt.platform && evt.platform !== 'none' && <span className={`inline-block text-[9px] px-2 py-0.5 rounded mt-2 font-bold uppercase tracking-tighter ${p.badgeBg} ${p.badgeText}`}>{p.label}</span>}
                   </div>
                 </div>
               );
@@ -135,25 +176,41 @@ function Sidebar({ events, miniMonth, selectedDate, onSelectDate, onChangeMiniMo
           </div>
         )}
       </div>
-      {upcoming.length > 0 && (
-        <div className="bg-white/5 border border-white/10 rounded-xl p-3">
-          <h3 className="text-xs font-semibold text-gray-400 uppercase mb-2">Coming Up</h3>
-          <div className="space-y-1.5">
-            {upcoming.map((evt: any) => {
-              const s = getStyle(evt); const evtDate = new Date(evt.date + "T12:00:00");
-              return (
-                <div key={evt.id} className="flex items-center gap-2 cursor-pointer group" onClick={() => onClickEvent(evt)}>
-                  <div className={`w-8 h-8 flex-shrink-0 flex flex-col items-center justify-center rounded-lg ${s.bg} border ${s.border}`}><span className="text-[8px] font-medium text-gray-400 leading-tight">{evtDate.toLocaleDateString("en-US", { weekday: "short" })}</span><span className={`text-xs font-bold ${s.text} leading-tight`}>{evtDate.getDate()}</span></div>
-                  <div className="min-w-0 flex-1"><p className="text-xs font-medium text-gray-300 truncate group-hover:text-white transition-colors">{evt.title}</p><p className="text-[9px] text-gray-500">{evt.startTime ? formatTime12(evt.startTime) : "All day"} · {s.label}</p></div>
-                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${s.dot}`} />
+
+      <div className="bg-blue-900/10 border border-blue-500/20 rounded-xl p-4">
+        <h3 className="text-[10px] font-bold text-blue-400 uppercase mb-3">Coming Up</h3>
+        <div className="space-y-3">
+          {upcoming.map((evt: any) => {
+            const s = getStyle(evt); 
+            const evtDate = new Date(evt.date + "T12:00:00");
+            return (
+              <div key={evt.id} className="flex items-center gap-3 cursor-pointer group" onClick={() => onClickEvent(evt)}>
+                <div className={`w-9 h-9 flex-shrink-0 flex flex-col items-center justify-center rounded-xl ${s.bg} border ${s.border}`}>
+                  <span className="text-[8px] font-bold text-gray-400 uppercase leading-tight">{evtDate.toLocaleDateString("en-US", { weekday: "short" })}</span>
+                  <span className={`text-xs font-black ${s.text} leading-tight`}>{evtDate.getDate()}</span>
                 </div>
-              );
-            })}
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-gray-200 truncate group-hover:text-blue-300 transition-colors uppercase tracking-tight">{evt.title}</p>
+                  <p className="text-[10px] text-gray-500">{evt.startTime ? formatTime12(evt.startTime) : "All day"} · {s.label}</p>
+                </div>
+                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${s.dot}`} />
+              </div>
+            );
+          })}
+          {upcoming.length === 0 && <p className="text-xs text-center text-gray-600">Nothing soon</p>}
+        </div>
+      </div>
+      
+      <div className="mt-auto bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border border-blue-500/20 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <span className="text-xl">✨</span>
+          <div>
+            <p className="text-[11px] font-bold text-blue-300 uppercase mb-1">Smart Tip</p>
+            <p className="text-[10px] text-gray-400 leading-relaxed">
+              Batching your tasks can save up to 40% of your production time.
+            </p>
           </div>
         </div>
-      )}
-      <div className="bg-gradient-to-br from-violet-500/10 to-indigo-500/10 border border-violet-500/20 rounded-xl p-3">
-        <div className="flex items-start gap-2"><span className="text-xl">✨</span><div><p className="text-[11px] font-semibold text-violet-300 mb-0.5">Smart Tip</p><p className="text-[10px] text-gray-400 leading-relaxed">You have {todayEvents.filter((e: any) => e.category === "content").length} content tasks today. Batch your filming sessions to save up to 40% more time.</p></div></div>
       </div>
     </aside>
   );
@@ -162,19 +219,46 @@ function Sidebar({ events, miniMonth, selectedDate, onSelectDate, onChangeMiniMo
 function MonthView({ current, events, categoryFilter, onClickDay, onClickEvent }: any) {
   const days = getDaysInMonth(current.getFullYear(), current.getMonth());
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="grid grid-cols-7 border-b border-white/10 text-center text-xs font-semibold text-gray-400 uppercase py-3">{DAY_NAMES.map(d => <div key={d}>{d}</div>)}</div>
-      <div className="flex-1 grid grid-cols-7 grid-rows-6">
+    <div className="flex-1 flex flex-col overflow-y-auto custom-scrollbar bg-[#020617]">
+      <div className="grid grid-cols-7 border-b border-white/10 text-center text-[10px] font-bold text-blue-400 uppercase tracking-widest py-4 sticky top-0 bg-[#0a0e1a] z-10">
+        {DAY_NAMES.map(d => <div key={d}>{d}</div>)}
+      </div>
+      <div className="flex-1 grid grid-cols-7 border-l border-white/5">
         {days.map((day, i) => {
           const dayEvents = getEventsForDay(events, day).filter((e: any) => categoryFilter === 'all' || e.category === categoryFilter);
+          const isCurrentMonth = day.getMonth() === current.getMonth();
+          const today = isToday(day);
+          
           return (
-            <div key={i} onClick={() => onClickDay(new Date(day))} className={`min-h-0 p-1.5 border-r border-b border-white/[0.06] cursor-pointer hover:bg-white/[0.03] ${day.getMonth() !== current.getMonth() ? "bg-white/[0.01]" : ""} ${isToday(day) ? "bg-violet-500/5" : ""}`}>
-              <div className="mb-1"><span className={`w-7 h-7 flex items-center justify-center rounded-full text-sm ${isToday(day) ? "bg-violet-600 text-white" : day.getMonth() === current.getMonth() ? "text-gray-300" : "text-gray-600"}`}>{day.getDate()}</span></div>
-              <div className="space-y-0.5 max-h-[100px] overflow-y-auto custom-scrollbar">
-                {dayEvents.map((evt: any) => {
+            <div 
+              key={i} 
+              onClick={() => onClickDay(new Date(day))} 
+              className={`min-h-[140px] p-2 border-r border-b border-white/5 cursor-pointer hover:bg-blue-600/5 transition-colors relative group ${!isCurrentMonth ? "bg-black/20 opacity-40" : ""} ${today ? "bg-blue-600/5" : ""}`}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <span className={`text-xs font-black rounded-lg w-7 h-7 flex items-center justify-center transition-all ${today ? "bg-blue-600 text-white shadow-lg shadow-blue-900/40" : isCurrentMonth ? "text-gray-300 group-hover:text-blue-200" : "text-gray-600"}`}>
+                  {day.getDate()}
+                </span>
+                {dayEvents.length > 0 && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-sm shadow-blue-400/50" />}
+              </div>
+              <div className="space-y-1 overflow-hidden">
+                {dayEvents.slice(0, 4).map((evt: any) => {
                   const s = getStyle(evt);
-                  return <div key={evt.id} onClick={(e) => { e.stopPropagation(); onClickEvent(evt); }} className={`px-1 py-0.5 rounded text-[10px] truncate ${s.bg} ${s.text} ${s.border}`}>{evt.title}</div>;
+                  const isReview = evt.status === 'awaiting_review';
+                  return (
+                    <div 
+                      key={evt.id} 
+                      onClick={(e) => { e.stopPropagation(); onClickEvent(evt); }} 
+                      className={`px-2 py-1 rounded-lg text-[10px] font-bold truncate transition-all hover:scale-[1.02] active:scale-95 border ${s.bg} ${s.text} ${s.border} ${isReview ? 'animate-pulse ring-1 ring-orange-500/50' : ''}`}
+                    >
+                      {isReview && <span className="mr-1">⚠️</span>}
+                      {evt.title}
+                    </div>
+                  );
                 })}
+                {dayEvents.length > 4 && (
+                  <div className="text-[9px] text-gray-500 font-bold pl-2">+{dayEvents.length - 4} more</div>
+                )}
               </div>
             </div>
           );
@@ -188,7 +272,7 @@ function WeekView({ current }: any) { return <div className="flex-1 flex flex-co
 function DayView({ current }: any) { return <div className="flex-1 flex flex-col items-center justify-center p-4 border-t border-white/10"><p className="text-gray-400">Day View Loaded</p></div>; }
 function AgendaView({ current }: any) { return <div className="flex-1 overflow-y-auto px-6 py-4 border-t border-white/10 text-gray-400">Agenda View Loaded</div>; }
 
-function EventModal({ event, defaultDate, onSave, onDelete, onClose }: any) {
+function EventModal({ event, defaultDate, onSave, onDelete, onApprove, onClose }: any) {
   const [title, setTitle] = useState(event?.title || ""); const [date, setDate] = useState(event?.date || (defaultDate ? formatDateKey(defaultDate) : formatDateKey(new Date()))); const [startTime, setStartTime] = useState(event?.startTime || "09:00"); const [endTime, setEndTime] = useState(event?.endTime || "10:00"); const [category, setCategory] = useState(event?.category || "content"); const [platform, setPlatform] = useState(event?.platform || "none"); const [description, setDescription] = useState(event?.description || "");
   const [imageUrl, setImageUrl] = useState(event?.imageUrl || "");
 
@@ -230,10 +314,29 @@ function EventModal({ event, defaultDate, onSave, onDelete, onClose }: any) {
         </div>
 
         <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} placeholder="Notes" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white mb-4" />
+        
+        {event?.status === 'awaiting_review' && (
+          <div className="mb-6 p-4 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-xl animate-pulse">⚠️</span>
+              <div>
+                <p className="text-sm font-bold text-orange-400">Needs Approval</p>
+                <p className="text-[10px] text-orange-300/70 uppercase">AI-generated content requires review</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => { if (onApprove) onApprove(event.id); onClose(); }}
+              className="px-6 py-2 bg-gradient-to-r from-orange-500 to-amber-600 text-white text-xs font-black rounded-xl hover:scale-105 transition-transform shadow-lg shadow-orange-900/20"
+            >
+              🚀 APPROVE & SCHEDULE
+            </button>
+          </div>
+        )}
+
         <div className="flex justify-end gap-2">
           {event && onDelete && <button onClick={() => { onDelete(event.originalId || event.id); onClose(); }} className="px-4 py-2 text-red-400">Delete</button>}
           <button onClick={onClose} className="px-4 py-2 text-gray-400">Cancel</button>
-          <button onClick={() => { onSave({ id: event?.id || `evt-${Date.now()}`, title, date, startTime, endTime, category, platform, description, imageUrl }); onClose(); }} className="px-4 py-2 bg-violet-600 text-white rounded">Save</button>
+          <button onClick={() => { onSave({ id: event?.id || `evt-${Date.now()}`, title, date, startTime, endTime, category, platform, description, imageUrl, status: event?.status }); onClose(); }} className="px-4 py-2 bg-violet-600 text-white rounded">Save</button>
         </div>
       </div>
     </div>
@@ -258,22 +361,57 @@ export default function ContentCalendar() {
   const events = posts.map((post: any) => {
     let date = formatDateKey(new Date()); let startTime = "";
     if (post.scheduledAt) { const d = parseISO(post.scheduledAt); date = formatDateKey(d); startTime = format(d, "HH:mm"); }
-    return { id: post.id, originalId: post.id, title: post.title, description: post.content, date, startTime, category: post.status === "published" ? "publish" : "content", platform: post.platforms && post.platforms[0] ? post.platforms[0].platform.toLowerCase() : "none", completed: post.status === "published", allDay: !post.scheduledAt };
+    return { 
+      id: post.id, 
+      originalId: post.id, 
+      title: post.title, 
+      description: post.content, 
+      date, 
+      startTime, 
+      category: post.status === "published" ? "publish" : post.status === "awaiting_review" ? "awaiting_review" : "content", 
+      status: post.status,
+      platform: post.platforms && post.platforms[0] ? post.platforms[0].platform.toLowerCase() : "none", 
+      completed: post.status === "published", 
+      allDay: !post.scheduledAt 
+    };
   });
 
   const [current, setCurrent] = useState(new Date()); const [miniMonth, setMiniMonth] = useState(new Date()); const [selectedDate, setSelectedDate] = useState(new Date()); const [viewMode, setViewMode] = useState("month"); const [categoryFilter, setCategoryFilter] = useState("all"); const [searchQuery, setSearchQuery] = useState(""); const [sidebarOpen, setSidebarOpen] = useState(true); const [modalOpen, setModalOpen] = useState(false); const [editingEvent, setEditingEvent] = useState<any>(null); const [defaultDate, setDefaultDate] = useState<any>(undefined);
 
-  const navigate = useCallback((dir: number) => { const next = new Date(current); if (viewMode === "month") next.setMonth(current.getMonth() + dir); else if (viewMode === "week") next.setDate(current.getDate() + dir * 7); else if (viewMode === "day") next.setDate(current.getDate() + dir); setCurrent(next); }, [current, viewMode]);
+  const navigate = useCallback((dir: number) => { 
+    const next = new Date(current); 
+    if (viewMode === "month") next.setMonth(current.getMonth() + dir); 
+    else if (viewMode === "week") next.setDate(current.getDate() + dir * 7); 
+    else if (viewMode === "day") next.setDate(current.getDate() + dir); 
+    setCurrent(next); 
+  }, [current, viewMode]);
 
   const handleSaveEvent = (event: any) => {
-    const scheduledAt = event.startTime ? `${event.date}T${event.startTime}:00` : `${event.date}T09:00:00`; const isUpdating = !event.id.startsWith("evt-");
-    if (isUpdating) { updatePost.mutate({ id: event.id, title: event.title, content: event.description, status: "scheduled", type: "text" }); schedulePost.mutate({ id: event.id, scheduledAt }); } else { addPost.mutate({ post: { title: event.title, content: event.description || "", type: "text", status: "scheduled", scheduled_at: scheduledAt }, platforms: [] }); }
+    const scheduledAt = event.startTime ? `${event.date}T${event.startTime}:00` : `${event.date}T09:00:00`; 
+    const isUpdating = !event.id.startsWith("evt-");
+    if (isUpdating) { 
+      updatePost.mutate({ id: event.id, title: event.title, content: event.description, status: event.status || "scheduled", type: "text" }); 
+      if (event.status !== 'awaiting_review') schedulePost.mutate({ id: event.id, scheduledAt }); 
+    } else { 
+      addPost.mutate({ post: { title: event.title, content: event.description || "", type: "text", status: "scheduled", scheduled_at: scheduledAt }, platforms: [] }); 
+    }
   };
   const handleDeleteEvent = (id: string) => deletePost.mutate(id);
+  const handleApproveEvent = (id: string) => {
+    const event = events.find(e => e.id === id);
+    if (event) {
+      const scheduledAt = event.startTime ? `${event.date}T${event.startTime}:00` : `${event.date}T09:00:00`;
+      schedulePost.mutate({ id, scheduledAt });
+    }
+  };
 
-  const filteredEvents = searchQuery.trim() ? events.filter((e: any) => e.title.toLowerCase().includes(searchQuery.toLowerCase()) || (e.description || "").toLowerCase().includes(searchQuery.toLowerCase())) : events;
+  const filteredEvents = searchQuery.trim() 
+    ? events.filter((e: any) => e.title.toLowerCase().includes(searchQuery.toLowerCase()) || (e.description || "").toLowerCase().includes(searchQuery.toLowerCase())) 
+    : (categoryFilter === 'all' ? events : events.filter((e: any) => e.status === categoryFilter || e.category === categoryFilter));
+
   const todayCount = events.filter((e: any) => e.date === formatDateKey(new Date())).length;
-  const publishCount = events.filter((e: any) => e.category === "publish").length;
+  const publishCount = events.filter((e: any) => e.category === "publish" || e.status === "published").length;
+  const reviewCount = events.filter((e: any) => e.status === "awaiting_review").length;
   const deadlineCount = events.filter((e: any) => e.category === "deadline").length;
 
   const headerLabel = (() => {
@@ -289,75 +427,109 @@ export default function ContentCalendar() {
   })();
 
   return (
-    <DashboardLayout>
+    <DashboardLayout hideHeader={true}>
       <DragDropImport onImport={(data) => { if (data.version === "1.0") processUJT(data); }} entityName="UJT">
-        <div className="-m-6 h-[calc(100vh-64px)] w-[calc(100%+3rem)] bg-transparent text-white flex flex-col font-sans overflow-hidden">
+        <div className="h-screen w-full bg-[#020617] text-white flex flex-col font-sans overflow-hidden">
           
-          {/* Top Master Class Header */}
-          <header className="flex-shrink-0 flex items-center justify-between px-5 py-3 border-b border-white/10 bg-black/20 backdrop-blur-xl z-30">
-            <div className="flex items-center gap-3">
-              <button onClick={() => setSidebarOpen(p => !p)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-violet-600/20 border border-violet-500/40 text-violet-400">☰</button>
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">📅</div>
+          {/* Top Master Class Header - Unified Theme */}
+          <header className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-white/5 bg-[#0f172a]/80 backdrop-blur-2xl z-40">
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setSidebarOpen(p => !p)} 
+                className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${sidebarOpen ? 'bg-blue-600/20 border-blue-500/40 text-blue-400' : 'bg-white/5 border-white/10 text-gray-400'}`}
+              >
+                ☰
+              </button>
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-700 flex items-center justify-center shadow-lg shadow-blue-900/20">📅</div>
               <div>
-                <h1 className="text-base font-bold bg-gradient-to-r from-violet-300 to-indigo-300 bg-clip-text text-transparent leading-none">MyFlow</h1>
-                <p className="text-[10px] text-gray-500 leading-none mt-0.5">Smart Calendar</p>
+                <h1 className="text-lg font-black bg-gradient-to-r from-blue-200 to-indigo-200 bg-clip-text text-transparent leading-none uppercase tracking-tighter">MyFlow</h1>
+                <p className="text-[10px] font-bold text-blue-500/70 leading-none mt-1 uppercase tracking-widest">Master Calendar</p>
               </div>
             </div>
             
-            <div className="flex-1 max-w-md mx-6 relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">🔍</span>
-              <input aria-label="Search" title="Search events" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search events, tasks, content..." className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-violet-500/50" />
-              {searchQuery && <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">✕</button>}
+            <div className="flex-1 max-w-xl mx-12 relative group">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400 text-sm group-focus-within:text-blue-300 transition-colors">🔍</span>
+              <input 
+                aria-label="Search" 
+                title="Search events" 
+                value={searchQuery} 
+                onChange={e => setSearchQuery(e.target.value)} 
+                placeholder="Find anything on your timeline..." 
+                className="w-full bg-white/[0.03] border border-white/10 rounded-2xl pl-11 pr-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 focus:bg-white/[0.05] transition-all" 
+              />
+              {searchQuery && <button onClick={() => setSearchQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">✕</button>}
             </div>
 
-            <div className="flex items-center gap-3">
-              <label className="cursor-pointer bg-white/5 hover:bg-white/10 border border-violet-500/30 text-violet-300 text-[11px] font-bold py-1.5 px-3 rounded-xl transition-all shadow-lg hover:shadow-violet-500/20 flex items-center gap-2">
-                <span>📥 Import UJT</span>
+            <div className="flex items-center gap-4">
+              <label className="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-black py-2.5 px-5 rounded-2xl transition-all shadow-xl shadow-blue-900/30 flex items-center gap-2 active:scale-95">
+                <span>📥 IMPORT UJT</span>
                 <input type="file" accept=".json" className="hidden" onChange={handleFileUpload} />
               </label>
-              <div className="hidden md:flex flex-wrap items-center gap-2">
-                 <StatPill icon="📅" label={`${todayCount} today`} color="violet" />
-                 <StatPill icon="📤" label={`${publishCount} posts`} color="amber" />
-                 <StatPill icon="🚨" label={`${deadlineCount} deadlines`} color="red" />
-              </div>
-              <button aria-label="Notifications" className="relative w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 border border-white/10">🔔{deadlineCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold flex items-center justify-center">{deadlineCount}</span>}</button>
-              <div className="flex items-center gap-2 pl-2 border-l border-white/10">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-sm font-bold">C</div>
-                <span className="text-sm text-gray-300 hidden md:block">Creator</span>
-              </div>
+              
+               <div className="hidden lg:flex items-center gap-3 px-4 border-l border-white/10 mr-4">
+                  <StatPill icon="📅" label={`${todayCount} TODAY`} color="violet" />
+                  <StatPill icon="📥" label={`${reviewCount} REVIEW`} color="amber" />
+                  <StatPill icon="📤" label={`${publishCount} POSTS`} color="red" />
+               </div>
+
+               <div className="flex items-center gap-2 border-l border-white/10 pl-4">
+                 <NotificationsDropdown />
+                 <UserDropdown />
+               </div>
             </div>
           </header>
 
           <div className="flex-1 flex overflow-hidden">
             {sidebarOpen && (
-              <div className="w-[300px] bg-[#0f1117] border-r border-white/10 overflow-y-auto p-4 shrink-0 transition-all duration-300">
-                <Sidebar events={filteredEvents} miniMonth={miniMonth} selectedDate={selectedDate} onSelectDate={(d: any) => { setSelectedDate(d); setCurrent(d); }} onChangeMiniMonth={(dir: any) => { const next = new Date(miniMonth); next.setMonth(miniMonth.getMonth() + dir); setMiniMonth(next); }} onAddEvent={() => { setEditingEvent(null); setDefaultDate(undefined); setModalOpen(true); }} onClickEvent={(evt: any) => { setEditingEvent(evt); setModalOpen(true); }} categoryFilter={categoryFilter} onFilterChange={setCategoryFilter} onClose={() => setSidebarOpen(false)} />
+              <div className="w-[320px] bg-[#020617] border-r border-white/5 p-5 shrink-0 transition-all duration-500 ease-in-out">
+                <Sidebar 
+                  events={filteredEvents} 
+                  miniMonth={miniMonth} 
+                  selectedDate={selectedDate} 
+                  onSelectDate={(d: any) => { setSelectedDate(d); setCurrent(d); }} 
+                  onChangeMonth={(dir: any) => { const next = new Date(miniMonth); next.setMonth(miniMonth.getMonth() + dir); setMiniMonth(next); }} 
+                  onAddEvent={() => { setEditingEvent(null); setDefaultDate(undefined); setModalOpen(true); }} 
+                  onClickEvent={(evt: any) => { setEditingEvent(evt); setModalOpen(true); }} 
+                  categoryFilter={categoryFilter} 
+                  onFilterChange={setCategoryFilter}
+                />
               </div>
             )}
             
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-hidden bg-[#020617]">
                {/* Calendar Grid Toolbar */}
-               <div className="flex-shrink-0 flex items-center justify-between px-5 py-3 border-b border-white/10 bg-[#0f1117]">
-                 <div className="flex items-center gap-2">
-                    <button onClick={() => navigate(-1)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 hover:bg-white/10">‹</button>
-                    <button onClick={() => { setCurrent(new Date()); setSelectedDate(new Date()); }} className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${isToday(current) ? 'bg-violet-600/30 text-violet-300 border-violet-500/40' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>Today</button>
-                    <button onClick={() => navigate(1)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 hover:bg-white/10">›</button>
-                    <h2 className="text-base font-semibold text-white ml-2">{headerLabel}</h2>
+               <div className="flex-shrink-0 flex items-center justify-between px-8 py-5 border-b border-white/5 bg-[#0f172a]/40 backdrop-blur-sm">
+                 <div className="flex items-center gap-4">
+                    <div className="flex bg-white/5 rounded-xl p-1 border border-white/5">
+                      <button onClick={() => navigate(-1)} className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors text-blue-400">‹</button>
+                      <button onClick={() => { setCurrent(new Date()); setSelectedDate(new Date()); }} className={`px-5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${isToday(current) ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40' : 'text-gray-400 hover:text-white'}`}>Today</button>
+                      <button onClick={() => navigate(1)} className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors text-blue-400">›</button>
+                    </div>
+                    <h2 className="text-xl font-black text-white ml-2 tracking-tighter uppercase">{headerLabel}</h2>
                  </div>
-                 <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
+                 
+                 <div className="flex items-center gap-1 bg-white/5 border border-white/5 rounded-2xl p-1.5 shadow-inner">
                     {['month', 'week', 'day', 'agenda'].map(m => (
-                      <button key={m} onClick={() => setViewMode(m)} className={`px-3 py-1.5 rounded-lg text-xs capitalize ${viewMode === m ? "bg-violet-600 shadow-md" : "text-gray-400 hover:text-gray-200"}`}>{m}</button>
+                      <button 
+                        key={m} 
+                        onClick={() => setViewMode(m)} 
+                        className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === m ? "bg-blue-600 text-white shadow-xl shadow-blue-900/40" : "text-gray-500 hover:text-gray-200"}`}
+                      >
+                        {m}
+                      </button>
                     ))}
                  </div>
                </div>
                
-               {viewMode === "month" && <MonthView current={current} events={filteredEvents} categoryFilter={categoryFilter} onClickDay={(date: any) => { setSelectedDate(date); setDefaultDate(date); setEditingEvent(null); setModalOpen(true); }} onClickEvent={(evt: any) => { setEditingEvent(evt); setModalOpen(true); }} />}
-               {viewMode === "week" && <WeekView current={current} />}
-               {viewMode === "day" && <DayView current={current} />}
-               {viewMode === "agenda" && <AgendaView current={current} />}
+               <div className="flex-1 overflow-hidden flex flex-col">
+                 {viewMode === "month" && <MonthView current={current} events={filteredEvents} categoryFilter={categoryFilter} onClickDay={(date: any) => { setSelectedDate(date); setDefaultDate(date); setEditingEvent(null); setModalOpen(true); }} onClickEvent={(evt: any) => { setEditingEvent(evt); setModalOpen(true); }} />}
+                 {viewMode === "week" && <WeekView current={current} />}
+                 {viewMode === "day" && <DayView current={current} />}
+                 {viewMode === "agenda" && <AgendaView current={current} />}
+               </div>
             </div>
           </div>
-          {modalOpen && <EventModal event={editingEvent} defaultDate={defaultDate} onSave={handleSaveEvent} onDelete={handleDeleteEvent} onClose={() => { setModalOpen(false); setEditingEvent(null); }} />}
+          {modalOpen && <EventModal event={editingEvent} defaultDate={defaultDate} onSave={handleSaveEvent} onDelete={handleDeleteEvent} onApprove={handleApproveEvent} onClose={() => { setModalOpen(false); setEditingEvent(null); }} />}
         </div>
       </DragDropImport>
     </DashboardLayout>

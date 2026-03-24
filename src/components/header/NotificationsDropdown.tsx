@@ -18,6 +18,8 @@ import {
   formatTimeAgo,
 } from "./notificationsData";
 
+import { usePersistentNotifications } from "./usePersistentNotifications";
+
 const iconMap = {
   FileText,
   Zap,
@@ -46,34 +48,27 @@ function getIcon(type: Notification["type"]) {
 
 export function NotificationsDropdown() {
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    clearAll,
+    deleteNotification: hookDeleteNotification,
+  } = usePersistentNotifications();
   const [open, setOpen] = useState(false);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
   const handleNotificationClick = (notification: Notification) => {
-    // Mark as read
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n))
-    );
-    // Navigate if link exists
+    markAsRead(notification.id);
     if (notification.link) {
       navigate(notification.link);
       setOpen(false);
     }
   };
 
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  };
-
-  const clearAll = () => {
-    setNotifications([]);
-  };
-
   const deleteNotification = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    hookDeleteNotification(id);
   };
 
   return (

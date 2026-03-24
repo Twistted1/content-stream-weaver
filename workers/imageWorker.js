@@ -1,28 +1,34 @@
-import fs from "fs"
+import { promises as fs } from "fs"
 
 export default async function runImageWorker() {
-  const posts = JSON.parse(fs.readFileSync("./cms/posts.json"))
-  let updated = false
+  try {
+    const fileContent = await fs.readFile("./cms/posts.json", "utf-8")
+    if (!fileContent.trim()) return; // Handle empty file
+    
+    const posts = JSON.parse(fileContent)
+    let updated = false
 
-  for (let post of posts) {
-    if (post.status === "awaiting_image") {
-      try {
-        console.log(`Generating image for post: ${post.id}...`)
-        
-        // 🔥 generate image based on text
-        post.image = await generateImageWithAI(post.text)
-        
-        post.status = "approved" // ready to publish
-        updated = true
-        console.log(`Image created for ${post.id}`)
-      } catch (err) {
-        console.error(`Failed generating image for post ${post.id}:`, err)
+    for (let post of posts) {
+      if (post.status === "awaiting_image") {
+        try {
+          console.log(`Generating image for post: ${post.id}...`)
+          
+          post.image = await generateImageWithAI(post.text)
+          
+          post.status = "approved" // ready to publish
+          updated = true
+          console.log(`Image created for ${post.id}`)
+        } catch (err) {
+          console.error(`Failed generating image for post ${post.id}:`, err)
+        }
       }
     }
-  }
 
-  if (updated) {
-    fs.writeFileSync("./cms/posts.json", JSON.stringify(posts, null, 2))
+    if (updated) {
+      await fs.writeFile("./cms/posts.json", JSON.stringify(posts, null, 2))
+    }
+  } catch (err) {
+    console.error("Image Worker file error:", err)
   }
 }
 

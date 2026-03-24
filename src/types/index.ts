@@ -35,7 +35,7 @@ export interface Task {
 }
 
 // Posts
-export type PostStatus = Database["public"]["Enums"]["post_status"];
+export type PostStatus = Database["public"]["Enums"]["post_status"] | "awaiting_review";
 export type PostType = Database["public"]["Enums"]["post_type"];
 export type PlatformType = Database["public"]["Enums"]["platform_type"];
 
@@ -186,6 +186,7 @@ export interface UJTItem {
     isPinned?: boolean;
     color?: string;
   };
+  imageUrl?: string;
 }
 
 export interface UniversalTemplate {

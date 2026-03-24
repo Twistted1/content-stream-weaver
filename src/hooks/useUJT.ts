@@ -44,12 +44,12 @@ export function useUJT() {
             
             await addPost.mutateAsync({
               post: {
-                title: item.data.title || "Untitled Post",
-                content: item.data.content || "",
-                type: item.type === "ARTICLE" ? "article" : (item.data.type || "text"),
-                status: (scheduledAt ? "scheduled" : "draft") as any,
+                title: item.data?.title || "Untitled Post",
+                content: item.data?.content || "",
+                type: item.type === "ARTICLE" ? "article" : (item.data?.type || "text"),
+                status: (item.metadata?.status || (scheduledAt ? "scheduled" : "draft")) as any,
                 scheduled_at: scheduledAt,
-                imageUrl: item.data.img || item.data.image || item.imageUrl || ""
+                cover_image_url: item.data?.img || item.data?.image || item.imageUrl || ""
               },
               platforms: item.metadata?.platforms || [platform],
             });

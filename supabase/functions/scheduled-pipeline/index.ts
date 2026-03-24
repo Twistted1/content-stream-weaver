@@ -22,6 +22,42 @@ serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const adminClient = createClient(supabaseUrl, serviceKey);
 
+    // --- Act II: The Worker (Frugal Architect Logic) ---
+    const calculateMonthlySpend = async (supabase: any) => {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const { data, error } = await supabase
+        .from('posts')
+        .select('cost_estimate')
+        .gte('created_at', startOfMonth.toISOString());
+
+      if (error) console.error("Error calculating monthly spend:", error);
+
+      const total = data?.reduce((acc: number, post: any) => acc + (Number(post.cost_estimate) || 0), 0) || 0;
+      const { data: settings } = await supabase.from('project_settings').select('*').single();
+
+      return {
+        currentSpend: total,
+        budgetLimit: settings?.monthly_openai_budget || 50
+      };
+    };
+
+    const budgetStatus = await calculateMonthlySpend(adminClient);
+    console.log(`[Budget Check] Current: $${budgetStatus.currentSpend}, Limit: $${budgetStatus.budgetLimit}`);
+
+    if (budgetStatus.currentSpend >= budgetStatus.budgetLimit) {
+      return new Response(JSON.stringify({ 
+        message: "Monthly Budget Exceeded", 
+        currentSpend: budgetStatus.currentSpend, 
+        limit: budgetStatus.budgetLimit 
+      }), {
+        status: 200, // Still return 200 to acknowledge trigger but stop execution
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Find active scheduled automations that are due
     const { data: automations, error: fetchError } = await adminClient
       .from("automations")
@@ -41,28 +77,21 @@ serve(async (req) => {
 
     for (const auto of automations) {
       try {
-        // Derive topic from automation name/description
         const topic = auto.description || auto.name;
         const platforms = auto.platforms || ["twitter"];
-
-        // Call the content-pipeline function
         const pipelineUrl = `${supabaseUrl}/functions/v1/content-pipeline`;
         
-        // Create a temporary session for the user
-        // We use service role to invoke the pipeline on behalf of the user
         const response = await fetch(pipelineUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${anonKey}`,
-            // We need to pass user context - the pipeline verifies auth
-            // For cron jobs, we'll use service role auth directly
-            "x-service-role": serviceKey,
+            Authorization: `Bearer ${serviceKey}`, // Use service key for system tasks
           },
           body: JSON.stringify({
             topic,
             platforms,
-            scheduleMode: "draft",
+            user_id: auto.user_id, // Pass the user context
+            scheduleMode: "awaiting_review", // Force human approval
           }),
         });
 
@@ -96,7 +125,7 @@ serve(async (req) => {
             user_id: auto.user_id,
             status: response.ok ? "success" : "failed",
             completed_at: new Date().toISOString(),
-            error_message: response.ok ? `Pipeline completed: ${result.title || "OK"}` : result.error,
+            error_message: response.ok ? `Sent to Review Inbox: ${result.title || "OK"}` : result.error,
           });
 
         results.push({ automationId: auto.id, name: auto.name, success: response.ok });

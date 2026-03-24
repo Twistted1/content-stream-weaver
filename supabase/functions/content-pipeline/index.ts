@@ -34,7 +34,38 @@ serve(async (req) => {
     }
 
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
-    const { topic, platforms, scheduleMode, scheduledAt } = await req.json();
+    const { topic, platforms, scheduleMode, scheduledAt, user_id } = await req.json();
+
+    // Determine target user (either from auth or passed by service role)
+    const targetUserId = user_id || user.id;
+
+    // --- Frugal Architect Logic: Pre-Flight Budget Check ---
+    const calculateMonthlySpend = async (supabase: any) => {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const { data } = await supabase
+        .from('posts')
+        .select('cost_estimate')
+        .gte('created_at', startOfMonth.toISOString());
+
+      const total = data?.reduce((acc: number, post: any) => acc + (Number(post.cost_estimate) || 0), 0) || 0;
+      const { data: settings } = await supabase.from('project_settings').select('*').single();
+
+      return {
+        currentSpend: total,
+        budgetLimit: settings?.monthly_openai_budget || 50
+      };
+    };
+
+    const budgetStatus = await calculateMonthlySpend(adminClient);
+    if (budgetStatus.currentSpend >= budgetStatus.budgetLimit) {
+      return new Response(JSON.stringify({ error: "Monthly Budget Exceeded", currentSpend: budgetStatus.currentSpend }), {
+        status: 402, // Payment Required / Over budget
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (!topic || !platforms?.length) {
       return new Response(JSON.stringify({ error: "topic and platforms are required" }), {
@@ -47,7 +78,7 @@ serve(async (req) => {
     const { data: pipelineRun, error: insertError } = await adminClient
       .from("pipeline_runs")
       .insert({
-        user_id: user.id,
+        user_id: targetUserId,
         topic,
         platforms,
         schedule_mode: scheduleMode || "immediate",
@@ -71,32 +102,26 @@ serve(async (req) => {
       await adminClient.from("pipeline_runs").update({ steps }).eq("id", runId);
     };
 
-    // 2. IDEA GENERATION - Generate content with AI
+    // 2. IDEA GENERATION
     await updateStep("generating_content");
 
     const platformList = platforms.join(", ");
     const contentPrompt = `You are a professional social media content creator. Generate a complete post about: "${topic}"
-
 Target platforms: ${platformList}
-
 Return a JSON object with:
 {
   "title": "A compelling title (max 80 chars)",
-  "content": "The full post content optimized for ${platformList}. Include relevant hashtags. Make it engaging and professional.",
-  "excerpt": "A 1-2 sentence summary",
+  "content": "The full post content optimized for ${platformList}.",
+  "excerpt": "A summary",
   "type": "text",
-  "tags": ["tag1", "tag2", "tag3"],
-  "imagePrompt": "A detailed description for generating a cover image that matches this content. Be specific about composition, style, and mood."
+  "tags": ["tag1", "tag2"],
+  "imagePrompt": "A description for a cover image."
 }
-
-Return ONLY the JSON, no markdown or explanation.`;
+Return ONLY JSON.`;
 
     const contentResponse = await fetch(OPENAI_URL, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${openaiKey}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "gpt-4o",
         messages: [{ role: "user", content: contentPrompt }],
@@ -104,67 +129,73 @@ Return ONLY the JSON, no markdown or explanation.`;
       }),
     });
 
-    if (!contentResponse.ok) {
-      const errText = await contentResponse.text();
-      throw new Error(`AI content heightening failed [${contentResponse.status}]: ${errText}`);
-    }
-
     const contentData = await contentResponse.json();
-    let rawContent = contentData.choices?.[0]?.message?.content || "";
-    // Strip markdown code fences if present
-    rawContent = rawContent.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-
-    let generatedContent: any;
-    try {
-      generatedContent = JSON.parse(rawContent);
-    } catch {
-      throw new Error("AI returned invalid JSON for content generation");
-    }
+    const generatedContent = JSON.parse(contentData.choices?.[0]?.message?.content || "{}");
+    
+    // Estimate Cost: GPT-4o tokens (approx $0.01)
+    let estimatedCost = 0.01;
 
     await updateStep("content_generated", { title: generatedContent.title });
 
-    // 3. IMAGE GENERATION - Generate cover image with DALL-E
+    // 3. IMAGE GENERATION (Optimization: 1024x1024 only)
     await updateStep("generating_image");
 
-    let coverImageUrl: string | null = null;
+    let finalImageUrl: string | null = null;
     try {
       const dalleResponse = await fetch("https://api.openai.com/v1/images/generations", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${openaiKey}`,
-          "Content-Type": "application/json",
-        },
+        headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "dall-e-3",
-          prompt: generatedContent.imagePrompt || `Professional social media image for: ${topic}`,
+          prompt: generatedContent.imagePrompt || `Professional image for: ${topic}`,
           n: 1,
-          size: "1792x1024",
+          size: "1024x1024",
           quality: "standard",
         }),
       });
 
       if (dalleResponse.ok) {
         const dalleData = await dalleResponse.json();
-        coverImageUrl = dalleData.data?.[0]?.url || null;
-        await updateStep("image_generated", { url: coverImageUrl ? "success" : "no_url" });
-      } else {
-        const errText = await dalleResponse.text();
-        console.error("DALL-E error:", errText);
-        await updateStep("image_failed", { error: errText.substring(0, 200) });
+        const openaiImageUrl = dalleData.data?.[0]?.url;
+        estimatedCost += 0.04; // DALL-E 3 Standard 1024x1024 cost
+
+        // Optimization: Download and Upload to Supabase Storage
+        if (openaiImageUrl) {
+          try {
+            const imgFetch = await fetch(openaiImageUrl);
+            const imgBlob = await imgFetch.blob();
+            const fileName = `${targetUserId}/${runId}.png`;
+            
+            const { data: uploadData, error: uploadError } = await adminClient.storage
+              .from('post-images')
+              .upload(fileName, imgBlob, { upsert: true, contentType: 'image/png' });
+
+            if (!uploadError) {
+              const { data: { publicUrl } } = adminClient.storage.from('post-images').getPublicUrl(fileName);
+              finalImageUrl = publicUrl;
+              await updateStep("image_stored", { url: publicUrl });
+            } else {
+              console.error("Storage upload error:", uploadError);
+              finalImageUrl = openaiImageUrl; // Fallback
+            }
+          } catch (storageErr) {
+            console.error("Storage processing error:", storageErr);
+            finalImageUrl = openaiImageUrl;
+          }
+        }
       }
     } catch (imgErr: any) {
-      console.error("Image generation error:", imgErr);
-      await updateStep("image_skipped", { reason: imgErr.message });
+      console.error("Image gen error:", imgErr);
     }
 
-    // 4. SCHEDULING - Create the post
+    // 4. THE GATEKEEPER - Enforce status: awaiting_review
     await updateStep("creating_post");
 
-    const postStatus = scheduleMode === "scheduled" && scheduledAt ? "scheduled" : "draft";
+    const postStatus = "awaiting_review"; // FORCED for AI generation
     const { data: post, error: postError } = await adminClient
       .from("posts")
       .insert({
-        user_id: user.id,
+        user_id: targetUserId,
         title: generatedContent.title,
         content: generatedContent.content,
         excerpt: generatedContent.excerpt || null,
@@ -172,7 +203,10 @@ Return ONLY the JSON, no markdown or explanation.`;
         status: postStatus,
         scheduled_at: scheduledAt || null,
         tags: generatedContent.tags || [],
-        cover_image_url: coverImageUrl,
+        cover_image_url: finalImageUrl,
+        is_ai_generated: true,
+        cost_estimate: estimatedCost,
+        workflow_step: 'Review'
       })
       .select()
       .single();
@@ -187,7 +221,7 @@ Return ONLY the JSON, no markdown or explanation.`;
     }));
     await adminClient.from("post_platforms").insert(platformInserts);
 
-    await updateStep("post_created", { postId: post.id, status: postStatus });
+    await updateStep("post_created", { postId: post.id, status: postStatus, cost: estimatedCost });
 
     // 5. PUBLISHING - Fire webhooks if immediate
     if (scheduleMode === "immediate" || (!scheduledAt && scheduleMode !== "draft")) {
@@ -217,7 +251,7 @@ Return ONLY the JSON, no markdown or explanation.`;
                   content: generatedContent.content,
                   excerpt: generatedContent.excerpt,
                   tags: generatedContent.tags,
-                  coverImageUrl: coverImageUrl,
+                  coverImageUrl: finalImageUrl,
                   platforms: matchingPlatforms,
                   scheduledAt: scheduledAt,
                 },
@@ -277,7 +311,7 @@ Return ONLY the JSON, no markdown or explanation.`;
         post_id: post.id,
         result: {
           title: generatedContent.title,
-          hasImage: !!coverImageUrl,
+          hasImage: !!finalImageUrl,
           postStatus,
           postId: post.id,
         },
@@ -291,7 +325,7 @@ Return ONLY the JSON, no markdown or explanation.`;
         postId: post.id,
         title: generatedContent.title,
         status: postStatus,
-        hasImage: !!coverImageUrl,
+        hasImage: !!finalImageUrl,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

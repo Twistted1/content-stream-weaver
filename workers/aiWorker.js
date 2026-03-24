@@ -1,36 +1,42 @@
-import fs from "fs"
+import { promises as fs } from "fs"
 
 export default async function runAIWorker() {
-  const posts = JSON.parse(fs.readFileSync("./cms/posts.json"))
+  try {
+    const fileContent = await fs.readFile("./cms/posts.json", "utf-8")
+    if (!fileContent.trim()) return; // Handle empty file
+    
+    const posts = JSON.parse(fileContent)
+    let updated = false
 
-  let updated = false
+    for (let post of posts) {
+      if (post.status === "idea" && post.idea) {
+        try {
+          console.log(`Generating post for idea: "${post.idea}"...`)
+          
+          post.text = await generatePostWithAI(post.idea)
+          
+          const tomorrow = new Date()
+          tomorrow.setDate(tomorrow.getDate() + 1)
+          tomorrow.setHours(14, 0, 0)
 
-  for (let post of posts) {
-    if (post.status === "idea") {
-      try {
-        console.log(`Generating post for idea: "${post.idea}"...`)
-        
-        // 🔥 Real AI plug-in replaces the hardcoded string
-        post.text = await generatePostWithAI(post.idea)
-        
-        // optional: set schedule automatically
-        const tomorrow = new Date()
-        tomorrow.setDate(tomorrow.getDate() + 1)
-        tomorrow.setHours(14, 0, 0)
+          post.scheduled_at = tomorrow.toISOString()
+          post.status = "approved"
 
-        post.scheduled_at = tomorrow.toISOString()
-        post.status = "approved"
-
-        updated = true
-        console.log(`Post ${post.id} generated:`, post.text)
-      } catch (err) {
-        console.error(`Failed generating post ${post.id}:`, err)
+          updated = true
+          console.log(`Post ${post.id} generated:`, post.text)
+        } catch (err) {
+          console.error(`Failed generating post ${post.id}:`, err)
+        }
+      } else if (post.status === "idea" && !post.idea) {
+        console.warn(`Post ${post.id} has status "idea" but no idea text!`)
       }
     }
-  }
 
-  if (updated) {
-    fs.writeFileSync("./cms/posts.json", JSON.stringify(posts, null, 2))
+    if (updated) {
+      await fs.writeFile("./cms/posts.json", JSON.stringify(posts, null, 2))
+    }
+  } catch (err) {
+    console.error("AI Worker file error:", err)
   }
 }
 

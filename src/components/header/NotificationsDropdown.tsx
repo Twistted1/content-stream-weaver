@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell, FileText, Zap, UserPlus, Target, Settings, Check, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,6 +57,12 @@ export function NotificationsDropdown() {
     deleteNotification: hookDeleteNotification,
   } = usePersistentNotifications();
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (open && unreadCount > 0) {
+      markAllAsRead();
+    }
+  }, [open, unreadCount, markAllAsRead]);
 
   const handleNotificationClick = (notification: Notification) => {
     markAsRead(notification.id);

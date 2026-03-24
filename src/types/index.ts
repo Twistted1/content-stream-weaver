@@ -9,6 +9,7 @@ export interface Project {
   status: ProjectStatus;
   priority: "low" | "medium" | "high";
   dueDate: string;
+  startDate: string;
   progress: number;
   comments: number;
   attachments: number;

@@ -118,7 +118,7 @@ const WorkflowTest = () => {
     <div className="p-6 max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Social Media Strategy Review</h1>
+            <h1 className="text-xl font-black tracking-tighter text-foreground">Workflow Engine Test</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Import JSON payload from AI Assistant and push it to the Calendar
           </p>

@@ -89,7 +89,7 @@ const contentTemplates = [
   },
 ];
 
-const GREETING = "Hello! I'm Novee, your AI content assistant. 🤖✨ I can help you create engaging social media posts, generate hashtags, write captions, and brainstorm content ideas. How can I help you today?";
+const GREETING = "Hi";
 
 const AIAssistant = () => {
   const { toast } = useToast();
@@ -153,8 +153,8 @@ const AIAssistant = () => {
       post: {
         title: "AI Generated Post",
         content: content,
-        type: "text",
-        status: "draft",
+        type: "text" as any,
+        status: "draft" as any,
         scheduled_at: null,
       },
       platforms: []
@@ -180,7 +180,7 @@ const AIAssistant = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">AI Assistant</h1>
+            <h1 className="text-xl font-black tracking-tighter">AI Assistant</h1>
             <p className="text-muted-foreground">
               Your intelligent content creation companion
             </p>
@@ -191,280 +191,290 @@ const AIAssistant = () => {
           </Button>
         </div>
 
-        {/* Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Messages Today</CardTitle>
-              <Sparkles className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{messages.filter(m => m.role === 'user').length}</div>
-              <p className="text-xs text-muted-foreground">In this session</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">AI Responses</CardTitle>
-              <Bot className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{messages.filter(m => m.role === 'assistant').length}</div>
-              <p className="text-xs text-muted-foreground">Helpful answers</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Status</CardTitle>
-              <Zap className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-500">Online</div>
-              <p className="text-xs text-muted-foreground">Novee is ready</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Model</CardTitle>
-              <PenTool className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">Gemini</div>
-              <p className="text-xs text-muted-foreground">Fast & capable</p>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Stats & Main Content Wrapper - Moved to the right */}
+        <div className="max-w-6xl ml-auto space-y-6">
+          {/* Stats */}
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+            <Card className="shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-4">
+                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Messages Today</CardTitle>
+                <Sparkles className="h-3.5 w-3.5 text-primary/60" />
+              </CardHeader>
+              <CardContent className="pb-3 px-4">
+                <div className="text-xl font-black tracking-tighter">{messages.filter(m => m.role === 'user').length}</div>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-4">
+                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">AI Responses</CardTitle>
+                <Bot className="h-3.5 w-3.5 text-primary/60" />
+              </CardHeader>
+              <CardContent className="pb-3 px-4">
+                <div className="text-xl font-black tracking-tighter">{messages.filter(m => m.role === 'assistant').length}</div>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-4">
+                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</CardTitle>
+                <Zap className="h-3.5 w-3.5 text-green-500/60" />
+              </CardHeader>
+              <CardContent className="pb-3 px-4">
+                <div className="text-xl font-black tracking-tighter text-green-500">Online</div>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-4">
+                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Model</CardTitle>
+                <PenTool className="h-3.5 w-3.5 text-primary/60" />
+              </CardHeader>
+              <CardContent className="pb-3 px-4">
+                <div className="text-xl font-black tracking-tighter">Gemini</div>
+              </CardContent>
+            </Card>
+          </div>
 
-        {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="chat">Chat</TabsTrigger>
-            <TabsTrigger value="templates">Content Templates</TabsTrigger>
-          </TabsList>
+          {/* Main Content */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="chat">Chat</TabsTrigger>
+              <TabsTrigger value="templates">Content Templates</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="chat" className="space-y-4">
-            <div className="grid gap-4 lg:grid-cols-4">
-              {/* Chat Interface */}
-              <Card className="lg:col-span-3">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Bot className="h-5 w-5" />
-                    Novee - Content Assistant
-                  </CardTitle>
-                  <CardDescription>
-                    Powered by AI to help with content creation
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Messages */}
-                  <ScrollArea className="h-[400px] rounded-md border p-4">
-                    <div className="space-y-4">
-                      {messages.map((message) => (
-                        <div
-                          key={message.id}
-                          className={`flex gap-3 ${
-                            message.role === "user" ? "justify-end" : "justify-start"
-                          }`}
-                        >
-                          {message.role === "assistant" && (
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">
-                              <Bot className="h-4 w-4 text-primary-foreground" />
-                            </div>
-                          )}
+            <TabsContent value="chat" className="space-y-4">
+              <div className="grid gap-4 lg:grid-cols-4">
+                {/* Sidebar */}
+                <div className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">Quick Actions</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-start gap-2 text-xs h-9 px-3"
+                        onClick={() => handleQuickPrompt("Generate a social media post about")}
+                        disabled={isLoading}
+                      >
+                        <Wand2 className="h-3.5 w-3.5" />
+                        Generate Post
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-start gap-2 text-xs h-9 px-3"
+                        onClick={() => handleQuickPrompt("Find trending hashtags for")}
+                        disabled={isLoading}
+                      >
+                        <Hash className="h-3.5 w-3.5" />
+                        Find Hashtags
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-start gap-2 text-xs h-9 px-3"
+                        onClick={() => handleQuickPrompt("Write an engaging caption for my image about")}
+                        disabled={isLoading}
+                      >
+                        <Image className="h-3.5 w-3.5" />
+                        Caption Image
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-start gap-2 text-xs h-9 px-3"
+                        onClick={() => handleQuickPrompt("Brainstorm content ideas for")}
+                        disabled={isLoading}
+                      >
+                        <Lightbulb className="h-3.5 w-3.5" />
+                        Brainstorm Ideas
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">Tips</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-xs text-muted-foreground space-y-2">
+                      <p>💡 Be specific about your audience</p>
+                      <p>🎯 Mention the platform you're targeting</p>
+                      <p>✨ Include your brand voice preference</p>
+                      <p>📊 Ask for variations to A/B test</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Chat Interface */}
+                <Card className="lg:col-span-3">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Bot className="h-5 w-5 text-primary" />
+                      Novee - Assistant
+                    </CardTitle>
+                    <CardDescription>
+                      Powered by AI to help with content creation
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Messages */}
+                    <ScrollArea className="h-[450px] rounded-md border p-4 bg-muted/30">
+                      <div className="space-y-4">
+                        {messages.map((message) => (
                           <div
-                            className={`group relative max-w-[80%] rounded-lg px-4 py-2 ${
-                              message.role === "user"
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted"
+                            key={message.id}
+                            className={`flex gap-3 ${
+                              message.role === "user" ? "justify-end" : "justify-start"
                             }`}
                           >
-                            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                            <span className="text-xs opacity-50 mt-1 block">
-                              {message.timestamp.toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </span>
-                            {message.role === "assistant" && message.content !== GREETING && (
-                              <div className="absolute -right-20 top-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  title="Copy to clipboard"
-                                  onClick={() => copyToClipboard(message.content)}
-                                >
-                                  <Copy className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  title="Save to CMS as Draft"
-                                  onClick={() => handleCreatePostFromAI(message.content)}
-                                >
-                                  <FileText className="h-4 w-4" />
-                                </Button>
+                            {message.role === "assistant" && (
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                <Bot className="h-4 w-4" />
+                              </div>
+                            )}
+                            <div
+                              className={`group relative max-w-[85%] rounded-2xl px-4 py-2.5 shadow-sm ${
+                                message.role === "user"
+                                  ? "bg-primary text-primary-foreground rounded-tr-none"
+                                  : "bg-card text-card-foreground border rounded-tl-none"
+                              }`}
+                            >
+                              <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                              <span className="text-[10px] opacity-50 mt-1.5 block font-medium">
+                                {message.timestamp.toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                              {message.role === "assistant" && message.content !== GREETING && (
+                                <div className="absolute -right-12 top-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1.5">
+                                  <Button
+                                    variant="secondary"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-full shadow-md"
+                                    title="Copy to clipboard"
+                                    onClick={() => copyToClipboard(message.content)}
+                                  >
+                                    <Copy className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button
+                                    variant="secondary"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-full shadow-md"
+                                    title="Save to CMS as Draft"
+                                    onClick={() => handleCreatePostFromAI(message.content)}
+                                  >
+                                    <FileText className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                            {message.role === "user" && (
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+                                <User className="h-4 w-4" />
                               </div>
                             )}
                           </div>
-                          {message.role === "user" && (
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary">
-                              <User className="h-4 w-4" />
+                        ))}
+                        {isLoading && (
+                          <div className="flex gap-3">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                              <Bot className="h-4 w-4" />
                             </div>
-                          )}
-                        </div>
+                            <div className="bg-card border rounded-2xl rounded-tl-none px-4 py-2.5 shadow-sm">
+                              <div className="flex gap-1.5 items-center h-5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce"></span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce [animation-delay:0.2s]"></span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce [animation-delay:0.4s]"></span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        <div ref={messagesEndRef} />
+                      </div>
+                    </ScrollArea>
+
+                    {/* Quick Prompts */}
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {quickPrompts.map((prompt) => (
+                        <Button
+                          key={prompt.label}
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleQuickPrompt(prompt.prompt)}
+                          className="gap-1.5 h-7 text-[11px] bg-muted/50 hover:bg-muted font-medium"
+                          disabled={isLoading}
+                        >
+                          <prompt.icon className="h-3 w-3" />
+                          {prompt.label}
+                        </Button>
                       ))}
-                      {isLoading && (
-                        <div className="flex gap-3">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">
-                            <Bot className="h-4 w-4 text-primary-foreground" />
-                          </div>
-                          <div className="bg-muted rounded-lg px-4 py-2">
-                            <div className="flex gap-1">
-                              <span className="animate-bounce">●</span>
-                              <span className="animate-bounce [animation-delay:0.1s]">●</span>
-                              <span className="animate-bounce [animation-delay:0.2s]">●</span>
-                            </div>
-                          </div>
+                    </div>
+
+                    {/* Input */}
+                    <div className="flex gap-3 items-end pt-2">
+                      <div className="flex-1 relative">
+                        <Textarea
+                          ref={inputRef}
+                          placeholder="Ask Novee to create content, generate ideas..."
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSend();
+                            }
+                          }}
+                          className="min-h-[80px] max-h-[200px] resize-none rounded-xl pr-12 text-sm"
+                          disabled={isLoading}
+                        />
+                        <div className="absolute right-3 bottom-3">
+                          <Button 
+                            onClick={handleSend} 
+                            disabled={isLoading}
+                            size="icon"
+                            className="h-8 w-8 rounded-lg"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
                         </div>
-                      )}
-                      <div ref={messagesEndRef} />
+                      </div>
                     </div>
-                  </ScrollArea>
-
-                  {/* Quick Prompts */}
-                  <div className="flex flex-wrap gap-2">
-                    {quickPrompts.map((prompt) => (
-                      <Button
-                        key={prompt.label}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleQuickPrompt(prompt.prompt)}
-                        className="gap-1"
-                        disabled={isLoading}
-                      >
-                        <prompt.icon className="h-3 w-3" />
-                        {prompt.label}
-                      </Button>
-                    ))}
-                  </div>
-
-                  {/* Input */}
-                  <div className="flex gap-2">
-                    <Textarea
-                      ref={inputRef}
-                      placeholder="Ask Novee to create content, generate ideas, or help with your social media strategy..."
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSend();
-                        }
-                      }}
-                      className="min-h-[80px]"
-                      disabled={isLoading}
-                    />
-                    <div className="flex flex-col gap-2">
-                      <Button onClick={handleSend} disabled={isLoading}>
-                        <Send className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Sidebar */}
-              <div className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm">Quick Actions</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start gap-2"
-                      onClick={() => handleQuickPrompt("Generate a social media post about")}
-                      disabled={isLoading}
-                    >
-                      <Wand2 className="h-4 w-4" />
-                      Generate Post
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start gap-2"
-                      onClick={() => handleQuickPrompt("Find trending hashtags for")}
-                      disabled={isLoading}
-                    >
-                      <Hash className="h-4 w-4" />
-                      Find Hashtags
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start gap-2"
-                      onClick={() => handleQuickPrompt("Write an engaging caption for my image about")}
-                      disabled={isLoading}
-                    >
-                      <Image className="h-4 w-4" />
-                      Caption Image
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start gap-2"
-                      onClick={() => handleQuickPrompt("Brainstorm content ideas for")}
-                      disabled={isLoading}
-                    >
-                      <Lightbulb className="h-4 w-4" />
-                      Brainstorm Ideas
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm">Tips</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-sm text-muted-foreground space-y-2">
-                    <p>💡 Be specific about your audience</p>
-                    <p>🎯 Mention the platform you're targeting</p>
-                    <p>✨ Include your brand voice preference</p>
-                    <p>📊 Ask for variations to A/B test</p>
                   </CardContent>
                 </Card>
               </div>
-            </div>
-          </TabsContent>
+            </TabsContent>
 
-          <TabsContent value="templates" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {contentTemplates.map((template) => (
-                <Card key={template.title} className="cursor-pointer hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <template.icon className="h-8 w-8 text-primary" />
-                      <Badge variant="secondary">{template.category}</Badge>
-                    </div>
-                    <CardTitle className="text-lg">{template.title}</CardTitle>
-                    <CardDescription>{template.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button 
-                      className="w-full" 
-                      onClick={() => handleTemplateUse(template.prompt)}
-                    >
-                      Use Template
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <TabsContent value="templates" className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {contentTemplates.map((template) => (
+                  <Card key={template.title} className="group cursor-pointer hover:shadow-lg transition-all border-muted-foreground/10">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                          <template.icon className="h-5 w-5" />
+                        </div>
+                        <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider">{template.category}</Badge>
+                      </div>
+                      <CardTitle className="text-base font-bold">{template.title}</CardTitle>
+                      <CardDescription className="text-xs line-clamp-2">{template.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button 
+                        className="w-full h-9 rounded-lg text-xs font-semibold" 
+                        onClick={() => handleTemplateUse(template.prompt)}
+                      >
+                        Use Template
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
 
-            {contentTemplates.length === 0 && (
-              <EmptyState
-                icon={FileText}
-                title="No templates available"
-                description="Templates will appear here once created"
-              />
-            )}
-          </TabsContent>
-        </Tabs>
+              {contentTemplates.length === 0 && (
+                <EmptyState
+                  icon={FileText}
+                  title="No templates available"
+                  description="Templates will appear here once created"
+                />
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </DashboardLayout>
   );

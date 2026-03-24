@@ -12,7 +12,7 @@ const Index = () => {
       <div className="space-y-6">
         {/* Page Title */}
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Overview</h1>
+          <h1 className="text-xl font-black tracking-tighter text-foreground">Overview</h1>
         </div>
 
         {/* Stats Cards */}

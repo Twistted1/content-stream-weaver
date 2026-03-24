@@ -7,7 +7,7 @@ import { ThemeProvider, useTheme } from "next-themes";
 import { useEffect } from "react";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
-import { useAppStore } from "@/stores/useAppStore";
+import { useUserPreferencesStore } from "@/stores/useUserPreferencesStore";
 import Landing from "./pages/Landing";
 import Pricing from "./pages/Pricing";
 import Terms from "./pages/Terms";
@@ -40,11 +40,11 @@ const queryClient = new QueryClient();
  * Must be rendered inside <ThemeProvider>.
  */
 function ThemeSync() {
-  const { theme } = useAppStore();
+  const { appearance } = useUserPreferencesStore();
   const { setTheme } = useTheme();
   useEffect(() => {
-    setTheme(theme);
-  }, [theme, setTheme]);
+    setTheme(appearance.theme);
+  }, [appearance.theme, setTheme]);
   return null;
 }
 

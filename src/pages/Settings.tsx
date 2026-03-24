@@ -34,7 +34,7 @@ export default function Settings() {
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+            <h1 className="text-xl font-black tracking-tighter text-foreground">Settings</h1>
             <p className="text-muted-foreground">
               Manage your account settings and preferences
             </p>

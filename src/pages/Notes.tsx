@@ -56,7 +56,40 @@ export default function Notes() {
     }
   }, []);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
-  const [newNote, setNewNote] = useState({ title: "", content: "", tags: "" });
+  const [newNote, setNewNote] = useState({ title: "", content: "", tags: [] as string[], color: "bg-card", isPinned: false });
+  const [tagInput, setTagInput] = useState("");
+
+  const colorOptions = [
+    { name: "Default", value: "bg-card" },
+    { name: "Blue", value: "bg-blue-500/10" },
+    { name: "Green", value: "bg-green-500/10" },
+    { name: "Yellow", value: "bg-yellow-500/10" },
+    { name: "Red", value: "bg-red-500/10" },
+    { name: "Purple", value: "bg-purple-500/10" },
+  ];
+
+  const addTag = (tag: string, isEditing: boolean) => {
+    const t = tag.trim();
+    if (!t) return;
+    if (isEditing && editingNote) {
+      if (!editingNote.tags.includes(t)) {
+        setEditingNote({ ...editingNote, tags: [...editingNote.tags, t] });
+      }
+    } else {
+      if (!newNote.tags.includes(t)) {
+        setNewNote({ ...newNote, tags: [...newNote.tags, t] });
+      }
+    }
+    setTagInput("");
+  };
+
+  const removeTag = (tag: string, isEditing: boolean) => {
+    if (isEditing && editingNote) {
+      setEditingNote({ ...editingNote, tags: editingNote.tags.filter(t => t !== tag) });
+    } else {
+      setNewNote({ ...newNote, tags: newNote.tags.filter(t => t !== tag) });
+    }
+  };
 
   const filteredNotes = notes.filter(
     (note) =>
@@ -88,12 +121,12 @@ export default function Notes() {
     addNote.mutate({
       title: newNote.title,
       content: newNote.content,
-      tags: newNote.tags.split(",").map((t) => t.trim()).filter(Boolean),
-      isPinned: false,
-      color: "bg-muted",
+      tags: newNote.tags,
+      isPinned: newNote.isPinned,
+      color: newNote.color,
     }, {
       onSuccess: () => {
-        setNewNote({ title: "", content: "", tags: "" });
+        setNewNote({ title: "", content: "", tags: [], color: "bg-card", isPinned: false });
         setIsCreateDialogOpen(false);
       }
     });
@@ -109,6 +142,8 @@ export default function Notes() {
       title: editingNote.title,
       content: editingNote.content,
       tags: editingNote.tags,
+      color: editingNote.color,
+      isPinned: editingNote.isPinned,
     });
     setEditingNote(null);
   };
@@ -199,7 +234,7 @@ export default function Notes() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Notes</h1>
+            <h1 className="text-xl font-black tracking-tighter text-foreground">Notes</h1>
             <p className="text-muted-foreground">
               Capture ideas, research, and quick thoughts
             </p>
@@ -215,37 +250,77 @@ export default function Notes() {
               <DialogHeader>
                 <DialogTitle>Create New Note</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <Label>Title</Label>
-                  <Input
-                    placeholder="Note title"
-                    value={newNote.title}
-                    onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
-                  />
+                <div className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label>Title</Label>
+                    <Input
+                      placeholder="Note title"
+                      value={newNote.title}
+                      onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Content</Label>
+                    <Textarea
+                      placeholder="Write your note..."
+                      rows={8}
+                      className="min-h-[200px]"
+                      value={newNote.content}
+                      onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Tags</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Add a tag..."
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag(tagInput, false))}
+                      />
+                      <Button variant="outline" size="sm" onClick={() => addTag(tagInput, false)}>Add</Button>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {newNote.tags.map(tag => (
+                        <Badge key={tag} variant="secondary" className="gap-1">
+                          {tag}
+                          <button onClick={() => removeTag(tag, false)} className="hover:text-destructive">×</button>
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Color</Label>
+                    <div className="flex gap-2">
+                      {colorOptions.map((opt) => (
+                        <button
+                          key={opt.value}
+                          className={cn(
+                            "h-8 w-8 rounded-full border border-border transition-all",
+                            opt.value,
+                            newNote.color === opt.value && "ring-2 ring-primary ring-offset-2"
+                          )}
+                          onClick={() => setNewNote({ ...newNote, color: opt.value })}
+                          title={opt.name}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label>Pin to top</Label>
+                    <Button
+                      variant={newNote.isPinned ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setNewNote({ ...newNote, isPinned: !newNote.isPinned })}
+                    >
+                      <Pin className={cn("h-4 w-4 mr-2", newNote.isPinned && "fill-current")} />
+                      {newNote.isPinned ? "Pinned" : "Pin Note"}
+                    </Button>
+                  </div>
+                  <Button onClick={handleCreateNote} className="w-full">
+                    Create Note
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label>Content</Label>
-                  <Textarea
-                    placeholder="Write your note..."
-                    rows={8}
-                    className="min-h-[200px]"
-                    value={newNote.content}
-                    onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Tags</Label>
-                  <Input
-                    placeholder="Tags (comma separated)"
-                    value={newNote.tags}
-                    onChange={(e) => setNewNote({ ...newNote, tags: e.target.value })}
-                  />
-                </div>
-                <Button onClick={handleCreateNote} className="w-full">
-                  Create Note
-                </Button>
-              </div>
             </DialogContent>
           </Dialog>
         </div>
@@ -377,27 +452,71 @@ export default function Notes() {
             </DialogHeader>
             {editingNote && (
               <div className="space-y-4 pt-4">
-                <Input
-                  placeholder="Note title"
-                  value={editingNote.title}
-                  onChange={(e) => setEditingNote({ ...editingNote, title: e.target.value })}
-                />
-                <Textarea
-                  placeholder="Write your note..."
-                  rows={5}
-                  value={editingNote.content}
-                  onChange={(e) => setEditingNote({ ...editingNote, content: e.target.value })}
-                />
-                <Input
-                  placeholder="Tags (comma separated)"
-                  value={editingNote.tags.join(", ")}
-                  onChange={(e) =>
-                    setEditingNote({
-                      ...editingNote,
-                      tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean),
-                    })
-                  }
-                />
+                <div className="space-y-2">
+                   <Label>Title</Label>
+                  <Input
+                    placeholder="Note title"
+                    value={editingNote.title}
+                    onChange={(e) => setEditingNote({ ...editingNote, title: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Content</Label>
+                  <Textarea
+                    placeholder="Write your note..."
+                    rows={8}
+                    value={editingNote.content}
+                    onChange={(e) => setEditingNote({ ...editingNote, content: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tags</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add a tag..."
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag(tagInput, true))}
+                    />
+                    <Button variant="outline" size="sm" onClick={() => addTag(tagInput, true)}>Add</Button>
+                  </div>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {editingNote.tags.map(tag => (
+                      <Badge key={tag} variant="secondary" className="gap-1">
+                        {tag}
+                        <button onClick={() => removeTag(tag, true)} className="hover:text-destructive">×</button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Color</Label>
+                  <div className="flex gap-2">
+                    {colorOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        className={cn(
+                          "h-8 w-8 rounded-full border border-border transition-all",
+                          opt.value,
+                          editingNote.color === opt.value && "ring-2 ring-primary ring-offset-2"
+                        )}
+                        onClick={() => setEditingNote({ ...editingNote, color: opt.value })}
+                        title={opt.name}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label>Pin to top</Label>
+                  <Button
+                    variant={editingNote.isPinned ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setEditingNote({ ...editingNote, isPinned: !editingNote.isPinned })}
+                  >
+                    <Pin className={cn("h-4 w-4 mr-2", editingNote.isPinned && "fill-current")} />
+                    {editingNote.isPinned ? "Pinned" : "Pin Note"}
+                  </Button>
+                </div>
               </div>
             )}
             <DialogFooter>

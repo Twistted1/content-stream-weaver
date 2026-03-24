@@ -197,7 +197,7 @@ export default function Platforms() {
                   <Globe className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-foreground">Platforms</h1>
+                  <h1 className="text-xl font-black tracking-tighter text-foreground">Platforms</h1>
                   <p className="text-muted-foreground">Manage your connected social media accounts</p>
                 </div>
               </div>
@@ -212,7 +212,7 @@ export default function Platforms() {
                 <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
                 {syncing ? "Syncing..." : "Sync All"}
               </Button>
-              <Button className="gap-2 bg-primary hover:bg-primary/90" onClick={() => setActiveTab("available")}>
+              <Button className="gap-2 bg-primary hover:bg-primary/90" onClick={() => setIsAddPlatformOpen(true)}>
                 <Plus className="h-4 w-4" />
                 Add Platform
               </Button>

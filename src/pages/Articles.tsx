@@ -185,7 +185,7 @@ export default function Articles() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Articles</h1>
+              <h1 className="text-xl font-black tracking-tighter text-foreground">Articles</h1>
               <p className="text-muted-foreground">
                 Write, edit, and publish long-form content for your website
               </p>

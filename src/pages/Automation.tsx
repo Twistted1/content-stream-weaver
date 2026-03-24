@@ -182,7 +182,7 @@ export default function AutomationPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Automation</h1>
+            <h1 className="text-xl font-black tracking-tighter text-foreground">Automation</h1>
             <p className="text-muted-foreground">
               Automate your content workflows and save time
             </p>

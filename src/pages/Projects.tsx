@@ -184,12 +184,184 @@ const emptyProject: Project = {
   status: "planning",
   priority: "medium",
   dueDate: "",
+  startDate: "",
   progress: 0,
   comments: 0,
   attachments: 0,
   assignees: [],
   tags: [],
 };
+
+const ProjectForm = ({ 
+  data, 
+  onChange, 
+  isNew, 
+  newTag, 
+  setNewTag, 
+  addTag, 
+  removeTag, 
+  newAssignee, 
+  setNewAssignee, 
+  addAssignee, 
+  removeAssignee 
+}: { 
+  data: Project; 
+  onChange: (data: any) => void; 
+  isNew: boolean;
+  newTag: string;
+  setNewTag: (v: string) => void;
+  addTag: (isNew: boolean) => void;
+  removeTag: (tag: string, isNew: boolean) => void;
+  newAssignee: string;
+  setNewAssignee: (v: string) => void;
+  addAssignee: (isNew: boolean) => void;
+  removeAssignee: (name: string, isNew: boolean) => void;
+}) => (
+  <div className="space-y-4 py-4">
+    <div className="space-y-2">
+      <Label htmlFor="title">Title</Label>
+      <Input
+        id="title"
+        value={data.title}
+        onChange={(e) => onChange({ ...data, title: e.target.value })}
+        placeholder="Project title"
+      />
+    </div>
+    <div className="space-y-2">
+      <Label htmlFor="description">Description</Label>
+      <Textarea
+        id="description"
+        value={data.description}
+        onChange={(e) => onChange({ ...data, description: e.target.value })}
+        placeholder="Project description"
+        rows={8}
+      />
+    </div>
+    <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-2">
+        <Label>Status</Label>
+        <Select
+          value={data.status}
+          onValueChange={(value: ProjectStatus) => onChange({ ...data, status: value })}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {columns.map((col) => (
+              <SelectItem key={col.id} value={col.id}>
+                {col.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-2">
+        <Label>Priority</Label>
+        <Select
+          value={data.priority}
+          onValueChange={(value: "low" | "medium" | "high") =>
+            onChange({ ...data, priority: value })
+          }
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="low">Low</SelectItem>
+            <SelectItem value="medium">Medium</SelectItem>
+            <SelectItem value="high">High</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+    <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-2">
+        <Label htmlFor="startDate">Start Date</Label>
+        <Input
+          id="startDate"
+          type="date"
+          value={data.startDate || ""}
+          onChange={(e) => onChange({ ...data, startDate: e.target.value })}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="dueDate">Due Date</Label>
+        <Input
+          id="dueDate"
+          type="date"
+          value={data.dueDate}
+          onChange={(e) => onChange({ ...data, dueDate: e.target.value })}
+        />
+      </div>
+    </div>
+    <div className="space-y-2">
+      <Label htmlFor="progress">Progress (%)</Label>
+      <Input
+        id="progress"
+        type="number"
+        min="0"
+        max="100"
+        value={data.progress}
+        onChange={(e) => onChange({ ...data, progress: parseInt(e.target.value) || 0 })}
+      />
+    </div>
+    <div className="space-y-2">
+      <Label>Tags</Label>
+      <div className="flex gap-2">
+        <Input
+          value={newTag}
+          onChange={(e) => setNewTag(e.target.value)}
+          placeholder="Add tag"
+          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag(isNew))}
+        />
+        <Button type="button" variant="outline" onClick={() => addTag(isNew)}>
+          Add
+        </Button>
+      </div>
+      <div className="flex flex-wrap gap-1 mt-2">
+        {data.tags.map((tag) => (
+          <Badge key={tag} variant="secondary" className="gap-1">
+            {tag}
+            <button
+              onClick={() => removeTag(tag, isNew)}
+              className="ml-1 hover:text-destructive"
+            >
+              ×
+            </button>
+          </Badge>
+        ))}
+      </div>
+    </div>
+    <div className="space-y-2">
+      <Label>Assignees</Label>
+      <div className="flex gap-2">
+        <Input
+          value={newAssignee}
+          onChange={(e) => setNewAssignee(e.target.value)}
+          placeholder="Add assignee name"
+          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addAssignee(isNew))}
+        />
+        <Button type="button" variant="outline" onClick={() => addAssignee(isNew)}>
+          Add
+        </Button>
+      </div>
+      <div className="flex flex-wrap gap-1 mt-2">
+        {data.assignees.map((assignee) => (
+          <Badge key={assignee.name} variant="outline" className="gap-1">
+            {assignee.name}
+            <button
+              onClick={() => removeAssignee(assignee.name, isNew)}
+              className="ml-1 hover:text-destructive"
+            >
+              ×
+            </button>
+          </Badge>
+        ))}
+      </div>
+    </div>
+  </div>
+);
 
 export default function Projects() {
   const { projects, addProject, updateProject, deleteProject, moveProject } = useProjects();
@@ -309,143 +481,7 @@ export default function Projects() {
     }
   };
 
-  const ProjectForm = ({ data, onChange, isNew }: { data: typeof emptyProject | Project; onChange: (data: any) => void; isNew: boolean }) => (
-    <div className="space-y-4 py-4">
-      <div className="space-y-2">
-        <Label htmlFor="title">Title</Label>
-        <Input
-          id="title"
-          value={data.title}
-          onChange={(e) => onChange({ ...data, title: e.target.value })}
-          placeholder="Project title"
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          value={data.description}
-          onChange={(e) => onChange({ ...data, description: e.target.value })}
-          placeholder="Project description"
-          rows={3}
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Status</Label>
-          <Select
-            value={data.status}
-            onValueChange={(value: ProjectStatus) => onChange({ ...data, status: value })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {columns.map((col) => (
-                <SelectItem key={col.id} value={col.id}>
-                  {col.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label>Priority</Label>
-          <Select
-            value={data.priority}
-            onValueChange={(value: "low" | "medium" | "high") =>
-              onChange({ ...data, priority: value })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="low">Low</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="dueDate">Due Date</Label>
-          <Input
-            id="dueDate"
-            type="date"
-            value={data.dueDate}
-            onChange={(e) => onChange({ ...data, dueDate: e.target.value })}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="progress">Progress (%)</Label>
-          <Input
-            id="progress"
-            type="number"
-            min="0"
-            max="100"
-            value={data.progress}
-            onChange={(e) => onChange({ ...data, progress: parseInt(e.target.value) || 0 })}
-          />
-        </div>
-      </div>
-      <div className="space-y-2">
-        <Label>Tags</Label>
-        <div className="flex gap-2">
-          <Input
-            value={newTag}
-            onChange={(e) => setNewTag(e.target.value)}
-            placeholder="Add tag"
-            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag(isNew))}
-          />
-          <Button type="button" variant="outline" onClick={() => addTag(isNew)}>
-            Add
-          </Button>
-        </div>
-        <div className="flex flex-wrap gap-1 mt-2">
-          {data.tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="gap-1">
-              {tag}
-              <button
-                onClick={() => removeTag(tag, isNew)}
-                className="ml-1 hover:text-destructive"
-              >
-                ×
-              </button>
-            </Badge>
-          ))}
-        </div>
-      </div>
-      <div className="space-y-2">
-        <Label>Assignees</Label>
-        <div className="flex gap-2">
-          <Input
-            value={newAssignee}
-            onChange={(e) => setNewAssignee(e.target.value)}
-            placeholder="Add assignee name"
-            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addAssignee(isNew))}
-          />
-          <Button type="button" variant="outline" onClick={() => addAssignee(isNew)}>
-            Add
-          </Button>
-        </div>
-        <div className="flex flex-wrap gap-1 mt-2">
-          {data.assignees.map((assignee) => (
-            <Badge key={assignee.name} variant="outline" className="gap-1">
-              {assignee.name}
-              <button
-                onClick={() => removeAssignee(assignee.name, isNew)}
-                className="ml-1 hover:text-destructive"
-              >
-                ×
-              </button>
-            </Badge>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+
 
   const handleImport = (data: any) => {
     if (data.version === "1.0" && Array.isArray(data.items)) {
@@ -462,6 +498,7 @@ export default function Projects() {
           status: (item.status === "backlog" ? "planning" : item.status) || "planning",
           priority: item.priority || "medium",
           dueDate: item.dueDate || "",
+          startDate: item.startDate || "",
           progress: item.progress || 0,
           comments: 0,
           attachments: 0,
@@ -479,7 +516,7 @@ export default function Projects() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Projects</h1>
+            <h1 className="text-xl font-black tracking-tighter text-foreground">Projects</h1>
             <p className="text-muted-foreground">
               Manage and track your content projects
             </p>
@@ -664,7 +701,19 @@ export default function Projects() {
               <DialogTitle>Create New Project</DialogTitle>
               <DialogDescription>Add a new project to track your content work.</DialogDescription>
             </DialogHeader>
-            <ProjectForm data={newProject} onChange={setNewProject} isNew={true} />
+            <ProjectForm 
+              data={newProject} 
+              onChange={setNewProject} 
+              isNew={true}
+              newTag={newTag}
+              setNewTag={setNewTag}
+              addTag={addTag}
+              removeTag={removeTag}
+              newAssignee={newAssignee}
+              setNewAssignee={setNewAssignee}
+              addAssignee={addAssignee}
+              removeAssignee={removeAssignee}
+            />
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                 Cancel
@@ -682,7 +731,19 @@ export default function Projects() {
               <DialogDescription>Update your project details.</DialogDescription>
             </DialogHeader>
             {editingProject && (
-              <ProjectForm data={editingProject} onChange={setEditingProject} isNew={false} />
+              <ProjectForm 
+                data={editingProject} 
+                onChange={setEditingProject} 
+                isNew={false}
+                newTag={newTag}
+                setNewTag={setNewTag}
+                addTag={addTag}
+                removeTag={removeTag}
+                newAssignee={newAssignee}
+                setNewAssignee={setNewAssignee}
+                addAssignee={addAssignee}
+                removeAssignee={removeAssignee}
+              />
             )}
             <DialogFooter>
               <Button variant="outline" onClick={() => setEditingProject(null)}>

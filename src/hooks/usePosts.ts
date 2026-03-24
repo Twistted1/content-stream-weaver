@@ -113,7 +113,7 @@ export function usePosts() {
   });
 
   const updatePost = useMutation({
-    mutationFn: async ({ id, ...updates }: PostUpdateType & { id: string }) => {
+    mutationFn: async ({ id, ...updates }: any & { id: string }) => {
       const { data, error } = await supabase
         .from("posts")
         .update(updates)

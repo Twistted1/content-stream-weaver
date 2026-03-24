@@ -126,7 +126,7 @@ function Sidebar({ events, miniMonth, selectedDate, onSelectDate, onChangeMonth,
         )}
       </div>
       
-      <button onClick={onAddEvent} className="w-full flex justify-center gap-2 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-900/20 transition-all active:scale-95">
+      <button onClick={onAddEvent} className="w-full flex justify-center gap-2 py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/20 transition-all active:scale-95">
         + New Event
       </button>
 
@@ -257,7 +257,7 @@ function MonthView({ current, events, categoryFilter, onClickDay, onClickEvent }
                   );
                 })}
                 {dayEvents.length > 4 && (
-                  <div className="text-[9px] text-gray-500 font-bold pl-2">+{dayEvents.length - 4} more</div>
+                  <div className="min-h-[400px] text-[9px] text-gray-500 font-bold pl-2">+{dayEvents.length - 4} more</div>
                 )}
               </div>
             </div>
@@ -268,9 +268,140 @@ function MonthView({ current, events, categoryFilter, onClickDay, onClickEvent }
   );
 }
 
-function WeekView({ current }: any) { return <div className="flex-1 flex flex-col overflow-hidden p-4 items-center justify-center border-t border-white/10"><p className="text-gray-400">Week View Loaded</p></div>; }
-function DayView({ current }: any) { return <div className="flex-1 flex flex-col items-center justify-center p-4 border-t border-white/10"><p className="text-gray-400">Day View Loaded</p></div>; }
-function AgendaView({ current }: any) { return <div className="flex-1 overflow-y-auto px-6 py-4 border-t border-white/10 text-gray-400">Agenda View Loaded</div>; }
+function WeekView({ current, events, onClickEvent }: any) { 
+  const weekDays = getWeekDays(current);
+  return (
+    <div className="flex-1 flex flex-col overflow-y-auto custom-scrollbar bg-background">
+      <div className="grid grid-cols-7 border-b border-border text-center text-[10px] font-bold text-primary tracking-widest py-4 sticky top-0 bg-card z-10">
+        {weekDays.map(d => (
+          <div key={d.toISOString()} className={isToday(d) ? "text-primary" : "text-muted-foreground"}>
+            <div className="uppercase">{DAY_NAMES[d.getDay()]}</div>
+            <div className={`mt-1 text-lg font-black ${isToday(d) ? "text-primary" : "text-foreground"}`}>{d.getDate()}</div>
+          </div>
+        ))}
+      </div>
+      <div className="flex-1 grid grid-cols-7 border-l border-border min-h-[600px]">
+        {weekDays.map((day, i) => {
+          const dayEvents = getEventsForDay(events, day);
+          return (
+            <div key={i} className="min-h-[140px] p-2 border-r border-b border-border hover:bg-primary/5 transition-colors relative group">
+              <div className="space-y-1">
+                {dayEvents.map((evt: any) => {
+                  const s = getStyle(evt);
+                  return (
+                    <div 
+                      key={evt.id} 
+                      onClick={() => onClickEvent(evt)}
+                      className={`px-2 py-1.5 rounded-lg text-[10px] font-bold border ${s.bg} ${s.text} ${s.border} cursor-pointer hover:scale-[1.02] transition-transform`}
+                    >
+                      {evt.startTime && <span className="mr-1 opacity-70">{evt.startTime}</span>}
+                      {evt.title}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function DayView({ current, events, onClickEvent }: any) { 
+  const dayEvents = getEventsForDay(events, current);
+  return (
+    <div className="flex-1 flex flex-col overflow-y-auto custom-scrollbar bg-background p-6">
+      <div className="max-w-3xl mx-auto w-full space-y-6">
+        <div className="flex items-center justify-between border-b border-border pb-4">
+          <div>
+            <h2 className="text-3xl font-black text-foreground tracking-tighter">{format(current, "EEEE, MMMM do")}</h2>
+            <p className="text-muted-foreground font-medium">Schedule for today</p>
+          </div>
+          <div className="text-right">
+            <span className="text-4xl font-black text-primary/20">{format(current, "dd")}</span>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {dayEvents.length > 0 ? dayEvents.map((evt: any) => {
+            const s = getStyle(evt);
+            return (
+              <div 
+                key={evt.id} 
+                onClick={() => onClickEvent(evt)}
+                className={`flex gap-6 p-6 rounded-2xl border ${s.bg} ${s.border} cursor-pointer hover:scale-[1.01] transition-transform shadow-sm`}
+              >
+                <div className="w-20 shrink-0 text-lg font-black text-muted-foreground/50 tabular-nums">
+                  {evt.startTime || "All Day"}
+                </div>
+                <div>
+                  <h3 className={`text-lg font-black ${s.text} tracking-tight`}>{evt.title}</h3>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{evt.description}</p>
+                  {evt.platform && evt.platform !== 'none' && (
+                    <Badge className="mt-4 uppercase text-[10px] font-black">{evt.platform}</Badge>
+                  )}
+                </div>
+              </div>
+            );
+          }) : (
+            <div className="py-20 text-center border-2 border-dashed border-border rounded-3xl">
+              <p className="text-muted-foreground font-medium italic">No events scheduled for this day</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AgendaView({ events, onClickEvent }: any) { 
+  const sortedEvents = [...events].sort((a, b) => a.date.localeCompare(b.date));
+  return (
+    <div className="flex-1 overflow-y-auto custom-scrollbar bg-background p-6">
+      <div className="max-w-4xl mx-auto space-y-12">
+        {sortedEvents.length > 0 ? (
+          Array.from(new Set(sortedEvents.map(e => e.date))).map(dateStr => {
+            const dateObj = parseISO(dateStr);
+            const dayEvts = sortedEvents.filter(e => e.date === dateStr);
+            return (
+              <div key={dateStr} className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-6">
+                <div className="sticky top-0 h-fit py-2">
+                  <div className="text-sm font-black text-primary uppercase tracking-widest">{format(dateObj, "MMMM")}</div>
+                  <div className="text-3xl font-black text-foreground">{format(dateObj, "do")}</div>
+                  <div className="text-xs font-bold text-muted-foreground uppercase">{format(dateObj, "EEEE")}</div>
+                </div>
+                <div className="space-y-3">
+                  {dayEvts.map((evt: any) => {
+                    const s = getStyle(evt);
+                    return (
+                      <div 
+                        key={evt.id} 
+                        onClick={() => onClickEvent(evt)}
+                        className={`flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:bg-primary/5 cursor-pointer transition-colors shadow-sm`}
+                      >
+                        <div className={`w-2 h-2 rounded-full ${s.dot}`} />
+                        <div className="w-16 text-xs font-bold text-muted-foreground/60 tabular-nums">{evt.startTime || "00:00"}</div>
+                        <div className="flex-1 font-bold text-foreground truncate">{evt.title}</div>
+                        {evt.platform && evt.platform !== 'none' && (
+                          <div className="text-[10px] font-black text-muted-foreground bg-secondary px-2 py-0.5 rounded uppercase tracking-tighter">{evt.platform}</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+            <p className="text-lg font-medium">Nothing on your agenda</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function EventModal({ event, defaultDate, onSave, onDelete, onApprove, onClose }: any) {
   const [title, setTitle] = useState(event?.title || ""); const [date, setDate] = useState(event?.date || (defaultDate ? formatDateKey(defaultDate) : formatDateKey(new Date()))); const [startTime, setStartTime] = useState(event?.startTime || "09:00"); const [endTime, setEndTime] = useState(event?.endTime || "10:00"); const [category, setCategory] = useState(event?.category || "content"); const [platform, setPlatform] = useState(event?.platform || "none"); const [description, setDescription] = useState(event?.description || "");
@@ -432,18 +563,21 @@ export default function ContentCalendar() {
         <div className="h-screen w-full bg-[#020617] text-white flex flex-col font-sans overflow-hidden">
           
           {/* Top Master Class Header - Unified Theme */}
-          <header className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-white/5 bg-[#0f172a]/80 backdrop-blur-2xl z-40">
+          <header className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-border bg-card z-40">
             <div className="flex items-center gap-4">
               <button 
                 onClick={() => setSidebarOpen(p => !p)} 
-                className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${sidebarOpen ? 'bg-blue-600/20 border-blue-500/40 text-blue-400' : 'bg-white/5 border-white/10 text-gray-400'}`}
+                className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${sidebarOpen ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-secondary border-border text-muted-foreground'}`}
               >
                 ☰
               </button>
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-700 flex items-center justify-center shadow-lg shadow-blue-900/20">📅</div>
+              <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 text-xl">📅</div>
               <div>
-                <h1 className="text-lg font-black bg-gradient-to-r from-blue-200 to-indigo-200 bg-clip-text text-transparent leading-none uppercase tracking-tighter">MyFlow</h1>
-                <p className="text-[10px] font-bold text-blue-500/70 leading-none mt-1 uppercase tracking-widest">Master Calendar</p>
+                <h1 className="text-lg font-black text-foreground leading-none tracking-tighter">Content Calendar</h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[10px] font-bold text-primary leading-none">MyFlow</span>
+                  <span className="text-[10px] text-muted-foreground leading-none">Smart Calendar</span>
+                </div>
               </div>
             </div>
             
@@ -461,8 +595,8 @@ export default function ContentCalendar() {
             </div>
 
             <div className="flex items-center gap-4">
-              <label className="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-black py-2.5 px-5 rounded-2xl transition-all shadow-xl shadow-blue-900/30 flex items-center gap-2 active:scale-95">
-                <span>📥 IMPORT UJT</span>
+              <label className="cursor-pointer bg-primary hover:bg-primary/90 text-primary-foreground text-[11px] font-bold py-2.5 px-5 rounded-2xl transition-all shadow-xl shadow-primary/20 flex items-center gap-2 active:scale-95">
+                <span>Import UJT</span>
                 <input type="file" accept=".json" className="hidden" onChange={handleFileUpload} />
               </label>
               
@@ -498,24 +632,24 @@ export default function ContentCalendar() {
             
             <div className="flex-1 flex flex-col overflow-hidden bg-[#020617]">
                {/* Calendar Grid Toolbar */}
-               <div className="flex-shrink-0 flex items-center justify-between px-8 py-5 border-b border-white/5 bg-[#0f172a]/40 backdrop-blur-sm">
+               <div className="flex-shrink-0 flex items-center justify-between px-8 py-5 border-b border-border bg-card">
                  <div className="flex items-center gap-4">
-                    <div className="flex bg-white/5 rounded-xl p-1 border border-white/5">
-                      <button onClick={() => navigate(-1)} className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors text-blue-400">‹</button>
-                      <button onClick={() => { setCurrent(new Date()); setSelectedDate(new Date()); }} className={`px-5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${isToday(current) ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40' : 'text-gray-400 hover:text-white'}`}>Today</button>
-                      <button onClick={() => navigate(1)} className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors text-blue-400">›</button>
+                    <div className="flex bg-secondary rounded-xl p-1 border border-border">
+                       <button onClick={() => navigate(-1)} className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-background transition-colors text-primary">‹</button>
+                       <button onClick={() => { setCurrent(new Date()); setSelectedDate(new Date()); }} className={`px-5 rounded-lg text-xs font-bold tracking-tight transition-all ${isToday(current) ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:text-foreground'}`}>Today</button>
+                       <button onClick={() => navigate(1)} className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-background transition-colors text-primary">›</button>
                     </div>
-                    <h2 className="text-xl font-black text-white ml-2 tracking-tighter uppercase">{headerLabel}</h2>
+                    <h2 className="text-xl font-black text-foreground ml-2 tracking-tighter">{headerLabel}</h2>
                  </div>
                  
-                 <div className="flex items-center gap-1 bg-white/5 border border-white/5 rounded-2xl p-1.5 shadow-inner">
+                 <div className="flex items-center gap-1 bg-secondary border border-border rounded-2xl p-1.5">
                     {['month', 'week', 'day', 'agenda'].map(m => (
                       <button 
                         key={m} 
                         onClick={() => setViewMode(m)} 
-                        className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === m ? "bg-blue-600 text-white shadow-xl shadow-blue-900/40" : "text-gray-500 hover:text-gray-200"}`}
+                        className={`px-5 py-2 rounded-xl text-[10px] font-bold tracking-wide transition-all ${viewMode === m ? "bg-primary text-primary-foreground shadow-lg" : "text-muted-foreground hover:text-foreground"}`}
                       >
-                        {m}
+                        {m.charAt(0).toUpperCase() + m.slice(1)}
                       </button>
                     ))}
                  </div>
@@ -523,9 +657,9 @@ export default function ContentCalendar() {
                
                <div className="flex-1 overflow-hidden flex flex-col">
                  {viewMode === "month" && <MonthView current={current} events={filteredEvents} categoryFilter={categoryFilter} onClickDay={(date: any) => { setSelectedDate(date); setDefaultDate(date); setEditingEvent(null); setModalOpen(true); }} onClickEvent={(evt: any) => { setEditingEvent(evt); setModalOpen(true); }} />}
-                 {viewMode === "week" && <WeekView current={current} />}
-                 {viewMode === "day" && <DayView current={current} />}
-                 {viewMode === "agenda" && <AgendaView current={current} />}
+                 {viewMode === "week" && <WeekView current={current} events={filteredEvents} onClickEvent={(evt: any) => { setEditingEvent(evt); setModalOpen(true); }} />}
+                 {viewMode === "day" && <DayView current={current} events={filteredEvents} onClickEvent={(evt: any) => { setEditingEvent(evt); setModalOpen(true); }} />}
+                 {viewMode === "agenda" && <AgendaView events={filteredEvents} onClickEvent={(evt: any) => { setEditingEvent(evt); setModalOpen(true); }} />}
                </div>
             </div>
           </div>

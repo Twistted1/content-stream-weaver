@@ -6,6 +6,29 @@ import { DragDropImport } from "@/components/common/DragDropImport";
 import { parseISO, format } from "date-fns";
 import { NotificationsDropdown } from "@/components/header/NotificationsDropdown";
 import { UserDropdown } from "@/components/header/UserDropdown";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Calendar as CalendarIcon, 
+  LayoutGrid, 
+  LayoutList, 
+  CalendarDays, 
+  ListTodo,
+  Plus,
+  Filter,
+  MoreVertical,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  FileText,
+  Trash2,
+  Edit,
+  ExternalLink,
+  Bot
+} from "lucide-react";
 
 function getDaysInMonth(year: any, month: any) {
   const days = []; const firstDay = new Date(year, month, 1); const lastDay = new Date(year, month + 1, 0);
@@ -157,7 +180,7 @@ function Sidebar({ events, miniMonth, selectedDate, onSelectDate, onChangeMonth,
 
       <div className="bg-blue-900/10 border border-blue-500/20 rounded-xl p-4">
         <h3 className="text-[10px] font-bold text-blue-400 uppercase mb-3">Today's Agenda</h3>
-        {todayEvents.length > 0 && <div className="h-1 bg-white/10 rounded-full overflow-hidden mb-3"><div className="h-full bg-blue-500 transition-all" style={{ width: `${progress}%` }} /></div>}
+        {todayEvents.length > 0 && <div className="h-1 bg-white/10 rounded-full overflow-hidden mb-3"><div className="h-full bg-blue-500 transition-all" style={{ width: `${progress}%` } as React.CSSProperties} /></div>}
         {todayEvents.length === 0 ? <p className="text-xs text-center py-4 text-gray-500">No events today 🎉</p> : (
           <div className="space-y-2">
             {todayEvents.map((evt: any) => {

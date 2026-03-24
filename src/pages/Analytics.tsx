@@ -347,7 +347,7 @@ export default function Analytics() {
                             <div className="flex items-center gap-2">
                               <div 
                                 className="h-3 w-3 rounded-full" 
-                                style={{ backgroundColor: device.color }}
+                                style={{ backgroundColor: device.color } as React.CSSProperties}
                               />
                               <span className="text-sm">{device.name}</span>
                             </div>

@@ -40,6 +40,8 @@ import { toast } from "sonner";
 import { useNotes } from "@/hooks/useNotes";
 import { useUJT } from "@/hooks/useUJT";
 import { Note } from "@/types";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
+import { Calendar as CalendarIcon } from "lucide-react";
 
 export default function Notes() {
   const { notes, addNote, updateNote, deleteNote } = useNotes();
@@ -56,7 +58,15 @@ export default function Notes() {
     }
   }, []);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
-  const [newNote, setNewNote] = useState({ title: "", content: "", tags: [] as string[], color: "bg-card", isPinned: false });
+  const [newNote, setNewNote] = useState({ 
+    title: "", 
+    content: "", 
+    tags: [] as string[], 
+    color: "bg-card", 
+    isPinned: false,
+    startDate: "",
+    dueDate: "" 
+  });
   const [tagInput, setTagInput] = useState("");
 
   const colorOptions = [
@@ -124,9 +134,19 @@ export default function Notes() {
       tags: newNote.tags,
       isPinned: newNote.isPinned,
       color: newNote.color,
+      startDate: newNote.startDate,
+      dueDate: newNote.dueDate,
     }, {
       onSuccess: () => {
-        setNewNote({ title: "", content: "", tags: [], color: "bg-card", isPinned: false });
+        setNewNote({ 
+          title: "", 
+          content: "", 
+          tags: [], 
+          color: "bg-card", 
+          isPinned: false,
+          startDate: "",
+          dueDate: ""
+        });
         setIsCreateDialogOpen(false);
       }
     });
@@ -144,6 +164,8 @@ export default function Notes() {
       tags: editingNote.tags,
       color: editingNote.color,
       isPinned: editingNote.isPinned,
+      startDate: editingNote.startDate,
+      dueDate: editingNote.dueDate,
     });
     setEditingNote(null);
   };
@@ -208,20 +230,38 @@ export default function Notes() {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <p className="text-sm text-muted-foreground whitespace-pre-line line-clamp-4">
-          {note.content}
+        <p className="text-sm text-muted-foreground line-clamp-4">
+          {note.content.replace(/<[^>]*>?/gm, '')}
         </p>
-        <div className="flex flex-wrap gap-1">
-          {note.tags.map((tag) => (
-            <Badge key={tag} variant="outline" className="text-xs">
-              <Tag className="h-3 w-3 mr-1" />
-              {tag}
-            </Badge>
-          ))}
-        </div>
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Clock className="h-3 w-3" />
-          <span>Updated {note.updatedAt}</span>
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap gap-1">
+            {note.tags.map((tag) => (
+              <Badge key={tag} variant="outline" className="text-[10px] py-0 h-4">
+                <Tag className="h-2.5 w-2.5 mr-1" />
+                {tag}
+              </Badge>
+            ))}
+          </div>
+          <div className="flex items-center justify-between mt-1">
+            <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+              {note.startDate && (
+                <div className="flex items-center gap-1">
+                  <CalendarIcon className="h-2.5 w-2.5" />
+                  <span>S: {note.startDate}</span>
+                </div>
+              )}
+              {note.dueDate && (
+                <div className="flex items-center gap-1">
+                  <CalendarIcon className="h-2.5 w-2.5 text-destructive" />
+                  <span>D: {note.dueDate}</span>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-1 text-[10px] text-muted-foreground opacity-50">
+              <Clock className="h-2.5 w-2.5" />
+              <span>{note.updatedAt}</span>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -260,14 +300,33 @@ export default function Notes() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Content</Label>
-                    <Textarea
-                      placeholder="Write your note..."
-                      rows={8}
-                      className="min-h-[200px]"
-                      value={newNote.content}
-                      onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
-                    />
+                    <Label>Content (Rich Text)</Label>
+                    <div className="border rounded-md overflow-hidden bg-background min-h-[250px]">
+                      <RichTextEditor 
+                        content={newNote.content}
+                        onChange={(content) => setNewNote({ ...newNote, content })}
+                        placeholder="Start typing your note here..."
+                        className="min-h-[250px]"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Start Date</Label>
+                      <Input
+                        type="date"
+                        value={newNote.startDate}
+                        onChange={(e) => setNewNote({ ...newNote, startDate: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Due Date</Label>
+                      <Input
+                        type="date"
+                        value={newNote.dueDate}
+                        onChange={(e) => setNewNote({ ...newNote, dueDate: e.target.value })}
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Tags</Label>
@@ -461,13 +520,33 @@ export default function Notes() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Content</Label>
-                  <Textarea
-                    placeholder="Write your note..."
-                    rows={8}
-                    value={editingNote.content}
-                    onChange={(e) => setEditingNote({ ...editingNote, content: e.target.value })}
-                  />
+                  <Label>Content (Rich Text)</Label>
+                  <div className="border rounded-md overflow-hidden bg-background min-h-[250px]">
+                    <RichTextEditor 
+                      content={editingNote.content}
+                      onChange={(content) => setEditingNote({ ...editingNote, content })}
+                      placeholder="Edit your note..."
+                      className="min-h-[250px]"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Start Date</Label>
+                    <Input
+                      type="date"
+                      value={editingNote.startDate || ""}
+                      onChange={(e) => setEditingNote({ ...editingNote, startDate: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Due Date</Label>
+                    <Input
+                      type="date"
+                      value={editingNote.dueDate || ""}
+                      onChange={(e) => setEditingNote({ ...editingNote, dueDate: e.target.value })}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Tags</Label>

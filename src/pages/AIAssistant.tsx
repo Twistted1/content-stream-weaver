@@ -89,7 +89,7 @@ const contentTemplates = [
   },
 ];
 
-const GREETING = "Hi";
+const GREETING = "Hi"; // Strictly "Hi" as requested by user multiple times.
 
 const AIAssistant = () => {
   const { toast } = useToast();
@@ -99,10 +99,12 @@ const AIAssistant = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState("chat");
 
-  // Add greeting on mount
+  // Add greeting on mount - strictly "Hi" as requested
   useEffect(() => {
-    if (messages.length === 0) {
-      addGreeting(GREETING);
+    // If messages are empty or contain any other greeting, force it to "Hi"
+    if (messages.length === 0 || (messages.length === 1 && messages[0].content !== GREETING)) {
+      resetChat();
+      setTimeout(() => addGreeting(GREETING), 10);
     }
   }, []);
 
@@ -177,59 +179,37 @@ const AIAssistant = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-black tracking-tighter">AI Assistant</h1>
-            <p className="text-muted-foreground">
-              Your intelligent content creation companion
-            </p>
-          </div>
-          <Button variant="outline" onClick={handleNewChat}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            New Chat
-          </Button>
-        </div>
-
-        {/* Stats & Main Content Wrapper - Moved to the right */}
-        <div className="max-w-6xl ml-auto space-y-6">
-          {/* Stats */}
-          <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-            <Card className="shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-4">
-                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Messages Today</CardTitle>
-                <Sparkles className="h-3.5 w-3.5 text-primary/60" />
-              </CardHeader>
-              <CardContent className="pb-3 px-4">
-                <div className="text-xl font-black tracking-tighter">{messages.filter(m => m.role === 'user').length}</div>
-              </CardContent>
+        {/* Main Content Wrapper - Moved further to the right as per red arrows */}
+        <div className="max-w-4xl ml-auto mr-12 pt-4 space-y-6">
+          {/* Stats - Even thinner and more compact */}
+          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+            <Card className="h-20 shadow-none border-border/40 bg-card/40 flex items-center justify-between px-4">
+              <div className="space-y-0.5">
+                <p className="text-[9px] font-black text-muted-foreground uppercase opacity-70">Messages</p>
+                <div className="text-lg font-black tracking-tighter">{messages.filter(m => m.role === 'user').length}</div>
+              </div>
+              <Sparkles className="h-4 w-4 text-primary opacity-20" />
             </Card>
-            <Card className="shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-4">
-                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">AI Responses</CardTitle>
-                <Bot className="h-3.5 w-3.5 text-primary/60" />
-              </CardHeader>
-              <CardContent className="pb-3 px-4">
-                <div className="text-xl font-black tracking-tighter">{messages.filter(m => m.role === 'assistant').length}</div>
-              </CardContent>
+            <Card className="h-20 shadow-none border-border/40 bg-card/40 flex items-center justify-between px-4">
+              <div className="space-y-0.5">
+                <p className="text-[9px] font-black text-muted-foreground uppercase opacity-70">Responses</p>
+                <div className="text-lg font-black tracking-tighter">{messages.filter(m => m.role === 'assistant').length}</div>
+              </div>
+              <Bot className="h-4 w-4 text-primary opacity-20" />
             </Card>
-            <Card className="shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-4">
-                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</CardTitle>
-                <Zap className="h-3.5 w-3.5 text-green-500/60" />
-              </CardHeader>
-              <CardContent className="pb-3 px-4">
-                <div className="text-xl font-black tracking-tighter text-green-500">Online</div>
-              </CardContent>
+            <Card className="h-20 shadow-none border-border/40 bg-card/40 flex items-center justify-between px-4">
+              <div className="space-y-0.5">
+                <p className="text-[9px] font-black text-muted-foreground uppercase opacity-70">Status</p>
+                <div className="text-lg font-black tracking-tighter text-green-500">Online</div>
+              </div>
+              <Zap className="h-4 w-4 text-green-500 opacity-20" />
             </Card>
-            <Card className="shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-4">
-                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Model</CardTitle>
-                <PenTool className="h-3.5 w-3.5 text-primary/60" />
-              </CardHeader>
-              <CardContent className="pb-3 px-4">
-                <div className="text-xl font-black tracking-tighter">Gemini</div>
-              </CardContent>
+            <Card className="h-20 shadow-none border-border/40 bg-card/40 flex items-center justify-between px-4">
+              <div className="space-y-0.5">
+                <p className="text-[9px] font-black text-muted-foreground uppercase opacity-70">Model</p>
+                <div className="text-lg font-black tracking-tighter">Gemini</div>
+              </div>
+              <PenTool className="h-4 w-4 text-primary opacity-20" />
             </Card>
           </div>
 

@@ -170,6 +170,8 @@ export interface Note {
   tags: string[];
   isPinned: boolean;
   color: string;
+  startDate?: string;
+  dueDate?: string;
   createdAt: string;
   updatedAt: string;
 }

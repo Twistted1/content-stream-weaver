@@ -24,6 +24,8 @@ export function useNotes() {
         tags: note.tags || [],
         isPinned: note.is_pinned,
         color: note.color || "bg-card",
+        startDate: note.start_date,
+        dueDate: note.due_date,
         createdAt: note.created_at,
         updatedAt: note.updated_at,
       })) as Note[];
@@ -43,6 +45,8 @@ export function useNotes() {
           tags: newNote.tags,
           is_pinned: newNote.isPinned,
           color: newNote.color,
+          start_date: newNote.startDate,
+          due_date: newNote.dueDate,
           user_id: user.user.id,
         })
         .select()
@@ -68,6 +72,8 @@ export function useNotes() {
       if (updates.tags) dbUpdates.tags = updates.tags;
       if (updates.isPinned !== undefined) dbUpdates.is_pinned = updates.isPinned;
       if (updates.color) dbUpdates.color = updates.color;
+      if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate;
+      if (updates.dueDate !== undefined) dbUpdates.due_date = updates.dueDate;
       dbUpdates.updated_at = new Date().toISOString();
 
       const { error } = await (supabase as any)

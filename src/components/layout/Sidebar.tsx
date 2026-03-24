@@ -100,12 +100,12 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
-        <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
-          <span className="text-lg font-bold text-primary-foreground">CH</span>
+        <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+          <h2 className="text-xl font-black text-primary-foreground">MF</h2>
         </div>
         <div>
-          <h1 className="font-semibold text-foreground">Content Hub</h1>
-          <p className="text-xs text-muted-foreground">Headless CMS</p>
+          <h1 className="font-black text-foreground tracking-tighter uppercase">MyFlow</h1>
+          <p className="text-[10px] font-bold text-primary uppercase tracking-wider">Smart Calendar</p>
         </div>
       </div>
 

@@ -124,4 +124,24 @@ All colors MUST be HSL.
   .bg-website { background-color: hsl(var(--website)); }
   .text-podcast { color: hsl(var(--podcast)); }
   .bg-podcast { background-color: hsl(var(--podcast)); }
+
+  /* Tiptap / Prosemirror Styling */
+  .ProseMirror {
+    outline: none !important;
+  }
+  .ProseMirror p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    color: hsl(var(--muted-foreground));
+    pointer-events: none;
+    height: 0;
+  }
+  .ProseMirror h1 { @apply text-2xl font-black tracking-tighter mb-4 mt-2; }
+  .ProseMirror h2 { @apply text-xl font-bold tracking-tight mb-3 mt-2; }
+  .ProseMirror ul { @apply list-disc ml-6 mb-4; }
+  .ProseMirror ol { @apply list-decimal ml-6 mb-4; }
+  .ProseMirror blockquote { @apply border-l-4 border-primary/30 pl-4 italic my-4; }
+  .ProseMirror code { @apply bg-muted px-1.5 py-0.5 rounded text-sm font-mono; }
+  .ProseMirror pre { @apply bg-muted p-4 rounded-lg font-mono text-sm my-4 overflow-x-auto; }
+  .ProseMirror img { @apply max-w-full h-auto rounded-lg my-4; }
 }

@@ -48,7 +48,13 @@ export function Header() {
           <ChevronDown className="h-4 w-4" />
         </Button>
         <span className="text-muted-foreground">|</span>
-        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+        <div className="flex flex-col">
+          <h2 className="text-xl font-black text-foreground tracking-tighter uppercase leading-none">{title}</h2>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-[10px] font-bold text-primary leading-none uppercase">MyFlow</span>
+            <span className="text-[10px] text-muted-foreground leading-none uppercase">Smart Calendar</span>
+          </div>
+        </div>
       </div>
 
       {/* Search & Actions */}

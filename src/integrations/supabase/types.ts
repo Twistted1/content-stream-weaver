@@ -255,12 +255,15 @@ export type Database = {
       }
       posts: {
         Row: {
+          approved_at: string | null
           category: string | null
           content: string | null
+          cost_estimate: number | null
           cover_image_url: string | null
           created_at: string
           excerpt: string | null
           id: string
+          is_ai_generated: boolean | null
           published_at: string | null
           read_time: number | null
           scheduled_at: string | null
@@ -270,14 +273,18 @@ export type Database = {
           type: Database["public"]["Enums"]["post_type"]
           updated_at: string
           user_id: string
+          workflow_step: string | null
         }
         Insert: {
+          approved_at?: string | null
           category?: string | null
           content?: string | null
+          cost_estimate?: number | null
           cover_image_url?: string | null
           created_at?: string
           excerpt?: string | null
           id?: string
+          is_ai_generated?: boolean | null
           published_at?: string | null
           read_time?: number | null
           scheduled_at?: string | null
@@ -287,14 +294,18 @@ export type Database = {
           type?: Database["public"]["Enums"]["post_type"]
           updated_at?: string
           user_id: string
+          workflow_step?: string | null
         }
         Update: {
+          approved_at?: string | null
           category?: string | null
           content?: string | null
+          cost_estimate?: number | null
           cover_image_url?: string | null
           created_at?: string
           excerpt?: string | null
           id?: string
+          is_ai_generated?: boolean | null
           published_at?: string | null
           read_time?: number | null
           scheduled_at?: string | null
@@ -304,6 +315,7 @@ export type Database = {
           type?: Database["public"]["Enums"]["post_type"]
           updated_at?: string
           user_id?: string
+          workflow_step?: string | null
         }
         Relationships: []
       }
@@ -337,6 +349,36 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      project_settings: {
+        Row: {
+          current_month_spend: number | null
+          id: string
+          last_reset_date: string | null
+          monthly_openai_budget: number | null
+          supabase_anon_key: string | null
+          supabase_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          current_month_spend?: number | null
+          id?: string
+          last_reset_date?: string | null
+          monthly_openai_budget?: number | null
+          supabase_anon_key?: string | null
+          supabase_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          current_month_spend?: number | null
+          id?: string
+          last_reset_date?: string | null
+          monthly_openai_budget?: number | null
+          supabase_anon_key?: string | null
+          supabase_url?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -641,7 +683,13 @@ export type Database = {
         | "linkedin"
         | "website"
         | "podcast"
-      post_status: "draft" | "scheduled" | "published" | "failed"
+      post_status:
+        | "draft"
+        | "scheduled"
+        | "published"
+        | "failed"
+        | "awaiting_review"
+        | "generating"
       post_type:
         | "text"
         | "image"
@@ -801,7 +849,14 @@ export const Constants = {
         "website",
         "podcast",
       ],
-      post_status: ["draft", "scheduled", "published", "failed"],
+      post_status: [
+        "draft",
+        "scheduled",
+        "published",
+        "failed",
+        "awaiting_review",
+        "generating",
+      ],
       post_type: [
         "text",
         "image",

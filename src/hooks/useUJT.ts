@@ -73,6 +73,7 @@ export function useUJT() {
               status: (item.metadata?.status === "backlog" ? "planning" : item.metadata?.status || "planning") as any,
               priority: (item.metadata?.priority || "medium") as any,
               dueDate: item.metadata?.scheduled_at || "",
+              startDate: new Date().toISOString().split('T')[0],
               progress: 0,
               assignees: [],
               tags: item.metadata?.tags || [],

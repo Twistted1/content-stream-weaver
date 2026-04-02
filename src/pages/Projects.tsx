@@ -490,6 +490,19 @@ export default function Projects() {
   const handleImport = (data: any) => {
     if (data.version === "1.0" && Array.isArray(data.items)) {
       processUJT(data);
+      // Also save as a reusable project template
+      addTemplate({
+        name: `Project Template (${new Date().toLocaleDateString()})`,
+        description: `Imported project blueprint with ${data.items.length} items`,
+        category: "Project",
+        platforms: [],
+        uses: 0,
+        isFavorite: false,
+        createdAt: new Date().toISOString().split("T")[0],
+        content: JSON.stringify(data, null, 2),
+        projectBlueprint: data,
+      });
+      toast.info("Template saved to Templates library for reuse");
       return;
     }
 
@@ -511,6 +524,40 @@ export default function Projects() {
         });
       }
     });
+
+    // Save imported JSON as a template blueprint
+    addTemplate({
+      name: items[0]?.title ? `${items[0].title} Blueprint` : `Project Blueprint (${new Date().toLocaleDateString()})`,
+      description: `Imported project template with ${items.length} project(s)`,
+      category: "Project",
+      platforms: [],
+      uses: 0,
+      isFavorite: false,
+      createdAt: new Date().toISOString().split("T")[0],
+      content: JSON.stringify(data, null, 2),
+      projectBlueprint: data,
+    });
+    toast.info("Template saved to Templates library for reuse");
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith(".json")) {
+      toast.error("Please upload a JSON file");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        handleImport(json);
+      } catch {
+        toast.error("Failed to parse JSON file");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
   };
 
   return (

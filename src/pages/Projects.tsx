@@ -496,6 +496,7 @@ export default function Projects() {
     const items = Array.isArray(data) ? data : [data];
     items.forEach((item: any) => {
       if (item.title) {
+        // 1. Create the project
         addProject.mutate({
           title: item.title,
           description: item.description || "",
@@ -509,8 +510,43 @@ export default function Projects() {
           assignees: item.assignees || [],
           tags: item.tags || [],
         });
+
+        // 2. Save as reusable template in the Templates library
+        addTemplate({
+          name: item.title,
+          description: item.description || "Imported project blueprint",
+          category: "Project",
+          platforms: item.platforms || [],
+          uses: 0,
+          isFavorite: false,
+          createdAt: new Date().toISOString().split("T")[0],
+          content: JSON.stringify(item, null, 2),
+          blueprint: item,
+        });
       }
     });
+
+    toast.success("Project imported & saved as template in AI Assistant Templates");
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith(".json")) {
+      toast.error("Please select a JSON file");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        handleImport(json);
+      } catch {
+        toast.error("Failed to parse JSON file");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
   };
 
   return (

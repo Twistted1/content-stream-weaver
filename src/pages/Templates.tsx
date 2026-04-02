@@ -255,8 +255,7 @@ export default function Templates() {
       });
       toast.success("Template updated successfully");
     } else {
-      const newTemplate: Template = {
-        id: Date.now(),
+      addTemplate({
         name: formName,
         description: formDescription,
         category: formCategory,
@@ -265,8 +264,7 @@ export default function Templates() {
         isFavorite: false,
         createdAt: new Date().toISOString().split("T")[0],
         content: formContent,
-      };
-      setTemplates((prev) => [newTemplate, ...prev]);
+      });
       toast.success("Template created successfully");
     }
 

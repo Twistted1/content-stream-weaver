@@ -572,10 +572,23 @@ export default function Projects() {
               Manage and track your content projects
             </p>
           </div>
-          <Button className="gap-2" onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4" />
-            New Project
-          </Button>
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={handleFileUpload}
+            />
+            <Button variant="outline" className="gap-2" onClick={() => fileInputRef.current?.click()}>
+              <Upload className="h-4 w-4" />
+              Import JSON
+            </Button>
+            <Button className="gap-2" onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4" />
+              New Project
+            </Button>
+          </div>
         </div>
 
         {/* Toolbar */}

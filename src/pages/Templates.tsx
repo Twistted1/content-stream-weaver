@@ -246,20 +246,13 @@ export default function Templates() {
     }
 
     if (editingTemplate) {
-      setTemplates((prev) =>
-        prev.map((t) =>
-          t.id === editingTemplate.id
-            ? {
-                ...t,
-                name: formName,
-                description: formDescription,
-                category: formCategory,
-                content: formContent,
-                platforms: formPlatforms,
-              }
-            : t
-        )
-      );
+      storeUpdateTemplate(editingTemplate.id, {
+        name: formName,
+        description: formDescription,
+        category: formCategory,
+        content: formContent,
+        platforms: formPlatforms,
+      });
       toast.success("Template updated successfully");
     } else {
       const newTemplate: Template = {

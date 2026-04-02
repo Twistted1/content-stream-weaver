@@ -170,7 +170,7 @@ function TemplateCard({
 
 export default function Templates() {
   const { addPost } = usePosts();
-  const [templates, setTemplates] = useState<Template[]>(initialTemplates);
+  const { templates, addTemplate, updateTemplate: storeUpdateTemplate, deleteTemplate: storeDeleteTemplate, duplicateTemplate, toggleFavorite, incrementUses } = useTemplatesStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All Templates");
   const [activeTab, setActiveTab] = useState("all");

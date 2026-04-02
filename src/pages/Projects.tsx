@@ -368,6 +368,8 @@ const ProjectForm = ({
 export default function Projects() {
   const { projects, addProject, updateProject, deleteProject, moveProject } = useProjects();
   const { processUJT } = useUJT();
+  const { addTemplate } = useTemplatesStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [viewMode, setViewMode] = useState<"board" | "list">("board");
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);

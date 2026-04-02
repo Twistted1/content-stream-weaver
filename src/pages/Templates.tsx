@@ -357,7 +357,7 @@ export default function Templates() {
       updatedAt: new Date().toISOString(),
     }));
     
-    setTemplates(prev => [...newTemplates, ...prev]);
+    addTemplates(newTemplates);
     toast.success(`Imported ${newTemplates.length} templates`);
   };
 

@@ -283,11 +283,7 @@ export default function Templates() {
   };
 
   const handleToggleFavorite = (template: Template) => {
-    setTemplates((prev) =>
-      prev.map((t) =>
-        t.id === template.id ? { ...t, isFavorite: !t.isFavorite } : t
-      )
-    );
+    toggleFavorite(template.id);
     toast.success(template.isFavorite ? "Removed from favorites" : "Added to favorites");
   };
 

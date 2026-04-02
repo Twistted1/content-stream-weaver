@@ -59,19 +59,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface Template {
-  id: number;
-  name: string;
-  description: string;
-  category: string;
-  platforms: string[];
-  uses: number;
-  isFavorite: boolean;
-  createdAt: string;
-  content?: string;
-}
-
-const initialTemplates: Template[] = [
+import { useTemplatesStore, Template } from "@/stores/useTemplatesStore";
   {
     id: 1,
     name: "Product Launch Announcement",

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,13 +41,11 @@ import {
   Trash2,
   Copy,
   Search,
-  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import { DragDropImport } from "@/components/common/DragDropImport";
 import { useProjects } from "@/hooks/useProjects";
 import { useUJT } from "@/hooks/useUJT";
-import { useTemplatesStore } from "@/stores/useTemplatesStore";
 import { Project, ProjectStatus } from "@/types";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
@@ -368,8 +366,6 @@ const ProjectForm = ({
 export default function Projects() {
   const { projects, addProject, updateProject, deleteProject, moveProject } = useProjects();
   const { processUJT } = useUJT();
-  const { addTemplate } = useTemplatesStore();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [viewMode, setViewMode] = useState<"board" | "list">("board");
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -490,19 +486,6 @@ export default function Projects() {
   const handleImport = (data: any) => {
     if (data.version === "1.0" && Array.isArray(data.items)) {
       processUJT(data);
-      // Also save as a reusable project template
-      addTemplate({
-        name: `Project Template (${new Date().toLocaleDateString()})`,
-        description: `Imported project blueprint with ${data.items.length} items`,
-        category: "Project",
-        platforms: [],
-        uses: 0,
-        isFavorite: false,
-        createdAt: new Date().toISOString().split("T")[0],
-        content: JSON.stringify(data, null, 2),
-        projectBlueprint: data,
-      });
-      toast.info("Template saved to Templates library for reuse");
       return;
     }
 
@@ -524,40 +507,6 @@ export default function Projects() {
         });
       }
     });
-
-    // Save imported JSON as a template blueprint
-    addTemplate({
-      name: items[0]?.title ? `${items[0].title} Blueprint` : `Project Blueprint (${new Date().toLocaleDateString()})`,
-      description: `Imported project template with ${items.length} project(s)`,
-      category: "Project",
-      platforms: [],
-      uses: 0,
-      isFavorite: false,
-      createdAt: new Date().toISOString().split("T")[0],
-      content: JSON.stringify(data, null, 2),
-      projectBlueprint: data,
-    });
-    toast.info("Template saved to Templates library for reuse");
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.name.endsWith(".json")) {
-      toast.error("Please upload a JSON file");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const json = JSON.parse(event.target?.result as string);
-        handleImport(json);
-      } catch {
-        toast.error("Failed to parse JSON file");
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = "";
   };
 
   return (
@@ -572,23 +521,10 @@ export default function Projects() {
               Manage and track your content projects
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json"
-              className="hidden"
-              onChange={handleFileUpload}
-            />
-            <Button variant="outline" className="gap-2" onClick={() => fileInputRef.current?.click()}>
-              <Upload className="h-4 w-4" />
-              Import JSON
-            </Button>
-            <Button className="gap-2" onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4" />
-              New Project
-            </Button>
-          </div>
+          <Button className="gap-2" onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="h-4 w-4" />
+            New Project
+          </Button>
         </div>
 
         {/* Toolbar */}

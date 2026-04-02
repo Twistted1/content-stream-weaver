@@ -41,11 +41,13 @@ import {
   Trash2,
   Copy,
   Search,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import { DragDropImport } from "@/components/common/DragDropImport";
 import { useProjects } from "@/hooks/useProjects";
 import { useUJT } from "@/hooks/useUJT";
+import { useTemplatesStore } from "@/stores/useTemplatesStore";
 import { Project, ProjectStatus } from "@/types";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 

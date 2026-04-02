@@ -295,11 +295,7 @@ export default function Templates() {
   };
 
   const handleUseTemplate = (template: Template) => {
-    setTemplates((prev) =>
-      prev.map((t) =>
-        t.id === template.id ? { ...t, uses: t.uses + 1 } : t
-      )
-    );
+    incrementUses(template.id);
     if (template.content) {
       navigator.clipboard.writeText(template.content);
       toast.success("Template content copied to clipboard!");

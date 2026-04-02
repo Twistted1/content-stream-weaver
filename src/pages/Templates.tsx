@@ -273,14 +273,7 @@ export default function Templates() {
   };
 
   const handleDuplicate = (template: Template) => {
-    const duplicate: Template = {
-      ...template,
-      id: Date.now(),
-      name: `${template.name} (Copy)`,
-      uses: 0,
-      createdAt: new Date().toISOString().split("T")[0],
-    };
-    setTemplates((prev) => [duplicate, ...prev]);
+    duplicateTemplate(template);
     toast.success("Template duplicated");
   };
 

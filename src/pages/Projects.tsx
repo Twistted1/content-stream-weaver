@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,11 +41,13 @@ import {
   Trash2,
   Copy,
   Search,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import { DragDropImport } from "@/components/common/DragDropImport";
 import { useProjects } from "@/hooks/useProjects";
 import { useUJT } from "@/hooks/useUJT";
+import { useTemplatesStore } from "@/stores/useTemplatesStore";
 import { Project, ProjectStatus } from "@/types";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
@@ -366,6 +368,8 @@ const ProjectForm = ({
 export default function Projects() {
   const { projects, addProject, updateProject, deleteProject, moveProject } = useProjects();
   const { processUJT } = useUJT();
+  const { addTemplate } = useTemplatesStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [viewMode, setViewMode] = useState<"board" | "list">("board");
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -492,6 +496,7 @@ export default function Projects() {
     const items = Array.isArray(data) ? data : [data];
     items.forEach((item: any) => {
       if (item.title) {
+        // 1. Create the project
         addProject.mutate({
           title: item.title,
           description: item.description || "",
@@ -505,8 +510,43 @@ export default function Projects() {
           assignees: item.assignees || [],
           tags: item.tags || [],
         });
+
+        // 2. Save as reusable template in the Templates library
+        addTemplate({
+          name: item.title,
+          description: item.description || "Imported project blueprint",
+          category: "Project",
+          platforms: item.platforms || [],
+          uses: 0,
+          isFavorite: false,
+          createdAt: new Date().toISOString().split("T")[0],
+          content: JSON.stringify(item, null, 2),
+          blueprint: item,
+        });
       }
     });
+
+    toast.success("Project imported & saved as template in AI Assistant Templates");
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith(".json")) {
+      toast.error("Please select a JSON file");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        handleImport(json);
+      } catch {
+        toast.error("Failed to parse JSON file");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
   };
 
   return (
@@ -521,10 +561,23 @@ export default function Projects() {
               Manage and track your content projects
             </p>
           </div>
-          <Button className="gap-2" onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4" />
-            New Project
-          </Button>
+          <div className="flex gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={handleFileSelect}
+            />
+            <Button variant="outline" className="gap-2" onClick={() => fileInputRef.current?.click()}>
+              <Upload className="h-4 w-4" />
+              Import JSON
+            </Button>
+            <Button className="gap-2" onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4" />
+              New Project
+            </Button>
+          </div>
         </div>
 
         {/* Toolbar */}

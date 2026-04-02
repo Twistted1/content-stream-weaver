@@ -59,87 +59,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface Template {
-  id: number;
-  name: string;
-  description: string;
-  category: string;
-  platforms: string[];
-  uses: number;
-  isFavorite: boolean;
-  createdAt: string;
-  content?: string;
-}
-
-const initialTemplates: Template[] = [
-  {
-    id: 1,
-    name: "Product Launch Announcement",
-    description: "Announce new products with impact across all platforms",
-    category: "Marketing",
-    platforms: ["instagram", "twitter", "linkedin"],
-    uses: 234,
-    isFavorite: true,
-    createdAt: "2024-01-15",
-    content: "🚀 Exciting news! We're thrilled to announce [Product Name]...",
-  },
-  {
-    id: 2,
-    name: "Weekly Newsletter",
-    description: "Engaging email template for weekly updates",
-    category: "Email",
-    platforms: ["email"],
-    uses: 156,
-    isFavorite: true,
-    createdAt: "2024-01-10",
-    content: "Hello [Name],\n\nHere's what's new this week...",
-  },
-  {
-    id: 3,
-    name: "Social Media Contest",
-    description: "Run engaging contests and giveaways",
-    category: "Engagement",
-    platforms: ["instagram", "facebook", "twitter"],
-    uses: 89,
-    isFavorite: false,
-    createdAt: "2024-01-08",
-    content: "🎉 GIVEAWAY TIME! 🎉\n\nTo enter:\n1. Follow us\n2. Like this post\n3. Tag 2 friends",
-  },
-  {
-    id: 4,
-    name: "Case Study",
-    description: "Professional case study format for success stories",
-    category: "Content",
-    platforms: ["linkedin", "email"],
-    uses: 67,
-    isFavorite: false,
-    createdAt: "2024-01-05",
-    content: "# Case Study: [Client Name]\n\n## Challenge\n\n## Solution\n\n## Results",
-  },
-  {
-    id: 5,
-    name: "Event Promotion",
-    description: "Promote upcoming events and webinars",
-    category: "Marketing",
-    platforms: ["instagram", "facebook", "linkedin", "email"],
-    uses: 145,
-    isFavorite: true,
-    createdAt: "2024-01-03",
-    content: "📅 Mark your calendars!\n\nJoin us for [Event Name]...",
-  },
-  {
-    id: 6,
-    name: "Customer Testimonial",
-    description: "Showcase customer reviews and testimonials",
-    category: "Social Proof",
-    platforms: ["instagram", "twitter", "linkedin"],
-    uses: 112,
-    isFavorite: false,
-    createdAt: "2024-01-01",
-    content: '"[Quote from customer]"\n\n— [Customer Name], [Title]',
-  },
-];
-
+import { useTemplatesStore, Template } from "@/stores/useTemplatesStore";
 const categories = [
   { name: "All Templates", icon: FileText },
   { name: "Marketing", icon: Megaphone },
@@ -147,6 +67,7 @@ const categories = [
   { name: "Engagement", icon: Heart },
   { name: "Content", icon: Calendar },
   { name: "Social Proof", icon: TrendingUp },
+  { name: "Project", icon: FileText },
 ];
 
 const platformIcons: Record<string, React.ElementType> = {
@@ -249,7 +170,7 @@ function TemplateCard({
 
 export default function Templates() {
   const { addPost } = usePosts();
-  const [templates, setTemplates] = useState<Template[]>(initialTemplates);
+  const { templates, addTemplate, updateTemplate: storeUpdateTemplate, deleteTemplate: storeDeleteTemplate, duplicateTemplate, toggleFavorite, incrementUses } = useTemplatesStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All Templates");
   const [activeTab, setActiveTab] = useState("all");
@@ -325,24 +246,16 @@ export default function Templates() {
     }
 
     if (editingTemplate) {
-      setTemplates((prev) =>
-        prev.map((t) =>
-          t.id === editingTemplate.id
-            ? {
-                ...t,
-                name: formName,
-                description: formDescription,
-                category: formCategory,
-                content: formContent,
-                platforms: formPlatforms,
-              }
-            : t
-        )
-      );
+      storeUpdateTemplate(editingTemplate.id, {
+        name: formName,
+        description: formDescription,
+        category: formCategory,
+        content: formContent,
+        platforms: formPlatforms,
+      });
       toast.success("Template updated successfully");
     } else {
-      const newTemplate: Template = {
-        id: Date.now(),
+      addTemplate({
         name: formName,
         description: formDescription,
         category: formCategory,
@@ -351,8 +264,7 @@ export default function Templates() {
         isFavorite: false,
         createdAt: new Date().toISOString().split("T")[0],
         content: formContent,
-      };
-      setTemplates((prev) => [newTemplate, ...prev]);
+      });
       toast.success("Template created successfully");
     }
 
@@ -361,39 +273,24 @@ export default function Templates() {
   };
 
   const handleDuplicate = (template: Template) => {
-    const duplicate: Template = {
-      ...template,
-      id: Date.now(),
-      name: `${template.name} (Copy)`,
-      uses: 0,
-      createdAt: new Date().toISOString().split("T")[0],
-    };
-    setTemplates((prev) => [duplicate, ...prev]);
+    duplicateTemplate(template);
     toast.success("Template duplicated");
   };
 
   const handleToggleFavorite = (template: Template) => {
-    setTemplates((prev) =>
-      prev.map((t) =>
-        t.id === template.id ? { ...t, isFavorite: !t.isFavorite } : t
-      )
-    );
+    toggleFavorite(template.id);
     toast.success(template.isFavorite ? "Removed from favorites" : "Added to favorites");
   };
 
   const handleDeleteConfirm = () => {
     if (!deleteTemplate) return;
-    setTemplates((prev) => prev.filter((t) => t.id !== deleteTemplate.id));
+    storeDeleteTemplate(deleteTemplate.id);
     toast.success("Template deleted");
     setDeleteTemplate(null);
   };
 
   const handleUseTemplate = (template: Template) => {
-    setTemplates((prev) =>
-      prev.map((t) =>
-        t.id === template.id ? { ...t, uses: t.uses + 1 } : t
-      )
-    );
+    incrementUses(template.id);
     if (template.content) {
       navigator.clipboard.writeText(template.content);
       toast.success("Template content copied to clipboard!");
@@ -442,21 +339,19 @@ export default function Templates() {
     }
 
     const items = Array.isArray(data) ? data : [data];
-    const newTemplates = items.map((item: any) => ({
-      id: Date.now() + Math.floor(Math.random() * 1000),
-      name: item.name || item.title || "Untitled Template",
-      description: item.description || "",
-      category: item.category || "General",
-      content: item.content || "",
-      platforms: item.platforms || [],
-      isFavorite: false,
-      uses: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }));
-    
-    setTemplates(prev => [...newTemplates, ...prev]);
-    toast.success(`Imported ${newTemplates.length} templates`);
+    items.forEach((item: any) => {
+      addTemplate({
+        name: item.name || item.title || "Untitled Template",
+        description: item.description || "",
+        category: item.category || "General",
+        content: item.content || "",
+        platforms: item.platforms || [],
+        isFavorite: false,
+        uses: 0,
+        createdAt: new Date().toISOString(),
+      });
+    });
+    toast.success(`Imported ${items.length} templates`);
   };
 
   return (

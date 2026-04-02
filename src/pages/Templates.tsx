@@ -339,21 +339,19 @@ export default function Templates() {
     }
 
     const items = Array.isArray(data) ? data : [data];
-    const newTemplates = items.map((item: any) => ({
-      id: Date.now() + Math.floor(Math.random() * 1000),
-      name: item.name || item.title || "Untitled Template",
-      description: item.description || "",
-      category: item.category || "General",
-      content: item.content || "",
-      platforms: item.platforms || [],
-      isFavorite: false,
-      uses: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }));
-    
-    setTemplates(prev => [...newTemplates, ...prev]);
-    toast.success(`Imported ${newTemplates.length} templates`);
+    items.forEach((item: any) => {
+      addTemplate({
+        name: item.name || item.title || "Untitled Template",
+        description: item.description || "",
+        category: item.category || "General",
+        content: item.content || "",
+        platforms: item.platforms || [],
+        isFavorite: false,
+        uses: 0,
+        createdAt: new Date().toISOString(),
+      });
+    });
+    toast.success(`Imported ${items.length} templates`);
   };
 
   return (

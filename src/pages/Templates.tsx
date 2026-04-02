@@ -67,6 +67,7 @@ const categories = [
   { name: "Engagement", icon: Heart },
   { name: "Content", icon: Calendar },
   { name: "Social Proof", icon: TrendingUp },
+  { name: "Project", icon: FileText },
 ];
 
 const platformIcons: Record<string, React.ElementType> = {

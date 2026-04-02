@@ -289,7 +289,7 @@ export default function Templates() {
 
   const handleDeleteConfirm = () => {
     if (!deleteTemplate) return;
-    setTemplates((prev) => prev.filter((t) => t.id !== deleteTemplate.id));
+    storeDeleteTemplate(deleteTemplate.id);
     toast.success("Template deleted");
     setDeleteTemplate(null);
   };

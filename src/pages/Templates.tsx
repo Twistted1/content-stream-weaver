@@ -278,27 +278,19 @@ export default function Templates() {
   };
 
   const handleToggleFavorite = (template: Template) => {
-    setTemplates((prev) =>
-      prev.map((t) =>
-        t.id === template.id ? { ...t, isFavorite: !t.isFavorite } : t
-      )
-    );
+    toggleFavorite(template.id);
     toast.success(template.isFavorite ? "Removed from favorites" : "Added to favorites");
   };
 
   const handleDeleteConfirm = () => {
     if (!deleteTemplate) return;
-    setTemplates((prev) => prev.filter((t) => t.id !== deleteTemplate.id));
+    storeDeleteTemplate(deleteTemplate.id);
     toast.success("Template deleted");
     setDeleteTemplate(null);
   };
 
   const handleUseTemplate = (template: Template) => {
-    setTemplates((prev) =>
-      prev.map((t) =>
-        t.id === template.id ? { ...t, uses: t.uses + 1 } : t
-      )
-    );
+    incrementUses(template.id);
     if (template.content) {
       navigator.clipboard.writeText(template.content);
       toast.success("Template content copied to clipboard!");

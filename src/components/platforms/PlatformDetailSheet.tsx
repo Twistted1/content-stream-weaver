@@ -252,7 +252,7 @@ export function PlatformDetailSheet({ platform, open, onOpenChange, getPlatformC
                           settings: newSettings,
                         });
                       } else {
-                        toast.success(`${setting.label} updated locally (Mock Mode)`);
+                        toast.success(`${setting.label} updated`);
                       }
                     }}
                   />

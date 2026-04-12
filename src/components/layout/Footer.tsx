@@ -11,21 +11,18 @@ const socialLinks = [
 const legalLinks = [
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Terms of Service", href: "/terms" },
-  { label: "Cookie Policy", href: "/cookies" },
+  
 ];
 
 const productLinks = [
   { label: "Features", href: "/#features" },
   { label: "Pricing", href: "/pricing" },
   { label: "Demo", href: "/dashboard" },
-  { label: "API Docs", href: "/docs" },
 ];
 
 const companyLinks = [
-  { label: "About", href: "/about" },
-  { label: "Blog", href: "/blog" },
-  { label: "Careers", href: "/careers" },
-  { label: "Contact", href: "/contact" },
+  { label: "About", href: "/#features" },
+  { label: "Contact", href: "mailto:hello@contenthub.io" },
 ];
 
 export function Footer() {

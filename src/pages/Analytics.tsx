@@ -10,10 +10,10 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { 
   TrendingUp, 
   TrendingDown, 
-  Users, 
+  FileText, 
   Eye, 
   Clock, 
-  MousePointerClick,
+  Calendar as CalendarIcon,
   ArrowUpRight,
   Download,
   Calendar,
@@ -38,142 +38,164 @@ import {
   Legend
 } from "recharts";
 import { toast } from "sonner";
+import { usePosts } from "@/hooks/usePosts";
+import { subDays, subMonths, format, isAfter } from "date-fns";
 
-const trafficByPeriod: Record<string, { name: string; visitors: number; pageViews: number }[]> = {
-  "7d": [
-    { name: "Mon", visitors: 1200, pageViews: 1900 },
-    { name: "Tue", visitors: 980, pageViews: 1500 },
-    { name: "Wed", visitors: 1400, pageViews: 2100 },
-    { name: "Thu", visitors: 1100, pageViews: 1700 },
-    { name: "Fri", visitors: 1350, pageViews: 2000 },
-    { name: "Sat", visitors: 800, pageViews: 1200 },
-    { name: "Sun", visitors: 650, pageViews: 950 },
-  ],
-  "30d": [
-    { name: "Week 1", visitors: 5200, pageViews: 8100 },
-    { name: "Week 2", visitors: 6100, pageViews: 9400 },
-    { name: "Week 3", visitors: 5800, pageViews: 8900 },
-    { name: "Week 4", visitors: 7100, pageViews: 10800 },
-  ],
-  "90d": [
-    { name: "Jan", visitors: 4000, pageViews: 6400 },
-    { name: "Feb", visitors: 3000, pageViews: 4398 },
-    { name: "Mar", visitors: 5000, pageViews: 7800 },
-    { name: "Apr", visitors: 4780, pageViews: 6908 },
-    { name: "May", visitors: 5890, pageViews: 8800 },
-    { name: "Jun", visitors: 6390, pageViews: 9800 },
-  ],
-  "1y": [
-    { name: "Jan", visitors: 4000, pageViews: 6400 },
-    { name: "Feb", visitors: 3000, pageViews: 4398 },
-    { name: "Mar", visitors: 5000, pageViews: 7800 },
-    { name: "Apr", visitors: 4780, pageViews: 6908 },
-    { name: "May", visitors: 5890, pageViews: 8800 },
-    { name: "Jun", visitors: 6390, pageViews: 9800 },
-    { name: "Jul", visitors: 7490, pageViews: 10300 },
-    { name: "Aug", visitors: 6800, pageViews: 9500 },
-    { name: "Sep", visitors: 7200, pageViews: 10100 },
-    { name: "Oct", visitors: 7800, pageViews: 11200 },
-    { name: "Nov", visitors: 8100, pageViews: 11900 },
-    { name: "Dec", visitors: 8900, pageViews: 12800 },
-  ],
-};
-
-const statsByPeriod: Record<string, { title: string; value: string; change: string; trend: "up" | "down"; icon: typeof Users }[]> = {
-  "7d": [
-    { title: "Total Visitors", value: "7,480", change: "+5.2%", trend: "up", icon: Users },
-    { title: "Page Views", value: "11,350", change: "+3.1%", trend: "up", icon: Eye },
-    { title: "Avg. Session Duration", value: "2m 58s", change: "-1.4%", trend: "down", icon: Clock },
-    { title: "Conversion Rate", value: "2.91%", change: "+0.3%", trend: "up", icon: MousePointerClick },
-  ],
-  "30d": [
-    { title: "Total Visitors", value: "24,200", change: "+9.8%", trend: "up", icon: Users },
-    { title: "Page Views", value: "37,200", change: "+6.5%", trend: "up", icon: Eye },
-    { title: "Avg. Session Duration", value: "3m 15s", change: "+0.5%", trend: "up", icon: Clock },
-    { title: "Conversion Rate", value: "3.10%", change: "+0.6%", trend: "up", icon: MousePointerClick },
-  ],
-  "90d": [
-    { title: "Total Visitors", value: "45,231", change: "+12.5%", trend: "up", icon: Users },
-    { title: "Page Views", value: "128,459", change: "+8.2%", trend: "up", icon: Eye },
-    { title: "Avg. Session Duration", value: "3m 42s", change: "-2.1%", trend: "down", icon: Clock },
-    { title: "Conversion Rate", value: "3.24%", change: "+0.8%", trend: "up", icon: MousePointerClick },
-  ],
-  "1y": [
-    { title: "Total Visitors", value: "182,400", change: "+22.1%", trend: "up", icon: Users },
-    { title: "Page Views", value: "498,100", change: "+18.4%", trend: "up", icon: Eye },
-    { title: "Avg. Session Duration", value: "3m 28s", change: "+4.2%", trend: "up", icon: Clock },
-    { title: "Conversion Rate", value: "3.45%", change: "+1.2%", trend: "up", icon: MousePointerClick },
-  ],
-};
-
-const deviceData = [
-  { name: "Desktop", value: 55, color: "hsl(var(--primary))" },
-  { name: "Mobile", value: 35, color: "hsl(var(--chart-2))" },
-  { name: "Tablet", value: 10, color: "hsl(var(--chart-3))" },
-];
-
-const sourceData = [
-  { source: "Organic Search", visits: 4500, conversion: 3.2 },
-  { source: "Direct", visits: 3200, conversion: 4.1 },
-  { source: "Social Media", visits: 2800, conversion: 2.8 },
-  { source: "Referral", visits: 1900, conversion: 3.5 },
-  { source: "Email", visits: 1200, conversion: 5.2 },
-];
-
-const engagementData = [
-  { day: "Mon", sessions: 320, bounceRate: 42 },
-  { day: "Tue", sessions: 450, bounceRate: 38 },
-  { day: "Wed", sessions: 380, bounceRate: 45 },
-  { day: "Thu", sessions: 520, bounceRate: 35 },
-  { day: "Fri", sessions: 480, bounceRate: 40 },
-  { day: "Sat", sessions: 280, bounceRate: 48 },
-  { day: "Sun", sessions: 220, bounceRate: 52 },
-];
-
-const topPages = [
-  { page: "/home", views: 12500, avgTime: "2:34", bounceRate: "32%" },
-  { page: "/products", views: 8900, avgTime: "3:12", bounceRate: "28%" },
-  { page: "/blog", views: 6700, avgTime: "4:45", bounceRate: "22%" },
-  { page: "/about", views: 4200, avgTime: "1:58", bounceRate: "45%" },
-  { page: "/contact", views: 2100, avgTime: "1:22", bounceRate: "38%" },
-];
-
-function exportAnalyticsCSV(period: string, stats: typeof statsByPeriod["7d"], trafficData: typeof trafficByPeriod["7d"]) {
-  let csv = "Analytics Report\nPeriod," + period + "\n\n";
-  csv += "Metric,Value,Change\n";
-  stats.forEach(s => { csv += `${s.title},${s.value},${s.change}\n`; });
-  csv += "\nTraffic Data\nPeriod,Visitors,Page Views\n";
-  trafficData.forEach(t => { csv += `${t.name},${t.visitors},${t.pageViews}\n`; });
-  csv += "\nTop Pages\nPage,Views,Avg Time,Bounce Rate\n";
-  topPages.forEach(p => { csv += `${p.page},${p.views},${p.avgTime},${p.bounceRate}\n`; });
-
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `analytics-${period}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+function getPeriodStart(period: string): Date {
+  const now = new Date();
+  switch (period) {
+    case "7d": return subDays(now, 7);
+    case "30d": return subDays(now, 30);
+    case "90d": return subDays(now, 90);
+    case "1y": return subMonths(now, 12);
+    default: return subDays(now, 30);
+  }
 }
 
 export default function Analytics() {
-  const [isLoading, setIsLoading] = useState(false);
   const [period, setPeriod] = useState("30d");
-  const [hasData] = useState(true);
+  const { posts, isLoading } = usePosts();
 
-  const trafficData = useMemo(() => trafficByPeriod[period] || trafficByPeriod["30d"], [period]);
-  const stats = useMemo(() => statsByPeriod[period] || statsByPeriod["30d"], [period]);
+  const periodStart = useMemo(() => getPeriodStart(period), [period]);
 
-  const handleRefresh = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      toast.success("Analytics data refreshed");
-    }, 1500);
-  };
+  const filteredPosts = useMemo(() => {
+    return (posts || []).filter(p => isAfter(new Date(p.createdAt), periodStart));
+  }, [posts, periodStart]);
+
+  // Stats
+  const stats = useMemo(() => {
+    const total = filteredPosts.length;
+    const published = filteredPosts.filter(p => p.status === "published").length;
+    const scheduled = filteredPosts.filter(p => p.status === "scheduled").length;
+    const drafts = filteredPosts.filter(p => p.status === "draft").length;
+
+    return [
+      { title: "Total Posts", value: total.toString(), change: `${published} published`, trend: "up" as const, icon: FileText },
+      { title: "Published", value: published.toString(), change: `in this period`, trend: "up" as const, icon: Eye },
+      { title: "Scheduled", value: scheduled.toString(), change: "upcoming", trend: "up" as const, icon: Clock },
+      { title: "Drafts", value: drafts.toString(), change: "in progress", trend: "up" as const, icon: CalendarIcon },
+    ];
+  }, [filteredPosts]);
+
+  // Timeline data
+  const timelineData = useMemo(() => {
+    const buckets: Record<string, { name: string; created: number; published: number }> = {};
+    const now = new Date();
+
+    if (period === "7d") {
+      for (let i = 6; i >= 0; i--) {
+        const day = subDays(now, i);
+        const key = format(day, "EEE");
+        buckets[key] = { name: key, created: 0, published: 0 };
+      }
+      filteredPosts.forEach(p => {
+        const key = format(new Date(p.createdAt), "EEE");
+        if (buckets[key]) {
+          buckets[key].created++;
+          if (p.status === "published") buckets[key].published++;
+        }
+      });
+    } else if (period === "30d") {
+      for (let i = 3; i >= 0; i--) {
+        const key = `Week ${4 - i}`;
+        buckets[key] = { name: key, created: 0, published: 0 };
+      }
+      filteredPosts.forEach(p => {
+        const daysAgo = Math.floor((now.getTime() - new Date(p.createdAt).getTime()) / 86400000);
+        const weekIndex = Math.min(3, Math.floor(daysAgo / 7));
+        const key = `Week ${4 - weekIndex}`;
+        if (buckets[key]) {
+          buckets[key].created++;
+          if (p.status === "published") buckets[key].published++;
+        }
+      });
+    } else {
+      // Monthly buckets
+      const months = period === "90d" ? 3 : 12;
+      for (let i = months - 1; i >= 0; i--) {
+        const month = subMonths(now, i);
+        const key = format(month, "MMM");
+        buckets[key] = { name: key, created: 0, published: 0 };
+      }
+      filteredPosts.forEach(p => {
+        const key = format(new Date(p.createdAt), "MMM");
+        if (buckets[key]) {
+          buckets[key].created++;
+          if (p.status === "published") buckets[key].published++;
+        }
+      });
+    }
+
+    return Object.values(buckets);
+  }, [filteredPosts, period]);
+
+  // Platform distribution
+  const platformData = useMemo(() => {
+    const counts = new Map<string, number>();
+    filteredPosts.forEach(p => {
+      const platforms = (p as any).platforms || [];
+      platforms.forEach((pp: any) => {
+        counts.set(pp.platform, (counts.get(pp.platform) || 0) + 1);
+      });
+    });
+
+    const platformColors = [
+      "hsl(var(--primary))",
+      "hsl(var(--chart-2))",
+      "hsl(var(--chart-3))",
+      "hsl(var(--chart-4))",
+      "hsl(var(--chart-5))",
+      "hsl(var(--warning))",
+    ];
+
+    return Array.from(counts.entries()).map(([name, value], i) => ({
+      name: name.charAt(0).toUpperCase() + name.slice(1),
+      value,
+      color: platformColors[i % platformColors.length],
+    }));
+  }, [filteredPosts]);
+
+  // Status breakdown
+  const statusData = useMemo(() => {
+    const statuses = ["draft", "scheduled", "published", "awaiting_review", "failed"];
+    return statuses.map(s => ({
+      source: s.replace("_", " ").replace(/\b\w/g, c => c.toUpperCase()),
+      count: filteredPosts.filter(p => p.status === s).length,
+    })).filter(s => s.count > 0);
+  }, [filteredPosts]);
+
+  // Post type breakdown
+  const typeData = useMemo(() => {
+    const counts = new Map<string, number>();
+    filteredPosts.forEach(p => {
+      counts.set(p.type, (counts.get(p.type) || 0) + 1);
+    });
+    return Array.from(counts.entries())
+      .map(([type, count]) => ({
+        type: type.charAt(0).toUpperCase() + type.slice(1),
+        count,
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [filteredPosts]);
 
   const handleExport = () => {
-    exportAnalyticsCSV(period, stats, trafficData);
+    let csv = "Analytics Report\nPeriod," + period + "\n\n";
+    csv += "Metric,Value\n";
+    stats.forEach(s => { csv += `${s.title},${s.value}\n`; });
+    csv += "\nTimeline\nPeriod,Created,Published\n";
+    timelineData.forEach(t => { csv += `${t.name},${t.created},${t.published}\n`; });
+    csv += "\nPlatform Distribution\nPlatform,Posts\n";
+    platformData.forEach(p => { csv += `${p.name},${p.value}\n`; });
+    csv += "\nPost Types\nType,Count\n";
+    typeData.forEach(t => { csv += `${t.type},${t.count}\n`; });
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `analytics-${period}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
     toast.success("Analytics report exported as CSV");
   };
 
@@ -185,6 +207,8 @@ export default function Analytics() {
     );
   }
 
+  const hasData = filteredPosts.length > 0;
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -193,7 +217,7 @@ export default function Analytics() {
           <div>
             <h1 className="text-xl font-black tracking-tighter text-foreground leading-none">Analytics</h1>
             <p className="text-muted-foreground">
-              Track your website performance and user engagement
+              Track your content performance and distribution
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -209,11 +233,7 @@ export default function Analytics() {
                 <SelectItem value="1y">Last year</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={handleRefresh}>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Refresh
-            </Button>
-            <Button variant="outline" onClick={handleExport}>
+            <Button variant="outline" onClick={handleExport} disabled={!hasData}>
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
@@ -225,8 +245,8 @@ export default function Analytics() {
             <CardContent>
               <EmptyState
                 icon={BarChart3}
-                title="No analytics data yet"
-                description="Analytics will appear here once your content starts getting views and engagement."
+                title="No content data yet"
+                description="Analytics will appear here once you start creating and publishing posts."
               />
             </CardContent>
           </Card>
@@ -242,16 +262,8 @@ export default function Analytics() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">{stat.value}</div>
-                    <div className="flex items-center text-xs">
-                      {stat.trend === "up" ? (
-                        <TrendingUp className="mr-1 h-3 w-3 text-chart-2" />
-                      ) : (
-                        <TrendingDown className="mr-1 h-3 w-3 text-destructive" />
-                      )}
-                      <span className={stat.trend === "up" ? "text-chart-2" : "text-destructive"}>
-                        {stat.change}
-                      </span>
-                      <span className="ml-1 text-muted-foreground">vs last period</span>
+                    <div className="flex items-center text-xs text-muted-foreground">
+                      {stat.change}
                     </div>
                   </CardContent>
                 </Card>
@@ -259,36 +271,36 @@ export default function Analytics() {
             </div>
 
             {/* Charts Section */}
-            <Tabs defaultValue="traffic" className="space-y-4">
+            <Tabs defaultValue="timeline" className="space-y-4">
               <TabsList>
-                <TabsTrigger value="traffic">Traffic</TabsTrigger>
-                <TabsTrigger value="engagement">Engagement</TabsTrigger>
-                <TabsTrigger value="sources">Sources</TabsTrigger>
+                <TabsTrigger value="timeline">Timeline</TabsTrigger>
+                <TabsTrigger value="platforms">Platforms</TabsTrigger>
+                <TabsTrigger value="status">Status</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="traffic" className="space-y-4">
+              <TabsContent value="timeline" className="space-y-4">
                 <div className="grid gap-4 lg:grid-cols-3">
                   <Card className="lg:col-span-2">
                     <CardHeader>
-                      <CardTitle>Traffic Overview</CardTitle>
+                      <CardTitle>Content Timeline</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="h-[300px]">
                         <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={trafficData}>
+                          <AreaChart data={timelineData}>
                             <defs>
-                              <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
+                              <linearGradient id="colorCreated" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
                                 <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                               </linearGradient>
-                              <linearGradient id="colorPageViews" x1="0" y1="0" x2="0" y2="1">
+                              <linearGradient id="colorPublished" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.3} />
                                 <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0} />
                               </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                             <XAxis dataKey="name" className="text-xs" />
-                            <YAxis className="text-xs" />
+                            <YAxis className="text-xs" allowDecimals={false} />
                             <Tooltip 
                               contentStyle={{ 
                                 backgroundColor: "hsl(var(--card))", 
@@ -298,17 +310,19 @@ export default function Analytics() {
                             />
                             <Area
                               type="monotone"
-                              dataKey="visitors"
+                              dataKey="created"
+                              name="Created"
                               stroke="hsl(var(--primary))"
                               fillOpacity={1}
-                              fill="url(#colorVisitors)"
+                              fill="url(#colorCreated)"
                             />
                             <Area
                               type="monotone"
-                              dataKey="pageViews"
+                              dataKey="published"
+                              name="Published"
                               stroke="hsl(var(--chart-2))"
                               fillOpacity={1}
-                              fill="url(#colorPageViews)"
+                              fill="url(#colorPublished)"
                             />
                           </AreaChart>
                         </ResponsiveContainer>
@@ -318,61 +332,68 @@ export default function Analytics() {
 
                   <Card>
                     <CardHeader>
-                      <CardTitle>Device Breakdown</CardTitle>
+                      <CardTitle>Platform Distribution</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="h-[200px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={deviceData}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={50}
-                              outerRadius={80}
-                              paddingAngle={5}
-                              dataKey="value"
-                            >
-                              {deviceData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                              ))}
-                            </Pie>
-                            <Tooltip />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-                      <div className="mt-4 space-y-2">
-                        {deviceData.map((device) => (
-                          <div key={device.name} className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <div 
-                                className="h-3 w-3 rounded-full" 
-                                style={{ backgroundColor: device.color } as React.CSSProperties}
-                              />
-                              <span className="text-sm">{device.name}</span>
-                            </div>
-                            <span className="text-sm font-medium">{device.value}%</span>
+                      {platformData.length > 0 ? (
+                        <>
+                          <div className="h-[200px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Pie
+                                  data={platformData}
+                                  cx="50%"
+                                  cy="50%"
+                                  innerRadius={50}
+                                  outerRadius={80}
+                                  paddingAngle={5}
+                                  dataKey="value"
+                                >
+                                  {platformData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                  ))}
+                                </Pie>
+                                <Tooltip />
+                              </PieChart>
+                            </ResponsiveContainer>
                           </div>
-                        ))}
-                      </div>
+                          <div className="mt-4 space-y-2">
+                            {platformData.map((platform) => (
+                              <div key={platform.name} className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div 
+                                    className="h-3 w-3 rounded-full" 
+                                    style={{ backgroundColor: platform.color } as React.CSSProperties}
+                                  />
+                                  <span className="text-sm">{platform.name}</span>
+                                </div>
+                                <span className="text-sm font-medium">{platform.value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <p className="text-sm text-muted-foreground text-center py-8">
+                          No platform data available
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
               </TabsContent>
 
-              <TabsContent value="engagement" className="space-y-4">
+              <TabsContent value="platforms" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Weekly Engagement</CardTitle>
+                    <CardTitle>Posts by Platform</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={engagementData}>
+                        <BarChart data={platformData} layout="vertical">
                           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                          <XAxis dataKey="day" className="text-xs" />
-                          <YAxis yAxisId="left" className="text-xs" />
-                          <YAxis yAxisId="right" orientation="right" className="text-xs" />
+                          <XAxis type="number" className="text-xs" allowDecimals={false} />
+                          <YAxis dataKey="name" type="category" width={100} className="text-xs" />
                           <Tooltip 
                             contentStyle={{ 
                               backgroundColor: "hsl(var(--card))", 
@@ -380,42 +401,26 @@ export default function Analytics() {
                               borderRadius: "8px"
                             }} 
                           />
-                          <Legend />
-                          <Line
-                            yAxisId="left"
-                            type="monotone"
-                            dataKey="sessions"
-                            stroke="hsl(var(--primary))"
-                            strokeWidth={2}
-                            dot={{ fill: "hsl(var(--primary))" }}
-                          />
-                          <Line
-                            yAxisId="right"
-                            type="monotone"
-                            dataKey="bounceRate"
-                            stroke="hsl(var(--destructive))"
-                            strokeWidth={2}
-                            dot={{ fill: "hsl(var(--destructive))" }}
-                          />
-                        </LineChart>
+                          <Bar dataKey="value" name="Posts" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                        </BarChart>
                       </ResponsiveContainer>
                     </div>
                   </CardContent>
                 </Card>
               </TabsContent>
 
-              <TabsContent value="sources" className="space-y-4">
+              <TabsContent value="status" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Traffic Sources</CardTitle>
+                    <CardTitle>Posts by Status</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={sourceData} layout="vertical">
+                        <BarChart data={statusData}>
                           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                          <XAxis type="number" className="text-xs" />
-                          <YAxis dataKey="source" type="category" width={100} className="text-xs" />
+                          <XAxis dataKey="source" className="text-xs" />
+                          <YAxis className="text-xs" allowDecimals={false} />
                           <Tooltip 
                             contentStyle={{ 
                               backgroundColor: "hsl(var(--card))", 
@@ -423,7 +428,7 @@ export default function Analytics() {
                               borderRadius: "8px"
                             }} 
                           />
-                          <Bar dataKey="visits" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                          <Bar dataKey="count" name="Posts" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -432,38 +437,32 @@ export default function Analytics() {
               </TabsContent>
             </Tabs>
 
-            {/* Top Pages Table */}
+            {/* Post Types Table */}
             <Card>
               <CardHeader>
-                <CardTitle>Top Pages</CardTitle>
+                <CardTitle>Content Types</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-border text-left text-sm text-muted-foreground">
-                        <th className="pb-3 font-medium">Page</th>
-                        <th className="pb-3 font-medium">Views</th>
-                        <th className="pb-3 font-medium">Avg. Time</th>
-                        <th className="pb-3 font-medium">Bounce Rate</th>
-                        <th className="pb-3 font-medium"></th>
+                        <th className="pb-3 font-medium">Type</th>
+                        <th className="pb-3 font-medium">Count</th>
+                        <th className="pb-3 font-medium">% of Total</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {topPages.map((page) => (
-                        <tr key={page.page} className="border-b border-border last:border-0">
+                      {typeData.map((item) => (
+                        <tr key={item.type} className="border-b border-border last:border-0">
                           <td className="py-3">
-                            <span className="font-medium">{page.page}</span>
+                            <span className="font-medium">{item.type}</span>
                           </td>
-                          <td className="py-3">{page.views.toLocaleString()}</td>
-                          <td className="py-3">{page.avgTime}</td>
+                          <td className="py-3">{item.count}</td>
                           <td className="py-3">
-                            <Badge variant="secondary">{page.bounceRate}</Badge>
-                          </td>
-                          <td className="py-3">
-                            <Button variant="ghost" size="sm">
-                              <ArrowUpRight className="h-4 w-4" />
-                            </Button>
+                            <Badge variant="secondary">
+                              {filteredPosts.length > 0 ? Math.round((item.count / filteredPosts.length) * 100) : 0}%
+                            </Badge>
                           </td>
                         </tr>
                       ))}

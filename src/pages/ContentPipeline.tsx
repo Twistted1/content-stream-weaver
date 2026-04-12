@@ -112,7 +112,7 @@ export default function ContentPipeline() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-xl font-black tracking-tighter text-foreground">Gantt Chart</h1>
+          <h1 className="text-xl font-black tracking-tighter text-foreground">Content Pipeline</h1>
           <p className="text-muted-foreground">
             Automated content creation: idea → image → schedule → publish
           </p>

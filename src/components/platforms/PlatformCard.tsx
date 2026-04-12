@@ -65,7 +65,7 @@ export function PlatformCard({ platform, isSelected, onSelect, getPlatformColor,
   const navigate = useNavigate();
   const { togglePlatformStatus } = usePlatforms();
   
-  // Local state for immediate UI feedback on mock data
+  // Local state for immediate UI feedback
   const [localStatus, setLocalStatus] = React.useState(platform.status);
 
   // Sync if prop changes

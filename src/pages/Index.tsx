@@ -4,41 +4,52 @@ import { AudienceChart } from "@/components/dashboard/AudienceChart";
 import { PlatformPerformance } from "@/components/dashboard/PlatformPerformance";
 import { RecentPosts } from "@/components/dashboard/RecentPosts";
 import { QuickNotes } from "@/components/dashboard/QuickNotes";
-import { Users, TrendingUp, UserPlus } from "lucide-react";
+import { FileText, TrendingUp, Calendar } from "lucide-react";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 const Index = () => {
+  const stats = useDashboardStats();
+
+  if (stats.isLoading) {
+    return (
+      <DashboardLayout>
+        <LoadingState message="Loading dashboard..." />
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Page Title */}
         <div>
           <h1 className="text-xl font-black tracking-tighter text-foreground">Overview</h1>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Real Data */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatsCard
-            title="Total Reach"
-            value="78,291"
-            change="+12.5% this month"
-            changeType="positive"
-            icon={Users}
+            title="Total Posts"
+            value={stats.totalPosts.toLocaleString()}
+            change={`${stats.publishedPosts} published`}
+            changeType="neutral"
+            icon={FileText}
             iconColor="bg-primary/20"
           />
           <StatsCard
-            title="Engagement Rate"
-            value="4.72%"
-            change="-0.2% this month"
-            changeType="negative"
-            icon={TrendingUp}
+            title="Scheduled"
+            value={stats.scheduledPosts.toLocaleString()}
+            change="Upcoming posts"
+            changeType="neutral"
+            icon={Calendar}
             iconColor="bg-[hsl(var(--warning))]/20"
           />
           <StatsCard
-            title="New Followers"
-            value="1,204"
-            change="+21% this month"
-            changeType="positive"
-            icon={UserPlus}
+            title="Drafts"
+            value={stats.draftPosts.toLocaleString()}
+            change="In progress"
+            changeType="neutral"
+            icon={TrendingUp}
             iconColor="bg-[hsl(var(--success))]/20"
           />
         </div>

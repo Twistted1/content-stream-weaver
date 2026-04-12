@@ -1,44 +1,23 @@
-import { Youtube, Instagram, Facebook, Linkedin, Twitter } from "lucide-react";
+import { usePosts } from "@/hooks/usePosts";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { FileText } from "lucide-react";
 
-const posts = [
-  {
-    title: "Content Piece Title 23 for TikTok",
-    platform: "TikTok",
-    status: "Published",
-    views: "7,324",
-    icon: "🎵",
-    color: "bg-[hsl(var(--tiktok))]/20",
-  },
-  {
-    title: "Weekly Update - Instagram Reels",
-    platform: "Instagram",
-    status: "Published",
-    views: "12,891",
-    icon: Instagram,
-    color: "bg-[hsl(var(--instagram))]/20",
-  },
-  {
-    title: "Tutorial Series Part 5",
-    platform: "YouTube",
-    status: "Scheduled",
-    views: "—",
-    icon: Youtube,
-    color: "bg-[hsl(var(--youtube))]/20",
-  },
-  {
-    title: "Industry Insights Thread",
-    platform: "X",
-    status: "Draft",
-    views: "—",
-    icon: Twitter,
-    color: "bg-[hsl(var(--twitter))]/20",
-  },
-];
+const statusColors: Record<string, string> = {
+  published: "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]",
+  scheduled: "bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))]",
+  draft: "bg-muted text-muted-foreground",
+  failed: "bg-destructive/10 text-destructive",
+  awaiting_review: "bg-primary/10 text-primary",
+  generating: "bg-[hsl(var(--chart-2))]/10 text-[hsl(var(--chart-2))]",
+};
 
 export function RecentPosts() {
   const navigate = useNavigate();
+  const { posts, isLoading } = usePosts();
+
+  const recentPosts = (posts || []).slice(0, 5);
 
   return (
     <div className="bg-card rounded-xl p-6 border border-border">
@@ -50,29 +29,37 @@ export function RecentPosts() {
       </div>
 
       <div className="space-y-4">
-        {posts.map((post, index) => (
-          <div key={index} className="flex items-center justify-between py-2">
-            <div className="flex items-center gap-3">
-              <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${post.color}`}>
-                {typeof post.icon === "string" ? (
-                  <span className="text-lg">{post.icon}</span>
-                ) : (
-                  <post.icon className="h-5 w-5 text-foreground" />
-                )}
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground text-center py-8">Loading...</p>
+        ) : recentPosts.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-8">
+            No posts yet. Create your first post to see it here.
+          </p>
+        ) : (
+          recentPosts.map((post) => {
+            const platforms = (post as any).platforms || [];
+            const platformNames = platforms.map((p: any) => p.platform).join(", ");
+
+            return (
+              <div key={post.id} className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-primary/10 shrink-0">
+                    <FileText className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium text-foreground text-sm truncate">{post.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {platformNames || "No platform"} · {post.type}
+                    </p>
+                  </div>
+                </div>
+                <Badge variant="secondary" className={statusColors[post.status] || ""}>
+                  {post.status.replace("_", " ")}
+                </Badge>
               </div>
-              <div>
-                <p className="font-medium text-foreground text-sm">{post.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  {post.platform} · {post.status}
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="font-semibold text-foreground">{post.views}</p>
-              <p className="text-xs text-muted-foreground">Views</p>
-            </div>
-          </div>
-        ))}
+            );
+          })
+        )}
       </div>
     </div>
   );

@@ -16,17 +16,12 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { ReportCard, Report } from "@/components/reports/ReportCard";
+import { ReportCard, Report as ReportCardType } from "@/components/reports/ReportCard";
 import { CreateReportDialog } from "@/components/reports/CreateReportDialog";
 import { ReportPreviewDialog } from "@/components/reports/ReportPreviewDialog";
-import {
-  initialReports,
-  initialScheduledReports,
-  reportStats,
-  quickTemplates,
-  typeIcons,
-  ScheduledReport,
-} from "@/components/reports/reportsData";
+import { quickTemplates, typeIcons } from "@/components/reports/reportsData";
+import { useReports } from "@/hooks/useReports";
+import { LoadingState } from "@/components/ui/LoadingState";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,19 +33,32 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+function mapToCardReport(r: any): ReportCardType {
+  return {
+    id: r.id,
+    name: r.name,
+    description: r.description || "",
+    type: (r.type || "Performance") as ReportCardType["type"],
+    icon: typeIcons[(r.type || "Performance") as keyof typeof typeIcons] || TrendingUp,
+    lastGenerated: r.lastGenerated ? new Date(r.lastGenerated).toISOString().split("T")[0] : "—",
+    status: (r.status || "Processing") as ReportCardType["status"],
+    format: (r.format || "PDF") as ReportCardType["format"],
+  };
+}
+
 export default function Reports() {
-  const [reports, setReports] = useState<Report[]>(initialReports);
-  const [scheduledReports, setScheduledReports] = useState<ScheduledReport[]>(initialScheduledReports);
+  const { reports, isLoading, addReport, deleteReport, regenerateReport } = useReports();
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("recent");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [previewReport, setPreviewReport] = useState<Report | null>(null);
-  const [deleteReport, setDeleteReport] = useState<Report | null>(null);
+  const [previewReport, setPreviewReport] = useState<ReportCardType | null>(null);
+  const [deleteReportTarget, setDeleteReportTarget] = useState<ReportCardType | null>(null);
 
-  // Filtered reports
+  const cardReports = useMemo(() => reports.map(mapToCardReport), [reports]);
+
   const filteredReports = useMemo(() => {
-    return reports.filter((report) => {
+    return cardReports.filter((report) => {
       const matchesSearch =
         report.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         report.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -58,7 +66,11 @@ export default function Reports() {
         typeFilter === "all" || report.type.toLowerCase() === typeFilter;
       return matchesSearch && matchesType;
     });
-  }, [reports, searchQuery, typeFilter]);
+  }, [cardReports, searchQuery, typeFilter]);
+
+  const scheduledReports = useMemo(() => {
+    return reports.filter(r => r.scheduleFrequency);
+  }, [reports]);
 
   const handleCreateReport = (data: {
     name: string;
@@ -68,93 +80,47 @@ export default function Reports() {
     schedule: boolean;
     frequency?: string;
   }) => {
-    const newReport: Report = {
-      id: Date.now(),
+    let scheduleNextRun: string | undefined;
+    if (data.schedule && data.frequency) {
+      const now = new Date();
+      switch (data.frequency) {
+        case "daily": now.setDate(now.getDate() + 1); break;
+        case "weekly": now.setDate(now.getDate() + 7); break;
+        case "monthly": now.setMonth(now.getMonth() + 1); break;
+        case "quarterly": now.setMonth(now.getMonth() + 3); break;
+      }
+      scheduleNextRun = now.toISOString();
+    }
+
+    addReport.mutate({
       name: data.name,
       description: data.description,
-      type: data.type as Report["type"],
-      icon: typeIcons[data.type as keyof typeof typeIcons],
-      lastGenerated: new Date().toISOString().split("T")[0],
-      status: "Processing",
-      format: data.format as Report["format"],
-    };
-
-    setReports((prev) => [newReport, ...prev]);
-
-    // Simulate processing completion
-    setTimeout(() => {
-      setReports((prev) =>
-        prev.map((r) => (r.id === newReport.id ? { ...r, status: "Ready" as const } : r))
-      );
-      toast.success(`"${data.name}" is ready for download`);
-    }, 3000);
-
-    if (data.schedule && data.frequency) {
-      const newScheduled: ScheduledReport = {
-        id: Date.now(),
-        name: data.name,
-        frequency: data.frequency.charAt(0).toUpperCase() + data.frequency.slice(1),
-        nextRun: getNextRunDate(data.frequency),
-      };
-      setScheduledReports((prev) => [...prev, newScheduled]);
-    }
-
-    toast.success("Report created successfully");
+      type: data.type,
+      format: data.format,
+      scheduleFrequency: data.schedule ? data.frequency : undefined,
+      scheduleNextRun,
+    });
   };
 
-  const getNextRunDate = (frequency: string): string => {
-    const now = new Date();
-    switch (frequency) {
-      case "daily":
-        return "Tomorrow";
-      case "weekly":
-        now.setDate(now.getDate() + 7);
-        return now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-      case "monthly":
-        now.setMonth(now.getMonth() + 1);
-        return now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-      case "quarterly":
-        now.setMonth(now.getMonth() + 3);
-        return now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-      default:
-        return "TBD";
-    }
-  };
-
-  const handleDownload = (report: Report) => {
+  const handleDownload = (report: ReportCardType) => {
     toast.success(`Downloading ${report.name}.${report.format.toLowerCase()}`);
   };
 
-  const handleRegenerate = (report: Report) => {
-    setReports((prev) =>
-      prev.map((r) => (r.id === report.id ? { ...r, status: "Processing" as const } : r))
-    );
-    toast.info(`Regenerating "${report.name}"...`);
-
-    setTimeout(() => {
-      setReports((prev) =>
-        prev.map((r) =>
-          r.id === report.id
-            ? { ...r, status: "Ready" as const, lastGenerated: new Date().toISOString().split("T")[0] }
-            : r
-        )
-      );
-      toast.success(`"${report.name}" has been regenerated`);
-    }, 2500);
+  const handleRegenerate = (report: ReportCardType) => {
+    regenerateReport.mutate(report.id as string);
   };
 
-  const handleView = (report: Report) => {
+  const handleView = (report: ReportCardType) => {
     setPreviewReport(report);
   };
 
   const handleDeleteConfirm = () => {
-    if (!deleteReport) return;
-    setReports((prev) => prev.filter((r) => r.id !== deleteReport.id));
-    toast.success(`"${deleteReport.name}" has been deleted`);
-    setDeleteReport(null);
+    if (!deleteReportTarget) return;
+    deleteReport.mutate(deleteReportTarget.id as string);
+    setDeleteReportTarget(null);
   };
 
-  const handleSchedule = (report: Report) => {
+  const handleSchedule = (report: ReportCardType) => {
     toast.info(`Opening schedule options for "${report.name}"`);
   };
 
@@ -163,10 +129,13 @@ export default function Reports() {
     toast.info(`Template "${templateName}" selected`);
   };
 
-  const handleRemoveScheduled = (id: number) => {
-    setScheduledReports((prev) => prev.filter((r) => r.id !== id));
-    toast.success("Scheduled report removed");
-  };
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <LoadingState message="Loading reports..." />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -229,7 +198,7 @@ export default function Reports() {
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Available Reports</h2>
               <span className="text-sm text-muted-foreground">
-                {filteredReports.length} of {reports.length} reports
+                {filteredReports.length} of {cardReports.length} reports
               </span>
             </div>
             <div className="space-y-3">
@@ -241,7 +210,7 @@ export default function Reports() {
                     onDownload={handleDownload}
                     onRegenerate={handleRegenerate}
                     onView={handleView}
-                    onDelete={setDeleteReport}
+                    onDelete={setDeleteReportTarget}
                     onSchedule={handleSchedule}
                   />
                 ))
@@ -278,16 +247,12 @@ export default function Reports() {
                   <span className="font-medium">{reports.length}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Generated This Month</span>
-                  <span className="font-medium">{reportStats.generatedThisMonth}</span>
+                  <span className="text-sm text-muted-foreground">Ready</span>
+                  <span className="font-medium">{reports.filter(r => r.status === "Ready").length}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Scheduled</span>
                   <span className="font-medium">{scheduledReports.length}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Storage Used</span>
-                  <span className="font-medium">{reportStats.storageUsed}</span>
                 </div>
               </CardContent>
             </Card>
@@ -307,14 +272,18 @@ export default function Reports() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">{report.name}</p>
-                        <p className="text-xs text-muted-foreground">{report.frequency}</p>
-                        <p className="text-xs text-muted-foreground">Next: {report.nextRun}</p>
+                        <p className="text-xs text-muted-foreground">{report.scheduleFrequency}</p>
+                        {report.scheduleNextRun && (
+                          <p className="text-xs text-muted-foreground">
+                            Next: {new Date(report.scheduleNextRun).toLocaleDateString()}
+                          </p>
+                        )}
                       </div>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleRemoveScheduled(report.id)}
+                        onClick={() => deleteReport.mutate(report.id)}
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
@@ -376,12 +345,12 @@ export default function Reports() {
       />
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteReport} onOpenChange={(open) => !open && setDeleteReport(null)}>
+      <AlertDialog open={!!deleteReportTarget} onOpenChange={(open) => !open && setDeleteReportTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Report</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deleteReport?.name}"? This action cannot be undone.
+              Are you sure you want to delete "{deleteReportTarget?.name}"? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

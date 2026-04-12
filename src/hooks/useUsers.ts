@@ -20,11 +20,18 @@ export function useUsers() {
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select(`*, user_roles ( role )`);
+      // Fetch profiles and user_roles separately to avoid FK join error
+      const [profilesRes, rolesRes] = await Promise.all([
+        supabase.from("profiles").select("*"),
+        supabase.from("user_roles").select("*"),
+      ]);
 
-      if (profilesError) throw profilesError;
+      if (profilesRes.error) throw profilesRes.error;
+
+      const rolesMap = new Map<string, string>();
+      if (!rolesRes.error && rolesRes.data) {
+        rolesRes.data.forEach((r: any) => rolesMap.set(r.user_id, r.role));
+      }
 
       // Try to fetch invitations (table may not exist)
       let invitations: any[] = [];
@@ -36,11 +43,11 @@ export function useUsers() {
         if (!invitesError && data) invitations = data;
       } catch { /* table may not exist */ }
 
-      const activeUsers = (profiles || []).map((profile: any) => ({
+      const activeUsers = (profilesRes.data || []).map((profile: any) => ({
         id: profile.user_id,
         name: profile.display_name || profile.email || "Unknown",
         email: profile.email || "",
-        role: profile.user_roles?.[0]?.role || "user",
+        role: rolesMap.get(profile.user_id) || "user",
         status: "active" as const,
         lastActive: undefined,
         joinedDate: new Date(profile.created_at).toLocaleDateString(),
@@ -123,7 +130,6 @@ export function useUsers() {
         const { error } = await (supabase as any).from("invitations").delete().eq("id", id);
         if (error) throw error;
       } else {
-        // Can't delete auth users from client - just remove role
         toast.info("User deactivated");
       }
     },

@@ -421,6 +421,51 @@ export type Database = {
         }
         Relationships: []
       }
+      reports: {
+        Row: {
+          created_at: string
+          description: string | null
+          format: string
+          id: string
+          last_generated: string | null
+          name: string
+          schedule_frequency: string | null
+          schedule_next_run: string | null
+          status: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          format?: string
+          id?: string
+          last_generated?: string | null
+          name: string
+          schedule_frequency?: string | null
+          schedule_next_run?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          format?: string
+          id?: string
+          last_generated?: string | null
+          name?: string
+          schedule_frequency?: string | null
+          schedule_next_run?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       strategies: {
         Row: {
           assignees: string[]

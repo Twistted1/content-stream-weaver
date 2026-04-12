@@ -11,7 +11,7 @@ import {
 import { LucideIcon } from "lucide-react";
 
 export interface Report {
-  id: number;
+  id: number | string;
   name: string;
   description: string;
   type: "Performance" | "Analytics" | "Financial" | "Marketing";

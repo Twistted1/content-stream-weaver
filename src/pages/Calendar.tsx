@@ -278,7 +278,7 @@ function MonthGrid({ current, events, categoryFilter, onClickDay, onClickEvent }
                       className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-bold truncate cursor-pointer transition-all hover:brightness-125 ${barColor} ${isReview ? "animate-pulse ring-1 ring-orange-500/40" : ""}`}
                     >
                       {evt.startTime && <span className="text-white/50 font-semibold shrink-0">{fmtHour(evt.startTime)}</span>}
-                      {p && <span className="text-white/60 shrink-0">{evt.platform === "youtube" ? "▶" : evt.platform === "tiktok" ? "♪" : evt.platform === "twitter" ? "𝕏" : "◈"}</span>}
+                      {p && <p.Icon className="w-3 h-3 text-white/70 shrink-0" />}
                       <span className="text-white/90 truncate">{evt.title}</span>
                     </div>
                   );

@@ -240,8 +240,11 @@ function CalSidebar({ events, miniMonth, selectedDate, onSelectDate, onNavMonth,
 
 /* ── month grid ──────────────────────────────────────────── */
 
-function MonthGrid({ current, events, categoryFilter, onClickDay, onClickEvent }: any) {
+function MonthGrid({ current, events, categoryFilter, onClickDay, onClickEvent, onDropEvent }: any) {
   const days = getDaysInMonth(current.getFullYear(), current.getMonth());
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOverKey, setDragOverKey] = useState<string | null>(null);
+
   return (
     <div className="flex-1 flex flex-col overflow-y-auto custom-scrollbar">
       <div className="grid grid-cols-7 text-center text-[10px] font-black text-gray-500 uppercase tracking-widest py-3 border-b border-white/5 sticky top-0 bg-[#0a0d1a] z-10">
@@ -252,13 +255,25 @@ function MonthGrid({ current, events, categoryFilter, onClickDay, onClickEvent }
           const dayEvts = getEventsForDay(events, day).filter((e: CalEvent) => categoryFilter === "all" || e.category === categoryFilter);
           const inMonth = day.getMonth() === current.getMonth();
           const today = isToday(day);
+          const dayKey = fmtKey(day);
+          const isDropTarget = dragOverKey === dayKey;
 
           return (
             <div
               key={i}
               onClick={() => onClickDay(new Date(day))}
+              onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (dragOverKey !== dayKey) setDragOverKey(dayKey); }}
+              onDragLeave={() => { if (dragOverKey === dayKey) setDragOverKey(null); }}
+              onDrop={(e) => {
+                e.preventDefault();
+                const id = e.dataTransfer.getData("text/event-id");
+                setDragOverKey(null);
+                setDraggingId(null);
+                if (id && onDropEvent) onDropEvent(id, new Date(day));
+              }}
               className={`min-h-[130px] p-2 border-r border-b border-white/[0.03] cursor-pointer transition-colors group
-                ${!inMonth ? "opacity-30" : ""} ${today ? "bg-primary/[0.03]" : "hover:bg-white/[0.02]"}`}
+                ${!inMonth ? "opacity-30" : ""}
+                ${isDropTarget ? "bg-primary/15 ring-2 ring-inset ring-primary/60" : today ? "bg-primary/[0.03]" : "hover:bg-white/[0.02]"}`}
             >
               <div className="mb-1.5">
                 <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-black
@@ -271,11 +286,21 @@ function MonthGrid({ current, events, categoryFilter, onClickDay, onClickEvent }
                   const barColor = getBarColor(evt);
                   const p = PLAT[evt.platform];
                   const isReview = evt.status === "awaiting_review";
+                  const isDragging = draggingId === evt.id;
                   return (
                     <div
                       key={evt.id}
+                      draggable
+                      onDragStart={(e) => {
+                        e.stopPropagation();
+                        e.dataTransfer.setData("text/event-id", evt.originalId || evt.id);
+                        e.dataTransfer.effectAllowed = "move";
+                        setDraggingId(evt.id);
+                      }}
+                      onDragEnd={() => { setDraggingId(null); setDragOverKey(null); }}
                       onClick={(e) => { e.stopPropagation(); onClickEvent(evt); }}
-                      className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-bold truncate cursor-pointer transition-all hover:brightness-125 ${barColor} ${isReview ? "animate-pulse ring-1 ring-orange-500/40" : ""}`}
+                      title="Drag to reschedule"
+                      className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-bold truncate cursor-grab active:cursor-grabbing transition-all hover:brightness-125 ${barColor} ${isReview ? "animate-pulse ring-1 ring-orange-500/40" : ""} ${isDragging ? "opacity-40 scale-95" : ""}`}
                     >
                       {evt.startTime && <span className="text-white/50 font-semibold shrink-0">{fmtHour(evt.startTime)}</span>}
                       {p && <p.Icon className="w-3 h-3 text-white/70 shrink-0" />}
@@ -584,6 +609,14 @@ export default function ContentCalendar() {
     if (event) schedulePost.mutate({ id, scheduledAt: event.startTime ? `${event.date}T${event.startTime}:00` : `${event.date}T09:00:00` });
   };
 
+  // Drag-and-drop reschedule: keep original time-of-day, change date only
+  const handleDropReschedule = useCallback((postId: string, newDay: Date) => {
+    const evt = events.find(e => (e.originalId || e.id) === postId);
+    if (!evt || evt.date === fmtKey(newDay)) return;
+    const time = evt.startTime || "09:00";
+    schedulePost.mutate({ id: postId, scheduledAt: `${fmtKey(newDay)}T${time}:00` });
+  }, [events, schedulePost]);
+
   const filtered = searchQuery.trim()
     ? events.filter(e => e.title.toLowerCase().includes(searchQuery.toLowerCase()) || e.description.toLowerCase().includes(searchQuery.toLowerCase()))
     : categoryFilter === "all" ? events : events.filter(e => e.category === categoryFilter || e.status === categoryFilter);
@@ -708,7 +741,7 @@ export default function ContentCalendar() {
 
               {/* View */}
               <div className="flex-1 overflow-hidden flex flex-col bg-[#060918]">
-                {viewMode === "month" && <MonthGrid current={current} events={filtered} categoryFilter={categoryFilter} onClickDay={(d: Date) => { setSelectedDate(d); setDefaultDate(d); setEditingEvent(null); setModalOpen(true); }} onClickEvent={(evt: CalEvent) => { setEditingEvent(evt); setModalOpen(true); }} />}
+                {viewMode === "month" && <MonthGrid current={current} events={filtered} categoryFilter={categoryFilter} onClickDay={(d: Date) => { setSelectedDate(d); setDefaultDate(d); setEditingEvent(null); setModalOpen(true); }} onClickEvent={(evt: CalEvent) => { setEditingEvent(evt); setModalOpen(true); }} onDropEvent={handleDropReschedule} />}
                 {viewMode === "week" && <WeekView current={current} events={filtered} onClickEvent={(evt: CalEvent) => { setEditingEvent(evt); setModalOpen(true); }} />}
                 {viewMode === "day" && <DayView current={current} events={filtered} onClickEvent={(evt: CalEvent) => { setEditingEvent(evt); setModalOpen(true); }} />}
                 {viewMode === "agenda" && <AgendaView events={filtered} onClickEvent={(evt: CalEvent) => { setEditingEvent(evt); setModalOpen(true); }} />}

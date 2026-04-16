@@ -616,10 +616,12 @@ export default function ContentCalendar() {
               <button onClick={() => setSidebarOpen(p => !p)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-sm transition-colors">
                 {sidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
               </button>
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm shadow-lg shadow-indigo-500/20">📅</div>
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                <CalendarDays className="w-5 h-5" />
+              </div>
               <div>
-                <h1 className="text-sm font-black text-white leading-none tracking-tight">ContentFlow</h1>
-                <p className="text-[10px] text-gray-500 font-medium">Smart Calendar</p>
+                <h1 className="text-base font-black text-purple-300 leading-none tracking-tight">ContentFlow</h1>
+                <p className="text-[10px] text-gray-500 font-medium mt-1">Smart Calendar</p>
               </div>
             </div>
 

@@ -104,7 +104,7 @@ export function Sidebar() {
           <h2 className="text-xl font-black text-primary-foreground">MF</h2>
         </div>
         <div>
-          <h1 className="font-black text-foreground tracking-tighter uppercase">MyFlow</h1>
+          <h1 className="font-black text-foreground tracking-tighter uppercase">CONTENT  HUB</h1>
           <p className="text-[10px] font-bold text-primary uppercase tracking-wider">Smart Calendar</p>
         </div>
       </div>

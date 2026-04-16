@@ -626,7 +626,7 @@ export default function ContentCalendar() {
             </div>
 
             <div className="flex-1 max-w-md mx-8 relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">🔍</span>
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-purple-400 w-3.5 h-3.5" />
               <input
                 aria-label="Search"
                 value={searchQuery}

@@ -6,9 +6,10 @@ import { DragDropImport } from "@/components/common/DragDropImport";
 import { parseISO, format } from "date-fns";
 import { NotificationsDropdown } from "@/components/header/NotificationsDropdown";
 import { UserDropdown } from "@/components/header/UserDropdown";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import {
+  ChevronLeft, ChevronRight, Plus, Search, Bell, CalendarDays, Send, AlarmClock,
+  Clapperboard, Briefcase, Users as UsersIcon, Sprout, Diamond, Youtube, Music2, Twitter, Instagram, Facebook, Linkedin, Globe, Video,
+} from "lucide-react";
 
 /* ── helpers ────────────────────────────────────────────── */
 
@@ -45,24 +46,24 @@ const DAYS_SHORT = ["S","M","T","W","T","F","S"];
 
 type CatKey = "content" | "publish" | "meeting" | "deadline" | "personal" | "awaiting_review";
 
-const CAT: Record<CatKey, { color: string; bg: string; border: string; label: string; icon: string }> = {
-  content:  { color: "text-violet-300", bg: "bg-violet-500/20", border: "border-violet-500/40", label: "Content",  icon: "🎬" },
-  publish:  { color: "text-amber-300",  bg: "bg-amber-500/20",  border: "border-amber-500/40",  label: "Publish",  icon: "📤" },
-  meeting:  { color: "text-blue-300",   bg: "bg-blue-500/20",   border: "border-blue-500/40",   label: "Meetings", icon: "👥" },
-  deadline: { color: "text-red-300",    bg: "bg-red-500/20",    border: "border-red-500/40",    label: "Deadlines",icon: "🚨" },
-  personal: { color: "text-emerald-300",bg: "bg-emerald-500/20",border: "border-emerald-500/40",label: "Personal", icon: "🌿" },
-  awaiting_review: { color: "text-orange-300", bg: "bg-orange-500/20", border: "border-orange-500/40", label: "Needs Review", icon: "⚠️" },
+const CAT: Record<CatKey, { color: string; bg: string; border: string; label: string; Icon: any; iconBg: string; iconColor: string }> = {
+  content:  { color: "text-violet-300",  bg: "bg-violet-500/25",  border: "border-violet-500/40", label: "Content",   Icon: Clapperboard, iconBg: "bg-violet-500/20",  iconColor: "text-violet-400" },
+  publish:  { color: "text-amber-300",   bg: "bg-amber-500/25",   border: "border-amber-500/40", label: "Publish",   Icon: Briefcase,    iconBg: "bg-amber-500/20",   iconColor: "text-amber-400" },
+  meeting:  { color: "text-blue-300",    bg: "bg-blue-500/30",    border: "border-blue-500/40",  label: "Meetings",  Icon: UsersIcon,    iconBg: "bg-blue-500/20",    iconColor: "text-blue-400" },
+  deadline: { color: "text-red-300",     bg: "bg-red-500/25",     border: "border-red-500/40",   label: "Deadlines", Icon: AlarmClock,   iconBg: "bg-red-500/20",     iconColor: "text-red-400" },
+  personal: { color: "text-emerald-300", bg: "bg-emerald-500/25", border: "border-emerald-500/40", label: "Personal", Icon: Sprout,      iconBg: "bg-emerald-500/20", iconColor: "text-emerald-400" },
+  awaiting_review: { color: "text-orange-300", bg: "bg-orange-500/25", border: "border-orange-500/40", label: "Needs Review", Icon: AlarmClock, iconBg: "bg-orange-500/20", iconColor: "text-orange-400" },
 };
 
-const PLAT: Record<string, { bar: string; badge: string; badgeText: string; label: string }> = {
-  youtube:   { bar: "bg-red-600/80",    badge: "bg-red-600",    badgeText: "text-white", label: "YouTube" },
-  tiktok:    { bar: "bg-zinc-700/80",   badge: "bg-black",      badgeText: "text-white", label: "TikTok" },
-  instagram: { bar: "bg-pink-600/80",   badge: "bg-gradient-to-br from-purple-600 to-pink-500", badgeText: "text-white", label: "Instagram" },
-  twitter:   { bar: "bg-sky-600/80",    badge: "bg-sky-500",    badgeText: "text-white", label: "Twitter/X" },
-  facebook:  { bar: "bg-blue-700/80",   badge: "bg-blue-600",   badgeText: "text-white", label: "Facebook" },
-  linkedin:  { bar: "bg-blue-800/80",   badge: "bg-blue-700",   badgeText: "text-white", label: "LinkedIn" },
-  website:   { bar: "bg-emerald-600/80",badge: "bg-emerald-600",badgeText: "text-white", label: "Website" },
-  rumble:    { bar: "bg-green-600/80",  badge: "bg-green-500",  badgeText: "text-white", label: "Rumble" },
+const PLAT: Record<string, { bar: string; badge: string; badgeText: string; label: string; Icon: any }> = {
+  youtube:   { bar: "bg-red-600/30",     badge: "bg-red-600",    badgeText: "text-white", label: "YouTube",   Icon: Youtube },
+  tiktok:    { bar: "bg-zinc-600/40",    badge: "bg-black",      badgeText: "text-white", label: "TikTok",    Icon: Music2 },
+  instagram: { bar: "bg-pink-600/30",    badge: "bg-gradient-to-br from-purple-600 to-pink-500", badgeText: "text-white", label: "Instagram", Icon: Instagram },
+  twitter:   { bar: "bg-sky-600/30",     badge: "bg-sky-500",    badgeText: "text-white", label: "Twitter/X", Icon: Twitter },
+  facebook:  { bar: "bg-blue-700/30",    badge: "bg-blue-600",   badgeText: "text-white", label: "Facebook",  Icon: Facebook },
+  linkedin:  { bar: "bg-blue-800/30",    badge: "bg-blue-700",   badgeText: "text-white", label: "LinkedIn",  Icon: Linkedin },
+  website:   { bar: "bg-emerald-600/30", badge: "bg-emerald-600",badgeText: "text-white", label: "Website",   Icon: Globe },
+  rumble:    { bar: "bg-green-600/30",   badge: "bg-green-500",  badgeText: "text-white", label: "Rumble",    Icon: Video },
 };
 
 function getBarColor(evt: CalEvent) {
@@ -103,13 +104,13 @@ function getEventsForDay(events: CalEvent[], day: Date) {
 
 /* ── filters ─────────────────────────────────────────────── */
 
-const FILTERS: { value: string; label: string; icon: string }[] = [
-  { value: "all",       label: "All",       icon: "◈" },
-  { value: "content",   label: "Content",   icon: "🎬" },
-  { value: "publish",   label: "Publish",   icon: "📤" },
-  { value: "meeting",   label: "Meetings",  icon: "👥" },
-  { value: "deadline",  label: "Deadlines", icon: "🚨" },
-  { value: "personal",  label: "Personal",  icon: "🌿" },
+const FILTERS: { value: string; label: string; cat?: CatKey }[] = [
+  { value: "all",      label: "All" },
+  { value: "content",  label: "Content",   cat: "content" },
+  { value: "publish",  label: "Publish",   cat: "publish" },
+  { value: "meeting",  label: "Meetings",  cat: "meeting" },
+  { value: "deadline", label: "Deadlines", cat: "deadline" },
+  { value: "personal", label: "Personal",  cat: "personal" },
 ];
 
 /* ── mini calendar ───────────────────────────────────────── */
@@ -136,11 +137,11 @@ function MiniCal({ current, selected, events, onSelect, onNav }: { current: Date
             <button
               key={i}
               onClick={() => onSelect(new Date(day))}
-              className={`relative flex items-center justify-center w-7 h-7 mx-auto rounded-lg text-xs font-semibold transition-all
-                ${today ? "bg-primary text-primary-foreground font-black" : sel ? "bg-white/15 text-white" : inMonth ? "text-gray-400 hover:bg-white/8 hover:text-gray-200" : "text-gray-700"}`}
+              className={`relative flex items-center justify-center w-7 h-7 mx-auto rounded-md text-xs font-semibold transition-all
+                ${today ? "bg-white text-black font-black" : sel ? "bg-white/15 text-white" : inMonth ? "text-gray-400 hover:bg-white/8 hover:text-gray-200" : "text-gray-700"}`}
             >
               {day.getDate()}
-              {hasEvt && !today && <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-primary" />}
+              {hasEvt && !today && <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-violet-400" />}
             </button>
           );
         })}
@@ -160,24 +161,27 @@ function CalSidebar({ events, miniMonth, selectedDate, onSelectDate, onNavMonth,
       <MiniCal current={miniMonth} selected={selectedDate} events={events} onSelect={onSelectDate} onNav={onNavMonth} />
 
       {/* Filter by type */}
-      <div>
+      <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-3">
         <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 px-1">Filter by Type</h3>
-        <div className="space-y-0.5">
+        <div className="space-y-1">
           {FILTERS.map(f => {
             const active = filter === f.value;
             const count = f.value === "all" ? events.length : events.filter((e: CalEvent) => e.category === f.value).length;
+            const cat = f.cat ? CAT[f.cat] : null;
             return (
               <button
                 key={f.value}
                 onClick={() => onFilter(f.value)}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all
-                  ${active ? "bg-primary/15 text-primary" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"}`}
+                className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all
+                  ${active ? "bg-white/10 text-white" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"}`}
               >
                 <span className="flex items-center gap-2.5">
-                  <span className="text-sm">{f.icon}</span>
+                  <span className={`w-6 h-6 flex items-center justify-center rounded-md ${cat ? cat.iconBg : "bg-white/10"}`}>
+                    {cat ? <cat.Icon className={`w-3.5 h-3.5 ${cat.iconColor}`} /> : <Diamond className="w-3.5 h-3.5 text-violet-400" />}
+                  </span>
                   {f.label}
                 </span>
-                <span className={`text-[10px] px-2 py-0.5 rounded-lg font-black ${active ? "bg-primary/20 text-primary" : "bg-white/5 text-gray-600"}`}>
+                <span className={`text-[10px] px-2 py-0.5 rounded-md font-black ${active ? "bg-white/15 text-gray-200" : "bg-white/5 text-gray-500"}`}>
                   {count}
                 </span>
               </button>
@@ -187,7 +191,7 @@ function CalSidebar({ events, miniMonth, selectedDate, onSelectDate, onNavMonth,
       </div>
 
       {/* Today's agenda */}
-      <div>
+      <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-3">
         <div className="flex items-center justify-between mb-3 px-1">
           <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Today's Agenda</h3>
           <span className="text-[10px] text-gray-600 font-bold">{done}/{todayEvents.length} done</span>
@@ -201,25 +205,26 @@ function CalSidebar({ events, miniMonth, selectedDate, onSelectDate, onNavMonth,
           {todayEvents.length === 0 && <p className="text-xs text-center py-6 text-gray-600">No events today 🎉</p>}
           {todayEvents.map((evt: CalEvent) => {
             const p = PLAT[evt.platform];
-            const barColor = getBarColor(evt);
+            const cat = CAT[evt.category as CatKey] || CAT.content;
             return (
               <div
                 key={evt.id}
                 onClick={() => onClickEvent(evt)}
-                className={`relative rounded-xl overflow-hidden cursor-pointer group transition-all hover:scale-[1.02] active:scale-[0.98] ${barColor} border border-white/10`}
+                className={`relative rounded-xl overflow-hidden cursor-pointer group transition-all hover:scale-[1.02] active:scale-[0.98] ${cat.bg} border ${cat.border}`}
               >
                 <div className="px-3.5 py-3">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <div className={`w-3 h-3 rounded-full border-2 ${evt.completed ? "bg-primary border-primary" : "border-gray-500"}`} />
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className={`w-3.5 h-3.5 rounded-full border-2 shrink-0 ${evt.completed ? "bg-primary border-primary" : "border-white/40"}`} />
                     <p className={`text-xs font-bold truncate ${evt.completed ? "line-through text-gray-500" : "text-white"}`}>{evt.title}</p>
                   </div>
                   {evt.startTime && (
-                    <p className="text-[10px] text-gray-400 ml-5 mb-1">
+                    <p className="text-[10px] text-white/60 ml-5 mb-1.5 font-medium">
                       {fmt12(evt.startTime)}{evt.endTime ? ` – ${fmt12(evt.endTime)}` : ""}
                     </p>
                   )}
                   {p && (
-                    <span className={`inline-block text-[9px] px-2 py-0.5 rounded-md font-black uppercase tracking-tight ml-5 ${p.badge} ${p.badgeText}`}>
+                    <span className={`inline-flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-md font-black uppercase tracking-tight ml-5 ${p.badge} ${p.badgeText}`}>
+                      <p.Icon className="w-2.5 h-2.5" />
                       {p.label}
                     </span>
                   )}
@@ -273,7 +278,7 @@ function MonthGrid({ current, events, categoryFilter, onClickDay, onClickEvent }
                       className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-bold truncate cursor-pointer transition-all hover:brightness-125 ${barColor} ${isReview ? "animate-pulse ring-1 ring-orange-500/40" : ""}`}
                     >
                       {evt.startTime && <span className="text-white/50 font-semibold shrink-0">{fmtHour(evt.startTime)}</span>}
-                      {p && <span className="text-white/60 shrink-0">{evt.platform === "youtube" ? "▶" : evt.platform === "tiktok" ? "♪" : evt.platform === "twitter" ? "𝕏" : "◈"}</span>}
+                      {p && <p.Icon className="w-3 h-3 text-white/70 shrink-0" />}
                       <span className="text-white/90 truncate">{evt.title}</span>
                     </div>
                   );
@@ -611,15 +616,17 @@ export default function ContentCalendar() {
               <button onClick={() => setSidebarOpen(p => !p)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-sm transition-colors">
                 {sidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
               </button>
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm shadow-lg shadow-indigo-500/20">📅</div>
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                <CalendarDays className="w-5 h-5" />
+              </div>
               <div>
-                <h1 className="text-sm font-black text-white leading-none tracking-tight">ContentFlow</h1>
-                <p className="text-[10px] text-gray-500 font-medium">Smart Calendar</p>
+                <h1 className="text-base font-black text-purple-300 leading-none tracking-tight">ContentFlow</h1>
+                <p className="text-[10px] text-gray-500 font-medium mt-1">Smart Calendar</p>
               </div>
             </div>
 
             <div className="flex-1 max-w-md mx-8 relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs">🔍</span>
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-purple-400 w-3.5 h-3.5" />
               <input
                 aria-label="Search"
                 value={searchQuery}
@@ -632,9 +639,9 @@ export default function ContentCalendar() {
 
             <div className="flex items-center gap-3">
               <div className="hidden lg:flex items-center gap-2 mr-3">
-                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-bold text-emerald-400">📅 {todayCount} today</span>
-                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[10px] font-bold text-amber-400">📤 {publishCount} posts</span>
-                {deadlineCount > 0 && <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-[10px] font-bold text-red-400">🚨 {deadlineCount} deadlines</span>}
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-bold text-emerald-400"><CalendarDays className="w-3 h-3" /> {todayCount} today</span>
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] font-bold text-amber-400"><Send className="w-3 h-3" /> {publishCount} posts</span>
+                {deadlineCount > 0 && <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-[11px] font-bold text-red-400"><AlarmClock className="w-3 h-3" /> {deadlineCount} deadlines</span>}
               </div>
               <NotificationsDropdown />
               <UserDropdown />

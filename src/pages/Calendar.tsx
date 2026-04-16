@@ -46,24 +46,24 @@ const DAYS_SHORT = ["S","M","T","W","T","F","S"];
 
 type CatKey = "content" | "publish" | "meeting" | "deadline" | "personal" | "awaiting_review";
 
-const CAT: Record<CatKey, { color: string; bg: string; border: string; label: string; icon: string }> = {
-  content:  { color: "text-violet-300", bg: "bg-violet-500/20", border: "border-violet-500/40", label: "Content",  icon: "🎬" },
-  publish:  { color: "text-amber-300",  bg: "bg-amber-500/20",  border: "border-amber-500/40",  label: "Publish",  icon: "📤" },
-  meeting:  { color: "text-blue-300",   bg: "bg-blue-500/20",   border: "border-blue-500/40",   label: "Meetings", icon: "👥" },
-  deadline: { color: "text-red-300",    bg: "bg-red-500/20",    border: "border-red-500/40",    label: "Deadlines",icon: "🚨" },
-  personal: { color: "text-emerald-300",bg: "bg-emerald-500/20",border: "border-emerald-500/40",label: "Personal", icon: "🌿" },
-  awaiting_review: { color: "text-orange-300", bg: "bg-orange-500/20", border: "border-orange-500/40", label: "Needs Review", icon: "⚠️" },
+const CAT: Record<CatKey, { color: string; bg: string; border: string; label: string; Icon: any; iconBg: string; iconColor: string }> = {
+  content:  { color: "text-violet-300",  bg: "bg-violet-500/25",  border: "border-violet-500/40", label: "Content",   Icon: Clapperboard, iconBg: "bg-violet-500/20",  iconColor: "text-violet-400" },
+  publish:  { color: "text-amber-300",   bg: "bg-amber-500/25",   border: "border-amber-500/40", label: "Publish",   Icon: Briefcase,    iconBg: "bg-amber-500/20",   iconColor: "text-amber-400" },
+  meeting:  { color: "text-blue-300",    bg: "bg-blue-500/30",    border: "border-blue-500/40",  label: "Meetings",  Icon: UsersIcon,    iconBg: "bg-blue-500/20",    iconColor: "text-blue-400" },
+  deadline: { color: "text-red-300",     bg: "bg-red-500/25",     border: "border-red-500/40",   label: "Deadlines", Icon: AlarmClock,   iconBg: "bg-red-500/20",     iconColor: "text-red-400" },
+  personal: { color: "text-emerald-300", bg: "bg-emerald-500/25", border: "border-emerald-500/40", label: "Personal", Icon: Sprout,      iconBg: "bg-emerald-500/20", iconColor: "text-emerald-400" },
+  awaiting_review: { color: "text-orange-300", bg: "bg-orange-500/25", border: "border-orange-500/40", label: "Needs Review", Icon: AlarmClock, iconBg: "bg-orange-500/20", iconColor: "text-orange-400" },
 };
 
-const PLAT: Record<string, { bar: string; badge: string; badgeText: string; label: string }> = {
-  youtube:   { bar: "bg-red-600/80",    badge: "bg-red-600",    badgeText: "text-white", label: "YouTube" },
-  tiktok:    { bar: "bg-zinc-700/80",   badge: "bg-black",      badgeText: "text-white", label: "TikTok" },
-  instagram: { bar: "bg-pink-600/80",   badge: "bg-gradient-to-br from-purple-600 to-pink-500", badgeText: "text-white", label: "Instagram" },
-  twitter:   { bar: "bg-sky-600/80",    badge: "bg-sky-500",    badgeText: "text-white", label: "Twitter/X" },
-  facebook:  { bar: "bg-blue-700/80",   badge: "bg-blue-600",   badgeText: "text-white", label: "Facebook" },
-  linkedin:  { bar: "bg-blue-800/80",   badge: "bg-blue-700",   badgeText: "text-white", label: "LinkedIn" },
-  website:   { bar: "bg-emerald-600/80",badge: "bg-emerald-600",badgeText: "text-white", label: "Website" },
-  rumble:    { bar: "bg-green-600/80",  badge: "bg-green-500",  badgeText: "text-white", label: "Rumble" },
+const PLAT: Record<string, { bar: string; badge: string; badgeText: string; label: string; Icon: any }> = {
+  youtube:   { bar: "bg-red-600/30",     badge: "bg-red-600",    badgeText: "text-white", label: "YouTube",   Icon: Youtube },
+  tiktok:    { bar: "bg-zinc-600/40",    badge: "bg-black",      badgeText: "text-white", label: "TikTok",    Icon: Music2 },
+  instagram: { bar: "bg-pink-600/30",    badge: "bg-gradient-to-br from-purple-600 to-pink-500", badgeText: "text-white", label: "Instagram", Icon: Instagram },
+  twitter:   { bar: "bg-sky-600/30",     badge: "bg-sky-500",    badgeText: "text-white", label: "Twitter/X", Icon: Twitter },
+  facebook:  { bar: "bg-blue-700/30",    badge: "bg-blue-600",   badgeText: "text-white", label: "Facebook",  Icon: Facebook },
+  linkedin:  { bar: "bg-blue-800/30",    badge: "bg-blue-700",   badgeText: "text-white", label: "LinkedIn",  Icon: Linkedin },
+  website:   { bar: "bg-emerald-600/30", badge: "bg-emerald-600",badgeText: "text-white", label: "Website",   Icon: Globe },
+  rumble:    { bar: "bg-green-600/30",   badge: "bg-green-500",  badgeText: "text-white", label: "Rumble",    Icon: Video },
 };
 
 function getBarColor(evt: CalEvent) {

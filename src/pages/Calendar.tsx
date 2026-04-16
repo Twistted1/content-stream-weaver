@@ -639,9 +639,9 @@ export default function ContentCalendar() {
 
             <div className="flex items-center gap-3">
               <div className="hidden lg:flex items-center gap-2 mr-3">
-                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-bold text-emerald-400">📅 {todayCount} today</span>
-                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[10px] font-bold text-amber-400">📤 {publishCount} posts</span>
-                {deadlineCount > 0 && <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-[10px] font-bold text-red-400">🚨 {deadlineCount} deadlines</span>}
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-bold text-emerald-400"><CalendarDays className="w-3 h-3" /> {todayCount} today</span>
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] font-bold text-amber-400"><Send className="w-3 h-3" /> {publishCount} posts</span>
+                {deadlineCount > 0 && <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-[11px] font-bold text-red-400"><AlarmClock className="w-3 h-3" /> {deadlineCount} deadlines</span>}
               </div>
               <NotificationsDropdown />
               <UserDropdown />

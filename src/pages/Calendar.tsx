@@ -6,9 +6,10 @@ import { DragDropImport } from "@/components/common/DragDropImport";
 import { parseISO, format } from "date-fns";
 import { NotificationsDropdown } from "@/components/header/NotificationsDropdown";
 import { UserDropdown } from "@/components/header/UserDropdown";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import {
+  ChevronLeft, ChevronRight, Plus, Search, Bell, CalendarDays, Send, AlarmClock,
+  Clapperboard, Briefcase, Users as UsersIcon, Sprout, Diamond, Youtube, Music2, Twitter, Instagram, Facebook, Linkedin, Globe, Video,
+} from "lucide-react";
 
 /* ── helpers ────────────────────────────────────────────── */
 

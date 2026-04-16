@@ -609,6 +609,14 @@ export default function ContentCalendar() {
     if (event) schedulePost.mutate({ id, scheduledAt: event.startTime ? `${event.date}T${event.startTime}:00` : `${event.date}T09:00:00` });
   };
 
+  // Drag-and-drop reschedule: keep original time-of-day, change date only
+  const handleDropReschedule = useCallback((postId: string, newDay: Date) => {
+    const evt = events.find(e => (e.originalId || e.id) === postId);
+    if (!evt || evt.date === fmtKey(newDay)) return;
+    const time = evt.startTime || "09:00";
+    schedulePost.mutate({ id: postId, scheduledAt: `${fmtKey(newDay)}T${time}:00` });
+  }, [events, schedulePost]);
+
   const filtered = searchQuery.trim()
     ? events.filter(e => e.title.toLowerCase().includes(searchQuery.toLowerCase()) || e.description.toLowerCase().includes(searchQuery.toLowerCase()))
     : categoryFilter === "all" ? events : events.filter(e => e.category === categoryFilter || e.status === categoryFilter);

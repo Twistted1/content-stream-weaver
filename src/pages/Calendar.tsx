@@ -104,13 +104,13 @@ function getEventsForDay(events: CalEvent[], day: Date) {
 
 /* ── filters ─────────────────────────────────────────────── */
 
-const FILTERS: { value: string; label: string; icon: string }[] = [
-  { value: "all",       label: "All",       icon: "◈" },
-  { value: "content",   label: "Content",   icon: "🎬" },
-  { value: "publish",   label: "Publish",   icon: "📤" },
-  { value: "meeting",   label: "Meetings",  icon: "👥" },
-  { value: "deadline",  label: "Deadlines", icon: "🚨" },
-  { value: "personal",  label: "Personal",  icon: "🌿" },
+const FILTERS: { value: string; label: string; cat?: CatKey }[] = [
+  { value: "all",      label: "All" },
+  { value: "content",  label: "Content",   cat: "content" },
+  { value: "publish",  label: "Publish",   cat: "publish" },
+  { value: "meeting",  label: "Meetings",  cat: "meeting" },
+  { value: "deadline", label: "Deadlines", cat: "deadline" },
+  { value: "personal", label: "Personal",  cat: "personal" },
 ];
 
 /* ── mini calendar ───────────────────────────────────────── */
@@ -137,11 +137,11 @@ function MiniCal({ current, selected, events, onSelect, onNav }: { current: Date
             <button
               key={i}
               onClick={() => onSelect(new Date(day))}
-              className={`relative flex items-center justify-center w-7 h-7 mx-auto rounded-lg text-xs font-semibold transition-all
-                ${today ? "bg-primary text-primary-foreground font-black" : sel ? "bg-white/15 text-white" : inMonth ? "text-gray-400 hover:bg-white/8 hover:text-gray-200" : "text-gray-700"}`}
+              className={`relative flex items-center justify-center w-7 h-7 mx-auto rounded-md text-xs font-semibold transition-all
+                ${today ? "bg-white text-black font-black" : sel ? "bg-white/15 text-white" : inMonth ? "text-gray-400 hover:bg-white/8 hover:text-gray-200" : "text-gray-700"}`}
             >
               {day.getDate()}
-              {hasEvt && !today && <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-primary" />}
+              {hasEvt && !today && <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-violet-400" />}
             </button>
           );
         })}
@@ -161,24 +161,27 @@ function CalSidebar({ events, miniMonth, selectedDate, onSelectDate, onNavMonth,
       <MiniCal current={miniMonth} selected={selectedDate} events={events} onSelect={onSelectDate} onNav={onNavMonth} />
 
       {/* Filter by type */}
-      <div>
+      <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-3">
         <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 px-1">Filter by Type</h3>
-        <div className="space-y-0.5">
+        <div className="space-y-1">
           {FILTERS.map(f => {
             const active = filter === f.value;
             const count = f.value === "all" ? events.length : events.filter((e: CalEvent) => e.category === f.value).length;
+            const cat = f.cat ? CAT[f.cat] : null;
             return (
               <button
                 key={f.value}
                 onClick={() => onFilter(f.value)}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all
-                  ${active ? "bg-primary/15 text-primary" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"}`}
+                className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all
+                  ${active ? "bg-white/10 text-white" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"}`}
               >
                 <span className="flex items-center gap-2.5">
-                  <span className="text-sm">{f.icon}</span>
+                  <span className={`w-6 h-6 flex items-center justify-center rounded-md ${cat ? cat.iconBg : "bg-white/10"}`}>
+                    {cat ? <cat.Icon className={`w-3.5 h-3.5 ${cat.iconColor}`} /> : <Diamond className="w-3.5 h-3.5 text-violet-400" />}
+                  </span>
                   {f.label}
                 </span>
-                <span className={`text-[10px] px-2 py-0.5 rounded-lg font-black ${active ? "bg-primary/20 text-primary" : "bg-white/5 text-gray-600"}`}>
+                <span className={`text-[10px] px-2 py-0.5 rounded-md font-black ${active ? "bg-white/15 text-gray-200" : "bg-white/5 text-gray-500"}`}>
                   {count}
                 </span>
               </button>
@@ -188,7 +191,7 @@ function CalSidebar({ events, miniMonth, selectedDate, onSelectDate, onNavMonth,
       </div>
 
       {/* Today's agenda */}
-      <div>
+      <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-3">
         <div className="flex items-center justify-between mb-3 px-1">
           <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Today's Agenda</h3>
           <span className="text-[10px] text-gray-600 font-bold">{done}/{todayEvents.length} done</span>
@@ -202,25 +205,26 @@ function CalSidebar({ events, miniMonth, selectedDate, onSelectDate, onNavMonth,
           {todayEvents.length === 0 && <p className="text-xs text-center py-6 text-gray-600">No events today 🎉</p>}
           {todayEvents.map((evt: CalEvent) => {
             const p = PLAT[evt.platform];
-            const barColor = getBarColor(evt);
+            const cat = CAT[evt.category as CatKey] || CAT.content;
             return (
               <div
                 key={evt.id}
                 onClick={() => onClickEvent(evt)}
-                className={`relative rounded-xl overflow-hidden cursor-pointer group transition-all hover:scale-[1.02] active:scale-[0.98] ${barColor} border border-white/10`}
+                className={`relative rounded-xl overflow-hidden cursor-pointer group transition-all hover:scale-[1.02] active:scale-[0.98] ${cat.bg} border ${cat.border}`}
               >
                 <div className="px-3.5 py-3">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <div className={`w-3 h-3 rounded-full border-2 ${evt.completed ? "bg-primary border-primary" : "border-gray-500"}`} />
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className={`w-3.5 h-3.5 rounded-full border-2 shrink-0 ${evt.completed ? "bg-primary border-primary" : "border-white/40"}`} />
                     <p className={`text-xs font-bold truncate ${evt.completed ? "line-through text-gray-500" : "text-white"}`}>{evt.title}</p>
                   </div>
                   {evt.startTime && (
-                    <p className="text-[10px] text-gray-400 ml-5 mb-1">
+                    <p className="text-[10px] text-white/60 ml-5 mb-1.5 font-medium">
                       {fmt12(evt.startTime)}{evt.endTime ? ` – ${fmt12(evt.endTime)}` : ""}
                     </p>
                   )}
                   {p && (
-                    <span className={`inline-block text-[9px] px-2 py-0.5 rounded-md font-black uppercase tracking-tight ml-5 ${p.badge} ${p.badgeText}`}>
+                    <span className={`inline-flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-md font-black uppercase tracking-tight ml-5 ${p.badge} ${p.badgeText}`}>
+                      <p.Icon className="w-2.5 h-2.5" />
                       {p.label}
                     </span>
                   )}

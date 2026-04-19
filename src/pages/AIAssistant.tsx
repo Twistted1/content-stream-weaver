@@ -336,19 +336,14 @@ const AIAssistant = () => {
                     </div>
                   </div>
                 </div>
-                <p className="text-[10px] text-center text-gray-600 mt-6 font-bold uppercase tracking-widest opacity-50">
-                  Novee AI can make mistakes. Check important info.
+                <p className="text-[10px] text-center text-muted-foreground mt-6 font-bold uppercase tracking-widest opacity-50">
+                  AI responses may require verification. Use critically.
                 </p>
               </div>
             </div>
           </main>
         </div>
       </div>
-      
-      {/* Suppress global bubble on this page */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        #novee-floating-bubble { display: none !important; }
-      `}} />
     </DashboardLayout>
   );
 };

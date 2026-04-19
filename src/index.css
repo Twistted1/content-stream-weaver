@@ -11,7 +11,7 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Premium Dark Dashboard Palette */
+    /* Premium Dark Dashboard Palette — default theme */
     --background: 222 47% 4%;
     --foreground: 213 31% 91%;
 
@@ -81,7 +81,52 @@ All colors MUST be HSL.
     --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.3), 0 2px 4px -2px hsl(0 0% 0% / 0.3);
     --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.3), 0 4px 6px -4px hsl(0 0% 0% / 0.3);
   }
+
+  /* ── Light Mode ───────────────────────────────────────────── */
+  .light {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 10%;
+
+    --primary: 250 89% 55%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 93%;
+    --secondary-foreground: 222 47% 10%;
+
+    --muted: 210 40% 93%;
+    --muted-foreground: 215 20% 40%;
+
+    --accent: 250 89% 55%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214 31% 85%;
+    --input: 214 31% 85%;
+    --ring: 250 89% 55%;
+
+    --sidebar-background: 222 47% 10%;
+    --sidebar-foreground: 215 20% 75%;
+    --sidebar-primary: 250 89% 65%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 222 47% 18%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 20%;
+    --sidebar-ring: 250 89% 65%;
+
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.08);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.08), 0 2px 4px -2px hsl(0 0% 0% / 0.05);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.08), 0 4px 6px -4px hsl(0 0% 0% / 0.05);
+  }
 }
+
 
 @layer base {
   * {

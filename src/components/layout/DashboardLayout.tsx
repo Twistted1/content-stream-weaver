@@ -1,6 +1,5 @@
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
-import { NoveeMascot } from "../mascot/NoveeMascot";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -15,7 +14,6 @@ export function DashboardLayout({ children, hideHeader = false }: DashboardLayou
         {!hideHeader && <Header />}
         <main className={hideHeader ? "h-screen" : "p-6"}>{children}</main>
       </div>
-      <NoveeMascot />
     </div>
   );
 }

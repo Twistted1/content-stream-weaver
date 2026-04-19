@@ -641,10 +641,10 @@ export default function ContentCalendar() {
   return (
     <DashboardLayout hideHeader>
       <DragDropImport onImport={(data) => { if (data.version === "1.0") processUJT(data); }} entityName="UJT">
-        <div className="h-screen w-full bg-[#060918] text-white flex flex-col overflow-hidden">
+        <div className="h-screen w-full bg-background text-foreground flex flex-col overflow-hidden">
 
           {/* Header */}
-          <header className="flex-shrink-0 flex items-center justify-between px-5 py-3 border-b border-white/[0.06] bg-[#0a0d1a]">
+          <header className="flex-shrink-0 flex items-center justify-between px-5 py-3 border-b border-border bg-card">
             <div className="flex items-center gap-3">
               <button onClick={() => setSidebarOpen(p => !p)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-sm transition-colors">
                 {sidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -653,8 +653,8 @@ export default function ContentCalendar() {
                 <CalendarDays className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-base font-black text-purple-300 leading-none tracking-tight">ContentFlow</h1>
-                <p className="text-[10px] text-gray-500 font-medium mt-1">Smart Calendar</p>
+                <h1 className="text-xl font-black text-foreground leading-none tracking-tight uppercase">Content Calendar</h1>
+                <p className="text-[10px] text-primary font-bold uppercase tracking-wider mt-0.5">CONTENT HUB</p>
               </div>
             </div>
 
@@ -685,7 +685,7 @@ export default function ContentCalendar() {
           <div className="flex-1 flex overflow-hidden">
             {/* Sidebar */}
             {sidebarOpen && (
-              <div className="w-[260px] bg-[#0a0d1a] border-r border-white/[0.06] p-4 shrink-0">
+              <div className="w-[260px] bg-card border-r border-border p-4 shrink-0">
                 <CalSidebar
                   events={filtered}
                   miniMonth={miniMonth}
@@ -703,7 +703,7 @@ export default function ContentCalendar() {
             {/* Main grid area */}
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* Toolbar */}
-              <div className="flex-shrink-0 flex items-center justify-between px-6 py-3 border-b border-white/[0.06] bg-[#0a0d1a]">
+              <div className="flex-shrink-0 flex items-center justify-between px-6 py-3 border-b border-border bg-card">
                 <div className="flex items-center gap-3">
                   <div className="flex bg-white/[0.03] rounded-xl p-1 border border-white/[0.06]">
                     <button onClick={() => navigate(-1)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-gray-400 text-sm">‹</button>
@@ -740,7 +740,7 @@ export default function ContentCalendar() {
               </div>
 
               {/* View */}
-              <div className="flex-1 overflow-hidden flex flex-col bg-[#060918]">
+              <div className="flex-1 overflow-hidden flex flex-col bg-background">
                 {viewMode === "month" && <MonthGrid current={current} events={filtered} categoryFilter={categoryFilter} onClickDay={(d: Date) => { setSelectedDate(d); setDefaultDate(d); setEditingEvent(null); setModalOpen(true); }} onClickEvent={(evt: CalEvent) => { setEditingEvent(evt); setModalOpen(true); }} onDropEvent={handleDropReschedule} />}
                 {viewMode === "week" && <WeekView current={current} events={filtered} onClickEvent={(evt: CalEvent) => { setEditingEvent(evt); setModalOpen(true); }} />}
                 {viewMode === "day" && <DayView current={current} events={filtered} onClickEvent={(evt: CalEvent) => { setEditingEvent(evt); setModalOpen(true); }} />}

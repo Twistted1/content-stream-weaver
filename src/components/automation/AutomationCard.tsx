@@ -8,10 +8,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Play, Pause, Clock, Zap, RefreshCw, MoreHorizontal, Pencil, Trash2, History } from "lucide-react";
+import { Play, Pause, Clock, Zap, RefreshCw, MoreHorizontal, Pencil, Trash2, History, Copy, Twitter, Instagram, Facebook, Mail, Bell, Globe, Rocket } from "lucide-react";
 import { triggerOptions } from "./automationData";
 import { Automation } from "@/hooks/useAutomations";
-import { Copy } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AutomationCardProps {
   automation: Automation;
@@ -34,99 +34,162 @@ export function AutomationCard({
 }: AutomationCardProps) {
   const triggerLabel = triggerOptions.find((t) => t.value === automation.trigger)?.label || automation.trigger;
 
+  const getPlatformIcon = (platform: string) => {
+    const p = platform.toLowerCase();
+    if (p.includes("twitter") || p === "x") return <Twitter className="h-4 w-4" />;
+    if (p.includes("instagram")) return <Instagram className="h-4 w-4" />;
+    if (p.includes("facebook")) return <Facebook className="h-4 w-4" />;
+    if (p.includes("email")) return <Mail className="h-4 w-4" />;
+    if (p.includes("slack")) return <Bell className="h-4 w-4" />;
+    if (p.includes("website")) return <Globe className="h-4 w-4" />;
+    return <Zap className="h-4 w-4" />;
+  };
+
   return (
-    <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/30 hover:bg-muted/50 transition-colors">
-      <div className="flex items-center gap-4">
+    <div className="group relative flex items-center justify-between p-8 rounded-[2rem] border border-border/50 bg-card/20 backdrop-blur-3xl hover:bg-card/40 hover:border-primary/50 transition-all duration-500 shadow-2xl overflow-hidden">
+      {/* Glow Effect on Hover */}
+      <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+      
+      {/* Decorative Brand Accent */}
+      <div className={cn(
+        "absolute top-0 right-[-20%] w-[40%] h-full rotate-12 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity duration-700 pointer-events-none",
+        automation.status === "active" ? "bg-primary" : "bg-muted-foreground"
+      )} />
+      
+      <div className="flex items-center gap-8 z-10">
         <div
-          className={`p-2 rounded-lg ${
+          className={cn(
+            "w-16 h-16 rounded-2xl shadow-inner border flex items-center justify-center transition-all duration-700",
             automation.status === "active"
-              ? "bg-emerald-500/20 text-emerald-500"
-              : "bg-muted text-muted-foreground"
-          }`}
+              ? "bg-primary/20 text-primary border-primary/20 scale-100 group-hover:scale-110 shadow-primary/20"
+              : "bg-muted/50 text-muted-foreground border-border/50 opacity-50"
+          )}
         >
           {automation.status === "active" ? (
-            <Play className="h-4 w-4" />
+            <Play className="h-6 w-6 fill-primary/20" />
           ) : (
-            <Pause className="h-4 w-4" />
+            <Pause className="h-6 w-6" />
           )}
         </div>
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h3 className="font-medium text-foreground">{automation.name}</h3>
-            <Badge variant={automation.status === "active" ? "default" : "secondary"}>
+        
+        <div className="space-y-3">
+          <div className="flex items-center gap-4">
+            <h3 className="text-xl font-black italic uppercase tracking-tighter text-foreground group-hover:text-primary transition-colors">
+              {automation.name}
+            </h3>
+            <Badge 
+              variant="outline" 
+              className={cn(
+                "text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1",
+                automation.status === "active" 
+                  ? "border-emerald-500/50 text-emerald-500 bg-emerald-500/10" 
+                  : "border-muted-foreground/20 text-muted-foreground bg-muted/10 opacity-60"
+              )}
+            >
               {automation.status}
             </Badge>
           </div>
-          <p className="text-sm text-muted-foreground">{automation.description}</p>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Zap className="h-3 w-3" />
-              Trigger: {triggerLabel}
-            </span>
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              Last run: {automation.lastRun || "Never"}
-            </span>
-            <span className="flex items-center gap-1">
-              <RefreshCw className="h-3 w-3" />
-              {automation.runs} runs
-            </span>
+          
+          <p className="text-[13px] text-muted-foreground font-medium max-w-[500px] line-clamp-1 opacity-80 group-hover:opacity-100 transition-opacity">
+            {automation.description}
+          </p>
+          
+          <div className="flex flex-wrap items-center gap-6 pt-2">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-background/50 border border-border/50 shadow-sm">
+              <Rocket className="h-3.5 w-3.5 text-primary" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/90">{triggerLabel}</span>
+            </div>
+            
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-background/50 border border-border/50 shadow-sm">
+              <Clock className="h-3.5 w-3.5 text-primary" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/90">
+                LAST: {automation.lastRun ? new Date(automation.lastRun).toLocaleDateString() : "NEVER"}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-background/50 border border-border/50 shadow-sm">
+              <RefreshCw className="h-3.5 w-3.5 text-primary" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/90">{automation.runs} EXECUTIONS</span>
+            </div>
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-4">
-        <div className="flex gap-1">
-          {automation.platforms.slice(0, 3).map((platform) => (
-            <Badge key={platform} variant="outline" className="text-xs">
-              {platform}
-            </Badge>
+
+      <div className="flex items-center gap-8 z-10">
+        <div className="hidden lg:flex items-center gap-2.5">
+          {automation.platforms.slice(0, 4).map((platform) => (
+            <div 
+              key={platform} 
+              title={platform}
+              className="w-10 h-10 rounded-xl bg-background/80 border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-all duration-300 cursor-help group-hover:shadow-[0_0_10px_rgba(168,85,247,0.1)]"
+            >
+              {getPlatformIcon(platform)}
+            </div>
           ))}
-          {automation.platforms.length > 3 && (
-            <Badge variant="outline" className="text-xs">
-              +{automation.platforms.length - 3}
-            </Badge>
+          {automation.platforms.length > 4 && (
+            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-[10px] font-black text-primary">
+              +{automation.platforms.length - 4}
+            </div>
           )}
         </div>
-        <Switch
-          checked={automation.status === "active"}
-          onCheckedChange={() => onToggle(automation.id)}
-        />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onRun(automation.id)}>
-              <Play className="h-4 w-4 mr-2" />
-              Run Now
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onViewHistory(automation)}>
-              <History className="h-4 w-4 mr-2" />
-              View History
-            </DropdownMenuItem>
-            {onDuplicate && (
-              <DropdownMenuItem onClick={() => onDuplicate(automation.id)}>
-                <Copy className="h-4 w-4 mr-2" />
-                Duplicate
+        
+        <div className="h-10 w-px bg-border/50 mx-4" />
+        
+        <div className="flex items-center gap-4">
+          <Switch
+            checked={automation.status === "active"}
+            onCheckedChange={() => onToggle(automation.id)}
+            className="data-[state=checked]:bg-primary scale-110"
+          />
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-12 w-12 rounded-xl hover:bg-primary/10 hover:text-primary transition-all border border-transparent hover:border-primary/20">
+                <MoreHorizontal className="h-6 w-6" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64 rounded-3xl border-border/50 bg-[#0a0c10]/95 backdrop-blur-3xl shadow-2xl p-3">
+              <DropdownMenuItem onClick={() => onRun(automation.id)} className="rounded-xl h-12 font-black text-[11px] uppercase tracking-widest cursor-pointer gap-4">
+                <div className="p-2 bg-emerald-500/10 rounded-lg">
+                   <Play className="h-4 w-4 text-emerald-500" />
+                </div>
+                Run Pipeline
               </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onEdit(automation)}>
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onDelete(automation.id)}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuItem onClick={() => onViewHistory(automation)} className="rounded-xl h-12 font-black text-[11px] uppercase tracking-widest cursor-pointer gap-4">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                   <History className="h-4 w-4 text-primary" />
+                </div>
+                View Logs
+              </DropdownMenuItem>
+              {onDuplicate && (
+                <DropdownMenuItem onClick={() => onDuplicate(automation.id)} className="rounded-xl h-12 font-black text-[11px] uppercase tracking-widest cursor-pointer gap-4">
+                  <div className="p-2 bg-blue-500/10 rounded-lg">
+                    <Copy className="h-4 w-4 text-blue-500" />
+                  </div>
+                  Clone Stream
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator className="bg-border/30 my-2 mx-2" />
+              <DropdownMenuItem onClick={() => onEdit(automation)} className="rounded-xl h-12 font-black text-[11px] uppercase tracking-widest cursor-pointer gap-4">
+                <div className="p-2 bg-amber-500/10 rounded-lg">
+                   <Pencil className="h-4 w-4 text-amber-500" />
+                </div>
+                Modify
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onDelete(automation.id)}
+                className="rounded-xl h-12 font-black text-[11px] uppercase tracking-widest text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer gap-4"
+              >
+                <div className="p-2 bg-destructive/10 rounded-lg">
+                   <Trash2 className="h-4 w-4" />
+                </div>
+                Terminate
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
   );
 }
+

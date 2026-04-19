@@ -29,6 +29,7 @@ import UsersPage from "./pages/Users";
 import ImportData from "./pages/ImportData";
 import Settings from "./pages/Settings";
 import Articles from "./pages/Articles";
+import ContentModel from "./pages/ContentModel";
 import ContentPipeline from "./pages/ContentPipeline";
 import WorkflowTest from "./pages/WorkflowTest";
 import NotFound from "./pages/NotFound";
@@ -82,6 +83,7 @@ const App = () => (
               <Route path="/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
               <Route path="/import" element={<ProtectedRoute><ImportData /></ProtectedRoute>} />
               <Route path="/pipeline" element={<ProtectedRoute><ContentPipeline /></ProtectedRoute>} />
+              <Route path="/models" element={<ProtectedRoute><ContentModel /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/workflow" element={<ProtectedRoute><WorkflowTest /></ProtectedRoute>} />
               

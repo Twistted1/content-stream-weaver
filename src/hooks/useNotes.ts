@@ -9,7 +9,7 @@ export function useNotes() {
   const { data: notes = [], isLoading, error } = useQuery({
     queryKey: ["notes"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("notes")
         .select("*")
         .order("is_pinned", { ascending: false })
@@ -37,7 +37,7 @@ export function useNotes() {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error("Not authenticated");
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("notes")
         .insert({
           title: newNote.title,
@@ -76,7 +76,7 @@ export function useNotes() {
       if (updates.dueDate !== undefined) dbUpdates.due_date = updates.dueDate;
       dbUpdates.updated_at = new Date().toISOString();
 
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("notes")
         .update(dbUpdates)
         .eq("id", id);
@@ -94,7 +94,7 @@ export function useNotes() {
 
   const deleteNote = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("notes")
         .delete()
         .eq("id", id);

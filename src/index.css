@@ -11,45 +11,45 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Dark theme as default for CMS dashboard */
-    --background: 222 47% 8%;
-    --foreground: 210 40% 98%;
+    /* Premium Dark Dashboard Palette */
+    --background: 222 47% 4%;
+    --foreground: 213 31% 91%;
 
-    --card: 222 47% 12%;
-    --card-foreground: 210 40% 98%;
+    --card: 222 47% 6%;
+    --card-foreground: 213 31% 91%;
 
-    --popover: 222 47% 14%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 222 47% 5%;
+    --popover-foreground: 213 31% 91%;
 
-    --primary: 174 83% 45%;
-    --primary-foreground: 222 47% 8%;
+    --primary: 250 89% 65%; /* Vibrant Indigo */
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 222 47% 16%;
+    --secondary: 222 47% 10%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 222 25% 25%;
-    --muted-foreground: 210 20% 65%;
+    --muted: 222 47% 12%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 222 47% 20%;
+    --accent: 250 89% 65%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 72% 50%;
-    --destructive-foreground: 0 85% 97%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 222 25% 20%;
-    --input: 222 25% 20%;
-    --ring: 174 83% 45%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 250 89% 65%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    --sidebar-background: 222 47% 10%;
-    --sidebar-foreground: 210 20% 65%;
-    --sidebar-primary: 174 83% 45%;
-    --sidebar-primary-foreground: 222 47% 8%;
-    --sidebar-accent: 222 47% 16%;
+    --sidebar-background: 222 47% 4%;
+    --sidebar-foreground: 215 20% 65%;
+    --sidebar-primary: 250 89% 65%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 222 47% 10%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 25% 18%;
-    --sidebar-ring: 174 83% 45%;
+    --sidebar-border: 217 33% 17%;
+    --sidebar-ring: 250 89% 65%;
 
     --chart-1: 174 83% 45%;
     --chart-2: 260 67% 60%;
@@ -144,4 +144,9 @@ All colors MUST be HSL.
   .ProseMirror code { @apply bg-muted px-1.5 py-0.5 rounded text-sm font-mono; }
   .ProseMirror pre { @apply bg-muted p-4 rounded-lg font-mono text-sm my-4 overflow-x-auto; }
   .ProseMirror img { @apply max-w-full h-auto rounded-lg my-4; }
+
+  .progress-bar-fill {
+    @apply h-full bg-gradient-to-r from-[#6366f1] to-[#a855f7] transition-all duration-1000;
+    width: var(--progress, 0%);
+  }
 }

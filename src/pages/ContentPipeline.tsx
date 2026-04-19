@@ -120,7 +120,7 @@ export default function ContentPipeline() {
 
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-4">
-          <Card>
+          <Card className="bg-card border-border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Runs</CardTitle>
               <Zap className="h-4 w-4 text-muted-foreground" />
@@ -129,7 +129,7 @@ export default function ContentPipeline() {
               <div className="text-2xl font-bold">{pipelineRuns.length}</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="bg-card border-border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Completed</CardTitle>
               <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -138,16 +138,16 @@ export default function ContentPipeline() {
               <div className="text-2xl font-bold text-green-500">{completedRuns}</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="bg-card border-border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Running</CardTitle>
-              <Loader2 className="h-4 w-4 text-primary" />
+              <Loader2 className="h-4 w-4 text-primary animate-spin" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-primary">{runningRuns}</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="bg-card border-border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Webhooks</CardTitle>
               <Webhook className="h-4 w-4 text-muted-foreground" />
@@ -170,14 +170,14 @@ export default function ContentPipeline() {
           <TabsContent value="create" className="space-y-4">
             <div className="grid gap-6 lg:grid-cols-5">
               {/* Pipeline Form */}
-              <Card className="lg:col-span-3">
+              <Card className="lg:col-span-3 bg-card border-border">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5" />
-                    Generate Content
+                  <CardTitle className="flex items-center gap-2 text-foreground">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    Automated Generation
                   </CardTitle>
                   <CardDescription>
-                    Describe your content topic and the pipeline will handle everything
+                    Describe your content topic and the pipeline will build a full multi-platform campaign
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -246,19 +246,19 @@ export default function ContentPipeline() {
                   {/* Run Button */}
                   <Button
                     size="lg"
-                    className="w-full gap-2"
+                    className="w-full gap-2 bg-primary hover:opacity-90 text-white font-black uppercase tracking-widest py-6 rounded-2xl shadow-xl shadow-primary/20 border-0"
                     onClick={handleRun}
                     disabled={isRunning || !topic.trim() || selectedPlatforms.length === 0}
                   >
                     {isRunning ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Running Pipeline...
+                        Generating Campaign...
                       </>
                     ) : (
                       <>
-                        <Play className="h-4 w-4" />
-                        Run Content Pipeline
+                        <Zap className="h-4 w-4" />
+                        Run Automated Pipeline
                       </>
                     )}
                   </Button>
@@ -266,27 +266,27 @@ export default function ContentPipeline() {
               </Card>
 
               {/* Pipeline Steps Visual */}
-              <Card className="lg:col-span-2">
+              <Card className="lg:col-span-2 bg-card border-border">
                 <CardHeader>
-                  <CardTitle className="text-sm">Pipeline Steps</CardTitle>
+                  <CardTitle className="text-sm text-foreground">Automation Flow</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     {[
-                      { icon: Sparkles, label: "1. AI Content Generation", desc: "Gemini creates optimized content" },
-                      { icon: Image, label: "2. DALL-E Image Creation", desc: "Cover image auto-generated" },
-                      { icon: Calendar, label: "3. Schedule / Save", desc: "Post saved to your CMS" },
-                      { icon: Globe, label: "4. Webhook Publishing", desc: "Fire webhooks to distribute" },
+                      { icon: Sparkles, label: "1. AI Strategy & Plan", desc: "Builds a multi-platform content roadmap" },
+                      { icon: FileText, label: "2. Content Generation", desc: "Crafts copy for X, IG, FB & Articles" },
+                      { icon: Image, label: "3. DALL-E Visualization", desc: "Cover images auto-created per post" },
+                      { icon: Calendar, label: "4. Smart Scheduling", desc: "Positions items in the optimal slots" },
                     ].map((step, i) => (
-                      <div key={i} className="flex items-start gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                          <step.icon className="h-4 w-4" />
+                      <div key={i} className="flex items-start gap-4">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-muted text-primary shadow-sm">
+                          <step.icon className="h-5 w-5" />
                         </div>
-                        <div>
-                          <p className="text-sm font-medium">{step.label}</p>
-                          <p className="text-xs text-muted-foreground">{step.desc}</p>
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-foreground leading-tight">{step.label}</p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">{step.desc}</p>
                         </div>
-                        {i < 3 && <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto mt-2" />}
+                        {i < 3 && <ArrowRight className="h-4 w-4 text-border mt-3" />}
                       </div>
                     ))}
                   </div>

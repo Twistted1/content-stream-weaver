@@ -14,6 +14,7 @@ import tiktokSchedule from '../data/platforms/tiktok.json';
 import rumbleSchedule from '../data/platforms/rumble.json';
 import websiteSchedule from '../data/platforms/website.json';
 import linkedinSchedule from '../data/platforms/linkedin.json';
+import apiSchedule from '../data/platforms/api.json';
 
 const allPlatformSchedules = [
   twitterSchedule,
@@ -22,7 +23,8 @@ const allPlatformSchedules = [
   tiktokSchedule,
   rumbleSchedule,
   websiteSchedule,
-  linkedinSchedule
+  linkedinSchedule,
+  apiSchedule
 ];
 
 export const CONTENT_SCHEDULE: Record<number, Record<DayName, ScheduledSlot[]>> = {};

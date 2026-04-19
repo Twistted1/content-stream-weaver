@@ -30,6 +30,7 @@ const mainNavItems = [
   { icon: Calendar, labelKey: "nav.calendar", href: "/calendar" },
   { icon: StickyNote, labelKey: "nav.notes", href: "/notes" },
   { icon: Target, labelKey: "nav.strategies", href: "/strategies" },
+  { icon: GanttChart, labelKey: "nav.contentModels", href: "/models" },
 ];
 
 const toolsNavItems = [
@@ -39,7 +40,6 @@ const toolsNavItems = [
   { icon: FileText, labelKey: "nav.templates", href: "/templates" },
   { icon: BarChart3, labelKey: "nav.analytics", href: "/analytics" },
   { icon: FileSpreadsheet, labelKey: "nav.reports", href: "/reports" },
-  { icon: GanttChart, labelKey: "nav.ganttChart", href: "/gantt" },
 ];
 
 const adminNavItems = [
@@ -98,14 +98,13 @@ export function Sidebar() {
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
-      {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
         <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-          <h2 className="text-xl font-black text-primary-foreground">MF</h2>
+          <h2 className="text-xl font-black text-primary-foreground">CH</h2>
         </div>
         <div>
-          <h1 className="font-black text-foreground tracking-tighter uppercase">MyFlow</h1>
-          <p className="text-[10px] font-bold text-primary uppercase tracking-wider">Smart Calendar</p>
+          <h1 className="text-xl font-black text-foreground tracking-tighter uppercase whitespace-nowrap">Content Hub</h1>
+          <p className="text-[10px] font-bold text-primary uppercase tracking-wider">HEADLESS CMS</p>
         </div>
       </div>
 

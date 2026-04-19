@@ -112,6 +112,36 @@ export type Database = {
         }
         Relationships: []
       }
+      invitations: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          status: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          token?: string
+        }
+        Relationships: []
+      }
       media: {
         Row: {
           created_at: string
@@ -208,6 +238,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notes: {
+        Row: {
+          color: string | null
+          content: string | null
+          created_at: string
+          id: string
+          is_pinned: boolean | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          color?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_pinned?: boolean | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          color?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_pinned?: boolean | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       post_platforms: {
         Row: {
@@ -698,6 +764,48 @@ export type Database = {
           updated_at?: string
           url?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_platforms: {
+        Row: {
+          account_name: string
+          avatar_url: string | null
+          created_at: string
+          id: string
+          last_sync: string | null
+          platform_type: Database["public"]["Enums"]["platform_type"]
+          settings: Json
+          status: string
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          account_name: string
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          last_sync?: string | null
+          platform_type: Database["public"]["Enums"]["platform_type"]
+          settings?: Json
+          status?: string
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          account_name?: string
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          last_sync?: string | null
+          platform_type?: Database["public"]["Enums"]["platform_type"]
+          settings?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string
+          username?: string | null
         }
         Relationships: []
       }

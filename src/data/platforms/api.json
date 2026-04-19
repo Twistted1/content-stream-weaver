@@ -1,0 +1,43 @@
+{
+  "platform": "REST API",
+  "icon": "webhook",
+  "description": "Headless API Distribution Channel",
+  "schedule": {
+    "1": {
+      "Monday": ["09:00", "15:00"],
+      "Tuesday": ["09:00", "15:00"],
+      "Wednesday": ["09:00", "15:00"],
+      "Thursday": ["09:00", "15:00"],
+      "Friday": ["09:00", "15:00"],
+      "Saturday": ["10:00"],
+      "Sunday": ["10:00"]
+    },
+    "2": {
+      "Monday": ["09:00", "15:00"],
+      "Tuesday": ["09:00", "15:00"],
+      "Wednesday": ["09:00", "15:00"],
+      "Thursday": ["09:00", "15:00"],
+      "Friday": ["09:00", "15:00"],
+      "Saturday": ["10:00"],
+      "Sunday": ["10:00"]
+    },
+    "3": {
+      "Monday": ["09:00", "15:00"],
+      "Tuesday": ["09:00", "15:00"],
+      "Wednesday": ["09:00", "15:00"],
+      "Thursday": ["09:00", "15:00"],
+      "Friday": ["09:00", "15:00"],
+      "Saturday": ["10:00"],
+      "Sunday": ["10:00"]
+    },
+    "4": {
+      "Monday": ["09:00", "15:00"],
+      "Tuesday": ["09:00", "15:00"],
+      "Wednesday": ["09:00", "15:00"],
+      "Thursday": ["09:00", "15:00"],
+      "Friday": ["09:00", "15:00"],
+      "Saturday": ["10:00"],
+      "Sunday": ["10:00"]
+    }
+  }
+}
